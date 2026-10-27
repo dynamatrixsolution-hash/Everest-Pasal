@@ -51,7 +51,7 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin) return callback(null, true);
       if (
         allowedOrigins.includes(origin) ||
@@ -69,7 +69,7 @@ app.use(express.json());
 app.use(requestContextMiddleware);
 
 // Health & System Diagnostic Endpoints
-app.get(['/health', '/api/v1/health'], (req, res) => {
+app.get(['/health', '/api/v1/health'], (req: express.Request, res: express.Response) => {
   res.json({
     status: 'UP',
     service: 'everest-pasal-backend',
@@ -78,7 +78,7 @@ app.get(['/health', '/api/v1/health'], (req, res) => {
   });
 });
 
-app.get(['/health/db', '/api/v1/health/database'], async (req, res) => {
+app.get(['/health/db', '/api/v1/health/database'], async (req: express.Request, res: express.Response) => {
   try {
     const startedAt = Date.now();
     const tableCount: any = await prisma.$queryRaw`

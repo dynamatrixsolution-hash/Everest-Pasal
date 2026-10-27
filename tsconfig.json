@@ -3,7 +3,8 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
     "outDir": "./dist",
     "rootDir": "./backend/src",
     "strict": true,
@@ -13,5 +14,11 @@
     "resolveJsonModule": true
   },
   "include": ["backend/src/**/*"],
-  "exclude": ["node_modules", "dist", "backend/scripts/**/*", "backend/tests/**/*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "backend/scripts/**/*",
+    "backend/src/scripts/**/*",
+    "backend/tests/**/*"
+  ]
 }
