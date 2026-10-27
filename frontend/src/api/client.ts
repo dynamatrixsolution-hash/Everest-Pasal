@@ -3,7 +3,10 @@
 // Connects UI layer to backend REST endpoints with auth tokens and error handling
 // ==============================================================================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const DEFAULT_PROD_API = 'https://everest-pasal-backend.onrender.com';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? DEFAULT_PROD_API : 'http://localhost:4000');
 
 export interface ApiResponse<T = any> {
   data?: T;
