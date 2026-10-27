@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: Everest Pasal Enterprise Backend API
+  description: Authoritative REST API for Everest Pasal multi-vendor commerce platform covering 21 PostgreSQL schemas and 183 physical base tables.
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local Development Server
+  - url: https://api.everestpasal.com/api/v1
+    description: Production Gateway
+
+paths:
+  /health:
+    get:
+      summary: Service Health Check
+      responses:
+        '200':
+          description: Service is healthy
+
+  /health/db:
+    get:
+      summary: Database Health across 21 Schemas
+      responses:
+        '200':
+          description: All 21 schemas and 183 tables verified
+
+  /system/companies:
+    get:
+      summary: List Authorized Companies
+      responses:
+        '200':
+          description: Company list
+
+  /system/fiscal-years:
+    get:
+      summary: List Fiscal Years
+      responses:
+        '200':
+          description: Fiscal years list
+
+  /geo/countries:
+    get:
+      summary: List Countries
+      responses:
+        '200':
+          description: Country list
+
+  /geo/provinces:
+    get:
+      summary: List Provinces
+      responses:
+        '200':
+          description: Province list
+
+  /auth/register:
+    post:
+      summary: Register Account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, fullName]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                fullName: { type: string }
+                role: { type: string, enum: [CUSTOMER, VENDOR, ADMIN] }
+      responses:
+        '201':
+          description: Account created
+
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Authenticated session returned
+
+  /auth/me:
+    get:
+      summary: Get Authenticated User Context
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user context
+
+  /customer/profile:
+    get:
+      summary: Get Customer Profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Customer profile
+
+  /customer/addresses:
+    get:
+      summary: Get Customer Addresses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Customer addresses list
+    post:
+      summary: Create Customer Address
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipientName, addressLine1]
+              properties:
+                recipientName: { type: string }
+                recipientPhone: { type: string }
+                addressLine1: { type: string }
+                cityCode: { type: string }
+                isDefault: { type: boolean }
+      responses:
+        '201':
+          description: Address created
+
+  /kyc/me:
+    get:
+      summary: Get KYC Status & Case
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: KYC Case details
+
+  /kyc/documents:
+    post:
+      summary: Upload KYC Verification Document
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentType, fileReference]
+              properties:
+                documentType: { type: string }
+                documentNumber: { type: string }
+                fileReference: { type: string }
+      responses:
+        '201':
+          description: Document stored
+
+  /products:
+    get:
+      summary: List Published Products
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Product catalog list
+
+  /search/products:
+    get:
+      summary: Search Products
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200':
+          description: Search results
+
+  /inventory/adjust:
+    post:
+      summary: Adjust Stock Quantity with Traceable Movement
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warehouseId, listingVariantId, quantityDelta]
+              properties:
+                warehouseId: { type: string, format: uuid }
+                listingVariantId: { type: string, format: uuid }
+                quantityDelta: { type: number }
+                movementType: { type: string }
+      responses:
+        '200':
+          description: Stock adjusted
+
+  /cart:
+    get:
+      summary: Get Active Cart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active customer cart
+
+  /cart/items:
+    post:
+      summary: Add Item to Cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [offerId, quantity]
+              properties:
+                offerId: { type: string, format: uuid }
+                quantity: { type: integer }
+      responses:
+        '200':
+          description: Cart updated
+
+  /checkout/orders:
+    post:
+      summary: Create Order from Cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shippingAddressId: { type: string, format: uuid }
+                paymentMethod: { type: string }
+      responses:
+        '201':
+          description: Order created transactionally
+
+  /payments/webhooks:
+    post:
+      summary: Handle Inbound Payment Webhooks
+      responses:
+        '200':
+          description: Webhook processed idempotently
+
+  /finance/journals:
+    post:
+      summary: Create Balanced Double-Entry Financial Journal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lines]
+              properties:
+                journalDate: { type: string, format: date }
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    required: [accountId, debit, credit]
+                    properties:
+                      accountId: { type: string, format: uuid }
+                      debit: { type: number }
+                      credit: { type: number }
+                      memo: { type: string }
+      responses:
+        '201':
+          description: Journal posted
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

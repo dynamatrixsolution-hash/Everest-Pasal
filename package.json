@@ -1,0 +1,48 @@
+{
+  "name": "everest-pasal-backend",
+  "version": "1.0.0",
+  "description": "Everest Pasal Backend & Database Infrastructure",
+  "main": "backend/src/server.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "build:frontend": "npm --prefix frontend run build",
+    "start": "tsx watch backend/src/server.ts",
+    "start:backend": "tsx watch backend/src/server.ts",
+    "start:frontend": "npm --prefix frontend run dev",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:status": "prisma migrate status",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:backup": "tsx backend/scripts/backup-db.ts",
+    "db:backup:verify": "tsx backend/scripts/verify-backup.ts",
+    "db:restore": "tsx backend/scripts/restore-db.ts",
+    "db:backup:cleanup": "tsx backend/scripts/cleanup-backups.ts",
+    "db:backup:status": "tsx backend/scripts/backup-status.ts",
+    "db:backup:test": "tsx backend/scripts/test-backup-system.ts",
+    "docs:generate": "python backend/scripts/generate_setup_docx.py",
+    "test": "vitest run"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.13.9",
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}
