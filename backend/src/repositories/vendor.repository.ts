@@ -63,7 +63,7 @@ export class VendorRepository {
 
     const merchantRows = await query<any>(
       `INSERT INTO ep_merchant.tb_ep_merchant_vendor_merchant_master (
-        id, company_code, merchant_code, merchant_name, legal_name, pan_vat_number,
+        id, company_code, merchant_code, merchant_name, legal_name, tax_no,
         merchant_type, onboarding_status, active, publish
       ) VALUES (
         gen_random_uuid(), $1, $2, $3, $4, $5, 'SELLER', 'APPROVED', true, true
@@ -1054,7 +1054,7 @@ export class VendorRepository {
    */
   async getVendorStoreInfo(merchantId: string): Promise<any> {
     const storeRows = await query<any>(
-      `SELECT m.id, m.merchant_name, m.legal_name, m.pan_vat_number, s.store_name
+      `SELECT m.id, m.merchant_name, m.legal_name, m.tax_no as pan_vat_number, s.store_name
        FROM ep_merchant.tb_ep_merchant_vendor_merchant_master m
        LEFT JOIN ep_merchant.tb_ep_merchant_store_store_master s ON s.merchant_id = m.id AND s.active = true
        WHERE m.company_code = $1 AND m.id = $2::uuid AND m.active = true
