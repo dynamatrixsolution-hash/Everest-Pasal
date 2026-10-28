@@ -4,9 +4,19 @@
 // ==============================================================================
 
 const DEFAULT_PROD_API = 'https://everest-pasal-backend.onrender.com';
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? DEFAULT_PROD_API : 'http://localhost:4000');
+const rawEnvUrl = typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL.trim() : '';
+const isValidUrl =
+  Boolean(rawEnvUrl) &&
+  rawEnvUrl !== 'VITE_API_URL' &&
+  rawEnvUrl !== 'undefined' &&
+  rawEnvUrl !== 'null' &&
+  (rawEnvUrl.startsWith('http://') || rawEnvUrl.startsWith('https://') || rawEnvUrl.startsWith('/'));
+
+const resolvedBase = isValidUrl
+  ? rawEnvUrl
+  : (import.meta.env.PROD ? DEFAULT_PROD_API : 'http://localhost:4000');
+
+const API_BASE_URL = resolvedBase.replace(/\/+$/, '');
 
 export interface ApiResponse<T = any> {
   data?: T;
@@ -44,7 +54,8 @@ export class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${normalizedEndpoint}`;
 
     try {
       const response = await fetch(url, {
