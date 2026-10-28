@@ -10,7 +10,7 @@ collection = {
     "variable": [
         {
             "key": "base_url",
-            "value": "http://localhost:4000",
+            "value": "https://everest-pasal-backend.onrender.com",
             "type": "string"
         },
         {
