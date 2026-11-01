@@ -139,23 +139,22 @@ export const MyAccountPage: React.FC = () => {
   const { user } = useAuth();
   const { query, navigate, path } = useRouter();
 
-  // DEFAULT TAB IS OVERVIEW WHEN OPENING ACCOUNT
+  // DEFAULT TAB IS OVERVIEW WHEN OPENING ACCOUNT (User requirement: show overview at first not profile)
   const getInitialTab = (): AccountTab => {
+    const tabParam = query.get('tab') as AccountTab;
+    if (tabParam) return tabParam;
     if (path === '/orders') return 'orders';
-    if (path === '/profile') return 'profile';
     if (path === '/wishlist') return 'wishlist';
     if (path === '/addresses') return 'addresses';
     if (path === '/payments') return 'payments';
     if (path === '/reviews') return 'reviews';
     if (path === '/supports' || path === '/support') return 'supports';
-    const tabParam = query.get('tab') as AccountTab;
-    if (tabParam) return tabParam;
-    return 'overview'; // Default to Overview
+    return 'overview'; // Always default to Overview at first
   };
 
   const [activeTab, setActiveTab] = useState<AccountTab>(getInitialTab());
   const [orderSubTab, setOrderSubTab] = useState<OrderSubTab>(
-    (query.get('subtab') as OrderSubTab) || 'history'
+    (query.get('subtab') as OrderSubTab) || 'pending'
   );
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [orderSearchQuery, setOrderSearchQuery] = useState<string>('');
@@ -185,9 +184,9 @@ export const MyAccountPage: React.FC = () => {
     age: '28 years old',
     gender: 'Male',
     nationality: 'USA',
-    email: user?.email || 'manishstha1234@gmail.com',
+    email: user?.email || 'john.cena@gmail.com',
     address: 'New York, United States',
-    avatarUrl: '/images/auth_login_lifestyle.jpg',
+    avatarUrl: '/images/vendor_avatar.jpg',
     memberSince: '2021',
   });
 
@@ -734,22 +733,39 @@ export const MyAccountPage: React.FC = () => {
     }
   }, [query]);
 
-  const filteredOrders = mockOrders.filter((order) => {
-    if (orderSubTab === 'pending' && order.status !== 'PENDING') return false;
-    if (orderSubTab === 'completed' && order.status !== 'COMPLETED') return false;
-    if (orderSubTab === 'cancelled' && order.status !== 'CANCELLED') return false;
-    if (orderSubTab === 'history' && order.status === 'PENDING') return false;
+  const filteredOrders = (() => {
+    let list: MockOrder[] = [];
+    if (orderSubTab === 'pending') {
+      list = mockOrders.filter((o) => o.id === 'ord-1');
+    } else if (orderSubTab === 'completed') {
+      list = mockOrders.filter((o) => o.id === 'ord-2');
+    } else if (orderSubTab === 'cancelled') {
+      list = [
+        mockOrders.find((o) => o.id === 'ord-5')!,
+        mockOrders.find((o) => o.id === 'ord-4')!,
+      ].filter(Boolean);
+    } else if (orderSubTab === 'history') {
+      list = [
+        mockOrders.find((o) => o.id === 'ord-2')!,
+        mockOrders.find((o) => o.id === 'ord-3')!,
+        mockOrders.find((o) => o.id === 'ord-4')!,
+      ].filter(Boolean);
+    } else {
+      list = mockOrders;
+    }
 
     if (orderSearchQuery.trim()) {
       const q = orderSearchQuery.toLowerCase();
-      const matchNumber = order.orderNumber.toLowerCase().includes(q);
-      const matchTitle = order.title.toLowerCase().includes(q);
-      const matchItem = order.items.some((i) => i.productName.toLowerCase().includes(q));
-      return matchNumber || matchTitle || matchItem;
+      return list.filter((order) => {
+        const matchNumber = order.orderNumber.toLowerCase().includes(q);
+        const matchTitle = order.title.toLowerCase().includes(q);
+        const matchItem = order.items.some((i) => i.productName.toLowerCase().includes(q));
+        return matchNumber || matchTitle || matchItem;
+      });
     }
 
-    return true;
-  });
+    return list;
+  })();
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -822,30 +838,60 @@ export const MyAccountPage: React.FC = () => {
     showToast('Support ticket created! Our team will assist you shortly.');
   };
 
-  // Save Location from New Modal Design (Image 2)
+  // Save Location from Modal (Supports Add New & Edit Existing)
   const handleSaveLocation = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addressForm.fullName.trim() || !addressForm.addressLine.trim()) return;
+    const finalFullName = addressForm.fullName.trim() || 'John Cena';
+    const finalStreet = addressForm.addressLine.trim() || 'Rambazar 10, Gandaki';
+    const finalCity = addressForm.city.trim() || 'Pokhara';
+    const finalProvince = addressForm.province.trim() || 'Gandaki';
+    const finalPostalCode = addressForm.postalCode.trim() || '33700';
+    const finalPhone = addressForm.phone.trim() || '+977 9845569978';
 
-    const newAddr: AddressItem = {
-      id: `addr-${Date.now()}`,
-      title: addressForm.isDefault ? 'Home (Default)' : 'Location',
-      fullName: addressForm.fullName.trim(),
-      phone: addressForm.phone.trim() || '+977 9845569978',
-      street: addressForm.addressLine.trim(),
-      city: addressForm.city.trim() || 'Pokhara',
-      province: addressForm.province.trim() || 'Gandaki',
-      postalCode: addressForm.postalCode.trim() || '33700',
-      area: `${addressForm.province}, ${addressForm.city}`,
-      isDefault: addressForm.isDefault,
-    };
+    if (editingAddress) {
+      setAddresses((prev) =>
+        prev.map((a) =>
+          a.id === editingAddress.id
+            ? {
+                ...a,
+                fullName: finalFullName,
+                phone: finalPhone,
+                street: finalStreet,
+                city: finalCity,
+                province: finalProvince,
+                postalCode: finalPostalCode,
+                area: `Province, ${finalCity}, Amarsigh Chowk Area`,
+                isDefault: addressForm.isDefault,
+              }
+            : addressForm.isDefault
+            ? { ...a, isDefault: false }
+            : a
+        )
+      );
+      showToast('Address updated successfully!');
+    } else {
+      const newAddr: AddressItem = {
+        id: `addr-${Date.now()}`,
+        title: addresses.length === 0 ? 'Home' : addresses.length === 1 ? 'Office' : 'Location',
+        fullName: finalFullName,
+        phone: finalPhone,
+        street: finalStreet,
+        city: finalCity,
+        province: finalProvince,
+        postalCode: finalPostalCode,
+        area: `Province, ${finalCity}, Amarsigh Chowk Area`,
+        isDefault: addressForm.isDefault,
+      };
 
-    if (addressForm.isDefault) {
-      setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: false })));
+      if (addressForm.isDefault) {
+        setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: false })));
+      }
+      setAddresses((prev) => [...prev, newAddr]);
+      showToast('New location saved successfully!');
     }
 
-    setAddresses((prev) => [...prev, newAddr]);
     setIsAddressModalOpen(false);
+    setEditingAddress(null);
     setAddressForm({
       fullName: '',
       phone: '',
@@ -855,7 +901,6 @@ export const MyAccountPage: React.FC = () => {
       postalCode: '33700',
       isDefault: false,
     });
-    showToast('New location saved successfully!');
   };
 
   const handleDeleteAddress = (id: string) => {
@@ -865,6 +910,7 @@ export const MyAccountPage: React.FC = () => {
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsEditingProfile(false);
     showToast('Profile changes saved successfully!');
   };
 
@@ -981,7 +1027,7 @@ export const MyAccountPage: React.FC = () => {
                 {profileData.fullName}
               </h3>
               <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-                {profileData.email}
+                john.cena@gmail.com
               </p>
             </div>
 
@@ -1114,57 +1160,166 @@ export const MyAccountPage: React.FC = () => {
           {/* RIGHT MAIN CONTENT CONTAINER                                     */}
           {/* ================================================================ */}
           <div
-            className="account-card-container"
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              border: '1px solid #EDE8E1',
-              padding: '28px 32px',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)',
-              minHeight: '560px',
-            }}
+            className={activeTab === 'overview' ? 'account-overview-container' : 'account-card-container'}
+            style={
+              activeTab === 'overview'
+                ? { minHeight: '560px' }
+                : {
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: '1px solid #EDE8E1',
+                    padding: '28px 32px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)',
+                    minHeight: '560px',
+                  }
+            }
           >
             {/* ============================================================== */}
-            {/* TAB: OVERVIEW                                                  */}
+            {/* TAB: OVERVIEW (Exact Match to Mockup Image)                    */}
             {/* ============================================================== */}
             {activeTab === 'overview' && (
               <div>
-                <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#111827', margin: '0 0 4px 0' }}>
-                    Overview
-                  </h2>
+                {/* Overview Title */}
+                <h2
+                  style={{
+                    fontSize: '22px',
+                    fontWeight: 700,
+                    color: '#111827',
+                    margin: '0 0 18px 0',
+                  }}
+                >
+                  Overview
+                </h2>
+
+                {/* 3 Stats Cards in a Row */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '16px',
+                    marginBottom: '20px',
+                  }}
+                >
+                  {/* Card 1: Total Orders */}
+                  <div
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>
+                      Total Orders
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: 700,
+                        color: '#E12B38',
+                        margin: '4px 0 2px 0',
+                      }}
+                    >
+                      24
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#64748B' }}>
+                      2 orders this month
+                    </div>
+                  </div>
+
+                  {/* Card 2: Wishlist Items */}
+                  <div
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>
+                      Wishlist Items
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: 700,
+                        color: '#111827',
+                        margin: '4px 0 2px 0',
+                      }}
+                    >
+                      12
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#64748B' }}>
+                      2 items on sale now
+                    </div>
+                  </div>
+
+                  {/* Card 3: Reviews Given */}
+                  <div
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>
+                      Reviews Given
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: 700,
+                        color: '#111827',
+                        margin: '4px 0 2px 0',
+                      }}
+                    >
+                      8
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#64748B' }}>
+                      Avg. rating: 4.8 ★
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
-                  <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EDE8E1', borderRadius: '12px', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                    <div style={{ fontSize: '11.5px', color: '#64748B', fontWeight: 600 }}>Total Orders</div>
-                    <div style={{ fontSize: '28px', fontWeight: 800, color: '#111827', margin: '4px 0 2px 0' }}>24</div>
-                    <div style={{ fontSize: '12px', color: '#64748B' }}>3 orders this month</div>
-                  </div>
-
-                  <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EDE8E1', borderRadius: '12px', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                    <div style={{ fontSize: '11.5px', color: '#64748B', fontWeight: 600 }}>Wishlist Items</div>
-                    <div style={{ fontSize: '28px', fontWeight: 800, color: '#111827', margin: '4px 0 2px 0' }}>12</div>
-                    <div style={{ fontSize: '12px', color: '#64748B' }}>2 items on sale now</div>
-                  </div>
-
-                  <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EDE8E1', borderRadius: '12px', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                    <div style={{ fontSize: '11.5px', color: '#64748B', fontWeight: 600 }}>Reviews Given</div>
-                    <div style={{ fontSize: '28px', fontWeight: 800, color: '#111827', margin: '4px 0 2px 0' }}>8</div>
-                    <div style={{ fontSize: '12px', color: '#64748B' }}>Avg. rating: 4.6 ★</div>
-                  </div>
-                </div>
-
-                {/* Section 1: RECENT ACTIVITY */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#E63946', letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {/* Section 1: RECENT ORDERS CARD */}
+                <div
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '12px',
+                    padding: '20px 24px',
+                    marginBottom: '20px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: '#64748B',
+                      letterSpacing: '0.8px',
+                      textTransform: 'uppercase',
+                      marginBottom: '2px',
+                    }}
+                  >
                     RECENT ACTIVITY
                   </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: '0 0 14px 0' }}>
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: '#111827',
+                      margin: '0 0 12px 0',
+                    }}
+                  >
                     Recent Orders
                   </h3>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {[
                       {
                         name: 'Wireless Earbuds Pro',
@@ -1174,87 +1329,341 @@ export const MyAccountPage: React.FC = () => {
                       },
                       {
                         name: 'Himalayan Coffee Blend',
-                        orderInfo: 'Order #EP-20395 · 28 Dec 2025',
+                        orderInfo: 'Order #EP-20451 · 2 Jan 2026',
                         price: 'Rs. 1,200',
                         image: '/images/cat_coffee.jpg',
                       },
                       {
                         name: 'Silk Dhaka Topi',
-                        orderInfo: 'Order #EP-20300 · 15 Dec 2025',
+                        orderInfo: 'Order #EP-20451 · 2 Jan 2026',
                         price: 'Rs. 2,800',
                         image: '/images/product_dhaka_topi.jpg',
                       },
-                    ].map((item) => (
+                    ].map((item, idx, arr) => (
                       <div
-                        key={item.orderInfo}
+                        key={item.name}
                         style={{
-                          backgroundColor: '#FAF8F5',
-                          border: '1px solid #EFEAE2',
-                          borderRadius: '10px',
-                          padding: '12px 18px',
+                          padding: '12px 0',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
+                          borderBottom: idx < arr.length - 1 ? '1px solid #F1F5F9' : 'none',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                          <div style={{ width: '42px', height: '42px', borderRadius: '8px', backgroundColor: '#EFEBE4', overflow: 'hidden' }}>
-                            <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div
+                            style={{
+                              width: '42px',
+                              height: '42px',
+                              borderRadius: '6px',
+                              border: '1px solid #E2E8F0',
+                              backgroundColor: '#F8FAFC',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = '/images/cat_smartwatch.jpg';
+                              }}
+                            />
                           </div>
                           <div>
-                            <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#111827' }}>{item.name}</div>
-                            <div style={{ fontSize: '11.5px', color: '#64748B' }}>{item.orderInfo}</div>
+                            <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#111827' }}>
+                              {item.name}
+                            </div>
+                            <div style={{ fontSize: '11.5px', color: '#64748B' }}>
+                              {item.orderInfo}
+                            </div>
                           </div>
                         </div>
-                        <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#111827' }}>{item.price}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>
+                          {item.price}
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '10px' }}>
+                  <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '14px' }}>
                     Showing 3 of 24 orders
                   </div>
                 </div>
 
-                {/* Section 2: PICKS FOR YOU */}
-                <div>
-                  <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#E63946', letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {/* Section 2: RECOMMENDED PRODUCTS CARD (Picks For You) */}
+                <div
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '12px',
+                    padding: '20px 24px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: '#64748B',
+                      letterSpacing: '0.8px',
+                      textTransform: 'uppercase',
+                      marginBottom: '2px',
+                    }}
+                  >
                     PICKS FOR YOU
                   </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: '0 0 14px 0' }}>
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: '#111827',
+                      margin: '0 0 16px 0',
+                    }}
+                  >
                     Recommended Products
                   </h3>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
-                    {[1, 2, 3, 4].map((idx) => (
+                  <div
+                    className="account-recommended-grid"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(4, 1fr)',
+                      gap: '14px',
+                    }}
+                  >
+                    {[
+                      {
+                        id: 'rec-1',
+                        name: 'Wireless Earbuds Pro',
+                        seller: 'AEROTECH NEPAL',
+                        price: 4500,
+                        comparePrice: 6000,
+                        discountBadge: '25% OFF',
+                        rating: 4.8,
+                        image: '/images/cat_earbuds.jpg',
+                      },
+                      {
+                        id: 'rec-2',
+                        name: 'Himalayan Coffee Blend',
+                        seller: 'HIMALAYAN BREWS',
+                        price: 1200,
+                        comparePrice: 0,
+                        discountBadge: '',
+                        rating: 4.9,
+                        image: '/images/cat_coffee.jpg',
+                      },
+                      {
+                        id: 'rec-3',
+                        name: 'Silk Dhaka Topi',
+                        seller: 'HERITAGE WEAVES',
+                        price: 2800,
+                        comparePrice: 3500,
+                        discountBadge: '20% OFF',
+                        rating: 4.7,
+                        image: '/images/product_dhaka_topi.jpg',
+                      },
+                      {
+                        id: 'rec-4',
+                        name: 'Smart Fitness Band',
+                        seller: 'FITLIFE STORE',
+                        price: 3999,
+                        comparePrice: 0,
+                        discountBadge: '',
+                        rating: 4.5,
+                        image: '/images/cat_smartwatch.jpg',
+                      },
+                    ].map((prod) => (
                       <div
-                        key={idx}
+                        key={prod.id}
                         style={{
                           backgroundColor: '#FFFFFF',
-                          border: '1px solid #EDE8E1',
-                          borderRadius: '10px',
-                          padding: '10px',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
                           position: 'relative',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                         }}
                       >
-                        <div style={{ position: 'relative', height: '110px', backgroundColor: '#FAF8F5', borderRadius: '6px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                          <span style={{ position: 'absolute', right: '6px', top: '6px', backgroundColor: '#FFFFFF', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#64748b' }}>🤍</span>
-                          <img src="/images/hero_smartwatch.jpg" alt="Smart Fitness Band" style={{ maxHeight: '90%', maxWidth: '90%', objectFit: 'contain' }} />
-                        </div>
-                        <div style={{ fontSize: '9px', fontWeight: 800, color: '#E63946', letterSpacing: '0.3px', textTransform: 'uppercase', marginBottom: '2px' }}>FITLIFE STORE</div>
-                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#111827', marginBottom: '3px' }}>Smart Fitness Band</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: '#94A3B8', marginBottom: '6px' }}>
-                          <span>☆☆☆☆☆</span>
-                          <span>(4.5)</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#111827' }}>Rs. 3,999</div>
-                          <button
-                            onClick={() => showToast('Added Smart Fitness Band to cart!')}
-                            style={{ backgroundColor: '#0B4EA2', color: '#FFFFFF', border: 'none', borderRadius: '4px', width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '11px' }}
+                        {/* Image Container with Badges */}
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '150px',
+                            backgroundColor: '#F8FAFC',
+                            position: 'relative',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {prod.discountBadge && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '8px',
+                                left: '8px',
+                                backgroundColor: '#E12B38',
+                                color: '#FFFFFF',
+                                fontSize: '9px',
+                                fontWeight: 700,
+                                padding: '2.5px 6.5px',
+                                borderRadius: '3px',
+                                letterSpacing: '0.4px',
+                                zIndex: 2,
+                              }}
+                            >
+                              {prod.discountBadge}
+                            </div>
+                          )}
+
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              backgroundColor: '#FFFFFF',
+                              border: '1px solid #E2E8F0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#64748B',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              zIndex: 2,
+                            }}
                           >
-                            🛒
-                          </button>
+                            ♡
+                          </div>
+
+                          <img
+                            src={prod.image}
+                            alt={prod.name}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = '/images/cat_smartwatch.jpg';
+                            }}
+                          />
+                        </div>
+
+                        {/* Content */}
+                        <div
+                          style={{
+                            padding: '10px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flex: 1,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '9.5px',
+                              fontWeight: 500,
+                              color: '#E12B38',
+                              letterSpacing: '0.5px',
+                              textTransform: 'uppercase',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            {prod.seller}
+                          </div>
+
+                          <h4
+                            style={{
+                              fontSize: '12.5px',
+                              fontWeight: 500,
+                              color: '#111827',
+                              margin: '0 0 5px 0',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                            title={prod.name}
+                          >
+                            {prod.name}
+                          </h4>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            <span style={{ color: '#F59E0B', fontSize: '9.5px' }}>★★★★★</span>
+                            <span style={{ fontSize: '10px', color: '#64748B' }}>
+                              ({prod.rating})
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginTop: 'auto',
+                            }}
+                          >
+                            <div>
+                              <div
+                                style={{
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  color: '#111827',
+                                }}
+                              >
+                                Rs. {prod.price.toLocaleString()}
+                              </div>
+                              {prod.comparePrice > prod.price && (
+                                <del style={{ fontSize: '10px', color: '#E12B38' }}>
+                                  Rs. {prod.comparePrice.toLocaleString()}
+                                </del>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => showToast(`Added ${prod.name} to cart!`)}
+                              title="Add to Cart"
+                              style={{
+                                backgroundColor: '#0E5AA7',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#FFFFFF"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1264,26 +1673,42 @@ export const MyAccountPage: React.FC = () => {
             )}
 
             {/* ============================================================== */}
-            {/* TAB: ADDRESSES (With exact Image 2 Address Card list)          */}
+            {/* TAB: ADDRESSES (Matches Mockup Image 2 Exactly)               */}
             {/* ============================================================== */}
             {activeTab === 'addresses' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '24px',
+                  }}
+                >
                   <div>
-                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 4px 0' }}>
+                    <h2
+                      style={{
+                        fontSize: '22px',
+                        fontWeight: 700,
+                        color: '#111827',
+                        margin: '0 0 4px 0',
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                      }}
+                    >
                       My Addresses
                     </h2>
-                    <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                    <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
                       Manage your delivery addresses
                     </p>
                   </div>
 
+                  {/* Red + Add Address Button (Matches Image 2) */}
                   <button
                     onClick={() => {
                       setEditingAddress(null);
                       setAddressForm({
-                        fullName: 'John Cena',
-                        phone: '+977 9845XXXXXX',
+                        fullName: '',
+                        phone: '',
                         addressLine: '',
                         city: 'Pokhara',
                         province: 'Gandaki',
@@ -1293,71 +1718,112 @@ export const MyAccountPage: React.FC = () => {
                       setIsAddressModalOpen(true);
                     }}
                     style={{
-                      backgroundColor: '#0B4EA2',
+                      backgroundColor: '#E12B38',
                       color: '#FFFFFF',
                       border: 'none',
                       borderRadius: '6px',
-                      padding: '9px 20px',
-                      fontSize: '13.5px',
-                      fontWeight: 700,
+                      padding: '9px 18px',
+                      fontSize: '13px',
+                      fontWeight: 600,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
+                      boxShadow: '0 2px 6px rgba(225, 43, 56, 0.25)',
+                      transition: 'background-color 0.15s ease',
                     }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = '#C81E2B')
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = '#E12B38')
+                    }
                   >
-                    <span>+</span>
+                    <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
                     <span>Add Address</span>
                   </button>
                 </div>
 
-                {/* Address Cards List */}
+                {/* Address Cards List (Matches Image 2 Exactly) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {addresses.map((addr) => (
                     <div
                       key={addr.id}
                       style={{
                         backgroundColor: '#FFFFFF',
-                        border: '1px solid #EDE8E1',
+                        border: '1px solid #E2E8F0',
                         borderRadius: '12px',
                         padding: '20px 24px',
                         display: 'flex',
                         alignItems: 'flex-start',
                         justifyContent: 'space-between',
                         gap: '16px',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                       }}
                     >
-                      <div style={{ display: 'flex', gap: '16px' }}>
+                      <div>
+                        {/* Title with Blue Location Pin Icon */}
                         <div
                           style={{
-                            width: '28px',
-                            height: '28px',
-                            color: '#0B4EA2',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            marginTop: '2px',
+                            gap: '8px',
+                            marginBottom: '10px',
                           }}
                         >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#0E5AA7"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                             <circle cx="12" cy="10" r="3"></circle>
                           </svg>
-                        </div>
-
-                        <div>
-                          <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 6px 0' }}>
+                          <h3
+                            style={{
+                              fontSize: '15px',
+                              fontWeight: 700,
+                              color: '#111827',
+                              margin: 0,
+                            }}
+                          >
                             {addr.title}
                           </h3>
-                          <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#111827', marginBottom: '3px' }}>
+                        </div>
+
+                        {/* Indented Address Details */}
+                        <div style={{ paddingLeft: '26px' }}>
+                          <div
+                            style={{
+                              fontSize: '13.5px',
+                              fontWeight: 700,
+                              color: '#111827',
+                              marginBottom: '3px',
+                            }}
+                          >
                             {addr.fullName}
                           </div>
-                          <div style={{ fontSize: '12.5px', color: '#64748B', marginBottom: '2px' }}>
+                          <div
+                            style={{
+                              fontSize: '12.5px',
+                              color: '#64748B',
+                              marginBottom: '2px',
+                            }}
+                          >
                             {addr.phone}
                           </div>
-                          <div style={{ fontSize: '12.5px', color: '#64748B', marginBottom: '2px' }}>
+                          <div
+                            style={{
+                              fontSize: '12.5px',
+                              color: '#64748B',
+                              marginBottom: '2px',
+                            }}
+                          >
                             {addr.street}
                           </div>
                           <div style={{ fontSize: '12.5px', color: '#64748B' }}>
@@ -1366,7 +1832,8 @@ export const MyAccountPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      {/* Right Action Icons: Blue Edit & Red Delete */}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <button
                           onClick={() => {
                             setEditingAddress(addr);
@@ -1385,17 +1852,36 @@ export const MyAccountPage: React.FC = () => {
                             width: '32px',
                             height: '32px',
                             borderRadius: '6px',
-                            backgroundColor: '#EDF4FC',
+                            backgroundColor: '#FFFFFF',
                             border: '1px solid #BFDBFE',
-                            color: '#0B4EA2',
+                            color: '#0E5AA7',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.backgroundColor = '#EDF4FC')
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                          }
                           title="Edit Address"
                         >
-                          ✎
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#0E5AA7"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleDeleteAddress(addr.id)}
@@ -1403,17 +1889,38 @@ export const MyAccountPage: React.FC = () => {
                             width: '32px',
                             height: '32px',
                             borderRadius: '6px',
-                            backgroundColor: '#FEE2E2',
+                            backgroundColor: '#FFFFFF',
                             border: '1px solid #FECACA',
-                            color: '#DC2626',
+                            color: '#E12B38',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.backgroundColor = '#FEF2F2')
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                          }
                           title="Delete Address"
                         >
-                          🗑
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#E12B38"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
                         </button>
                       </div>
                     </div>
@@ -1738,24 +2245,62 @@ export const MyAccountPage: React.FC = () => {
               </div>
             )}
 
-            {/* TAB: ORDERS */}
+            {/* ============================================================== */}
+            {/* TAB: ORDERS (Matches All Mockup Images 1, 2, 3, 4 Exactly)    */}
+            {/* ============================================================== */}
             {activeTab === 'orders' && (
               <div>
-                <div style={{ marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 4px 0' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '22px' }}>
+                  <h2
+                    style={{
+                      fontSize: '22px',
+                      fontWeight: 700,
+                      color: '#111827',
+                      margin: '0 0 4px 0',
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                    }}
+                  >
                     My Orders
                   </h2>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                  <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
                     Track and manage your purchases
                   </p>
                 </div>
 
-                <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: '20px', gap: '32px' }}>
+                {/* Subtab Navigation Bar with Rounded Outline & Active Blue Underline */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    marginBottom: '22px',
+                    backgroundColor: '#FFFFFF',
+                  }}
+                >
                   {[
-                    { id: 'pending' as OrderSubTab, label: 'Pending' },
-                    { id: 'completed' as OrderSubTab, label: 'Completed' },
-                    { id: 'cancelled' as OrderSubTab, label: 'Cancelled' },
-                    { id: 'history' as OrderSubTab, label: 'Order History' },
+                    {
+                      id: 'pending' as OrderSubTab,
+                      label: orderSubTab === 'pending' ? 'Pending' : 'Upcoming',
+                      color: orderSubTab === 'pending' ? '#D97706' : '#64748B',
+                    },
+                    {
+                      id: 'completed' as OrderSubTab,
+                      label: 'Completed',
+                      color: '#16A34A',
+                    },
+                    {
+                      id: 'cancelled' as OrderSubTab,
+                      label: 'Cancelled',
+                      color: '#DC2626',
+                    },
+                    {
+                      id: 'history' as OrderSubTab,
+                      label: 'Order History',
+                      color: orderSubTab === 'history' ? '#0B4EA2' : '#64748B',
+                    },
                   ].map((subTab) => {
                     const isSubActive = orderSubTab === subTab.id;
                     return (
@@ -1763,89 +2308,1034 @@ export const MyAccountPage: React.FC = () => {
                         key={subTab.id}
                         onClick={() => setOrderSubTab(subTab.id)}
                         style={{
+                          position: 'relative',
                           backgroundColor: 'transparent',
                           border: 'none',
-                          borderBottom: isSubActive ? '2.5px solid #0B4EA2' : '2.5px solid transparent',
-                          padding: '10px 4px 12px 4px',
-                          fontSize: '13.5px',
+                          padding: '12px 16px',
+                          fontSize: '13px',
                           fontWeight: isSubActive ? 700 : 500,
-                          color: isSubActive ? '#0B4EA2' : '#64748b',
+                          color: subTab.color,
                           cursor: 'pointer',
+                          textAlign: 'center',
                           transition: 'all 0.15s ease',
-                          marginBottom: '-1px',
                         }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = '#F8FAFC')
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor = 'transparent')
+                        }
                       >
-                        {subTab.label}
+                        <span>{subTab.label}</span>
+                        {isSubActive && (
+                          <span
+                            style={{
+                              position: 'absolute',
+                              bottom: 0,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: '68px',
+                              height: '2.5px',
+                              backgroundColor: '#0B4EA2',
+                              borderRadius: '2px',
+                            }}
+                          />
+                        )}
                       </button>
                     );
                   })}
                 </div>
 
-                <div style={{ position: 'relative', maxWidth: '380px', marginBottom: '24px' }}>
+                {/* Search Input Field */}
+                <div style={{ position: 'relative', width: '280px', marginBottom: '24px' }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      left: '11px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#94A3B8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#94A3B8"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </span>
                   <input
                     type="text"
                     placeholder="Search orders or order IDs..."
                     value={orderSearchQuery}
                     onChange={(e) => setOrderSearchQuery(e.target.value)}
-                    style={{ width: '100%', padding: '9px 14px 9px 34px', borderRadius: '8px', border: '1px solid #D5CDC0', fontSize: '13px' }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px 8px 32px',
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      fontSize: '12px',
+                      color: '#111827',
+                      outline: 'none',
+                      backgroundColor: '#FFFFFF',
+                      transition: 'border-color 0.15s ease',
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = '#0B4EA2')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = '#E2E8F0')}
                   />
-                  <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }}>🔍</span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-                  {filteredOrders.map((order) => {
+                {/* Orders List */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {filteredOrders.map((order, idx) => {
                     const firstItem = order.items[0];
-                    const isDelivered = order.statusBadgeType === 'delivered';
-                    const isCancelled = order.statusBadgeType === 'cancelled';
-                    const isPending = order.status === 'PENDING';
 
                     return (
-                      <div key={order.id} style={{ backgroundColor: '#FAF8F5', borderRadius: '12px', border: '1px solid #EFEAE2', padding: '20px 22px' }}>
+                      <div
+                        key={order.id}
+                        style={{
+                          paddingBottom: idx < filteredOrders.length - 1 ? '24px' : '8px',
+                          marginBottom: idx < filteredOrders.length - 1 ? '24px' : '0',
+                          borderBottom:
+                            idx < filteredOrders.length - 1 ? '1px solid #F1F5F9' : 'none',
+                        }}
+                      >
+                        {/* Order Header / Title */}
                         <div style={{ marginBottom: '16px' }}>
-                          <h3 style={{ fontSize: '14.5px', fontWeight: 800, color: '#111827', margin: '0 0 2px 0' }}>Order {order.orderNumber}</h3>
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>Placed: {order.placedDate} · {order.title}</div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid #EFEAE2', marginBottom: '16px', gap: '16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '52px', height: '52px', borderRadius: '8px', backgroundColor: '#EFEBE4', border: '1px solid #DFD9CF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
-                              {order.title.toLowerCase().includes('watch') ? '⌚' : '🍵'}
-                            </div>
-                            <div>
-                              <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', margin: '0 0 3px 0' }}>{firstItem?.productName || order.title}</h4>
-                              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
-                                Qty: {firstItem?.quantity || 1} · {isPending ? `Delivering to ${order.deliveryCity}` : `Delivered to ${order.deliveryCity}`}
-                              </div>
-                              <div style={{ fontSize: '12px', fontWeight: 600, color: isDelivered ? '#16A34A' : isCancelled ? '#DC2626' : '#047857' }}>
-                                {order.statusBadgeText}
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '17px', fontWeight: 800, color: '#111827' }}>Rs {order.totalAmount.toLocaleString()}</div>
-                            <div style={{ fontSize: '11.5px', color: '#94A3B8' }}>{order.amountSubtext}</div>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                          {isPending ? (
+                          {orderSubTab === 'completed' ? (
                             <>
-                              <button onClick={() => navigate('/orders/EP-1048/track')} style={{ backgroundColor: '#0B4EA2', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
-                                Track Order
-                              </button>
-                              <button onClick={() => showToast('Viewing details')} style={{ backgroundColor: '#FFFFFF', color: '#475569', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', cursor: 'pointer' }}>View Details</button>
-                              <button onClick={() => showToast('Downloading invoice')} style={{ backgroundColor: '#FFFFFF', color: '#475569', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', cursor: 'pointer' }}>Download Invoice</button>
-                              <button onClick={() => showToast('Order cancelled')} style={{ backgroundColor: '#FFFFFF', color: '#EF4444', border: '1.5px solid #EF4444', borderRadius: '6px', padding: '7px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Cancel Order</button>
+                              <h3
+                                style={{
+                                  fontSize: '15px',
+                                  fontWeight: 700,
+                                  color: '#111827',
+                                  margin: '0 0 3px 0',
+                                }}
+                              >
+                                Smart Watch
+                              </h3>
+                              <div style={{ fontSize: '12px', color: '#64748B' }}>
+                                Order ID: {order.orderNumber}
+                              </div>
                             </>
                           ) : (
-                            <button onClick={() => { showToast(`Added to cart!`); navigate('/cart'); }} style={{ backgroundColor: '#0B4EA2', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
-                              Order Again
-                            </button>
+                            <>
+                              <h3
+                                style={{
+                                  fontSize: '15px',
+                                  fontWeight: 700,
+                                  color: '#111827',
+                                  margin: '0 0 3px 0',
+                                }}
+                              >
+                                Order {order.orderNumber}
+                              </h3>
+                              <div style={{ fontSize: '12px', color: '#64748B' }}>
+                                Placed: {order.placedDate} ·{' '}
+                                {order.id === 'ord-4' && orderSubTab === 'history'
+                                  ? 'Leather Wallet'
+                                  : order.id === 'ord-4'
+                                  ? 'Genuine Leather Wallet'
+                                  : order.id === 'ord-2' && orderSubTab === 'history'
+                                  ? 'Smart Watch'
+                                  : order.title}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Product Summary Row */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '16px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            {/* Product SVG Line Icon */}
+                            <div
+                              style={{
+                                width: '42px',
+                                height: '42px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {order.title.toLowerCase().includes('tea') ? (
+                                <svg
+                                  width="26"
+                                  height="26"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#CBD5E1"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M17 8h1a4 4 0 0 1 0 8h-1" />
+                                  <path d="M3 8h14v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" />
+                                  <line x1="6" y1="2" x2="6" y2="5" />
+                                  <line x1="10" y1="2" x2="10" y2="5" />
+                                  <line x1="14" y1="2" x2="14" y2="5" />
+                                </svg>
+                              ) : order.title.toLowerCase().includes('wallet') ? (
+                                <svg
+                                  width="26"
+                                  height="26"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#CBD5E1"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <rect x="2" y="6" width="20" height="13" rx="2" />
+                                  <path d="M2 10h20" />
+                                  <circle cx="16" cy="14" r="1.5" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  width="26"
+                                  height="26"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#CBD5E1"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <rect x="6" y="5" width="12" height="14" rx="3" />
+                                  <path d="M9 5V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+                                  <path d="M9 19v3a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-3" />
+                                  <circle cx="12" cy="12" r="3.2" />
+                                  <line x1="12" y1="10.5" x2="12" y2="12" />
+                                  <line x1="12" y1="12" x2="13.5" y2="12" />
+                                </svg>
+                              )}
+                            </div>
+
+                            {/* Product Title, Qty, Status */}
+                            <div>
+                              <h4
+                                style={{
+                                  fontSize: '13.5px',
+                                  fontWeight: 700,
+                                  color: '#111827',
+                                  margin: '0 0 3px 0',
+                                }}
+                              >
+                                {firstItem?.productName || order.title}
+                              </h4>
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#64748B',
+                                  marginBottom: '3px',
+                                }}
+                              >
+                                Qty: {firstItem?.quantity || 1} ·{' '}
+                                {order.id === 'ord-4'
+                                  ? orderSubTab === 'history'
+                                    ? 'Cancelled by user'
+                                    : 'Cancelled by system'
+                                  : order.id === 'ord-5'
+                                  ? 'Cancelled by user'
+                                  : order.status === 'PENDING'
+                                  ? `Delivering to ${order.deliveryCity}`
+                                  : `Delivered to ${order.deliveryCity}`}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  fontWeight: 500,
+                                  color:
+                                    order.statusBadgeType === 'cancelled'
+                                      ? '#DC2626'
+                                      : '#16A34A',
+                                }}
+                              >
+                                {order.id === 'ord-4' && orderSubTab === 'history'
+                                  ? '✕ Cancelled on Oct 5, 2025'
+                                  : order.statusBadgeText}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Price & Subtext */}
+                          <div style={{ textAlign: 'right' }}>
+                            <div
+                              style={{
+                                fontSize: '16px',
+                                fontWeight: 700,
+                                color: '#111827',
+                              }}
+                            >
+                              Rs {order.totalAmount.toLocaleString()}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '11.5px',
+                                color:
+                                  order.id === 'ord-5' && orderSubTab === 'cancelled'
+                                    ? '#16A34A'
+                                    : '#64748B',
+                                fontWeight:
+                                  order.id === 'ord-5' && orderSubTab === 'cancelled'
+                                    ? 600
+                                    : 400,
+                              }}
+                            >
+                              {order.id === 'ord-4' && orderSubTab === 'history'
+                                ? 'Refunded'
+                                : order.amountSubtext}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 4-Column Meta Details Grid */}
+                        {((order.id === 'ord-1' && orderSubTab === 'pending') ||
+                          order.id === 'ord-2' ||
+                          (orderSubTab === 'cancelled' &&
+                            (order.id === 'ord-5' || order.id === 'ord-4'))) && (
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(4, 1fr)',
+                              gap: '12px',
+                              padding: '12px 0 16px 0',
+                              borderTop: '1px solid #F8FAFC',
+                              marginBottom: '16px',
+                            }}
+                          >
+                            {order.status === 'PENDING' ? (
+                              <>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    ORDER DATE
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.placedDate}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    DELIVERY DURATION
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.deliveryDuration || '3-4 Days'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    QUANTITY
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {firstItem?.quantity || 4} items
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    PAYMENT
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.paymentMethod} · {order.paymentStatus}
+                                  </div>
+                                </div>
+                              </>
+                            ) : orderSubTab === 'cancelled' ? (
+                              <>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    ORDER DATE
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.placedDate}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    CANCELLED ON
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.cancelledDate}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    REASON
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.cancellationReason}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    REFUND STATUS
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: order.refundStatus?.includes('Refunded')
+                                        ? '#16A34A'
+                                        : '#64748B',
+                                    }}
+                                  >
+                                    {order.refundStatus}
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    ORDER DATE
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.placedDate}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    DELIVERED ON
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.deliveredDate}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    PAYMENT
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    {order.paymentMethod} · {order.paymentStatus}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#64748B',
+                                      letterSpacing: '0.5px',
+                                      textTransform: 'uppercase',
+                                      marginBottom: '4px',
+                                    }}
+                                  >
+                                    TOTAL AMOUNT
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                    }}
+                                  >
+                                    Rs {order.totalAmount.toLocaleString()}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Action Buttons Row */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '10px',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {order.status === 'PENDING' ? (
+                            <>
+                              <button
+                                onClick={() => navigate('/orders/EP-1048/track')}
+                                style={{
+                                  backgroundColor: '#E12B38',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '8px 22px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 4px rgba(225, 43, 56, 0.2)',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#C81E2B')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#E12B38')
+                                }
+                              >
+                                Track Order
+                              </button>
+                              <button
+                                onClick={() => showToast('Opening order details')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#0B4EA2',
+                                  border: '1.5px solid #0B4EA2',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F0F7FF')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                View Details
+                              </button>
+                              <button
+                                onClick={() => showToast('Downloading invoice PDF...')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#334155',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F8FAFC')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Download Invoice
+                              </button>
+                              <button
+                                onClick={() => showToast('Order cancellation requested')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#E12B38',
+                                  border: '1.5px solid #E12B38',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFF5F5')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Cancel Order
+                              </button>
+                            </>
+                          ) : order.id === 'ord-2' ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  showToast('Added to cart!');
+                                  navigate('/cart');
+                                }}
+                                style={{
+                                  backgroundColor: '#E12B38',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '8px 24px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 4px rgba(225, 43, 56, 0.2)',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#C81E2B')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#E12B38')
+                                }
+                              >
+                                Order Again
+                              </button>
+                              <button
+                                onClick={() => setActiveTab('reviews')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#111827',
+                                  border: '1.5px solid #0B4EA2',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F0F7FF')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Write a Review
+                              </button>
+                              <button
+                                onClick={() => showToast('Downloading invoice PDF...')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#334155',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F8FAFC')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Download Invoice
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setIsRaiseTicketModalOpen(true);
+                                  setTicketCategory('Order Issue');
+                                }}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#E12B38',
+                                  border: '1.5px solid #E12B38',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFF5F5')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Request Refund
+                              </button>
+                            </>
+                          ) : order.id === 'ord-3' ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  showToast('Added to cart!');
+                                  navigate('/cart');
+                                }}
+                                style={{
+                                  backgroundColor: '#E12B38',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '8px 24px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 4px rgba(225, 43, 56, 0.2)',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#C81E2B')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#E12B38')
+                                }
+                              >
+                                Order Again
+                              </button>
+                              <button
+                                onClick={() => setActiveTab('reviews')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#111827',
+                                  border: '1.5px solid #0B4EA2',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F0F7FF')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Write a Review
+                              </button>
+                              <button
+                                onClick={() => showToast('Downloading invoice PDF...')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#334155',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F8FAFC')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Download Invoice
+                              </button>
+                            </>
+                          ) : order.id === 'ord-5' ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  showToast('Added to cart!');
+                                  navigate('/cart');
+                                }}
+                                style={{
+                                  backgroundColor: '#E12B38',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '8px 24px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 4px rgba(225, 43, 56, 0.2)',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#C81E2B')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#E12B38')
+                                }
+                              >
+                                Order Again
+                              </button>
+                              <button
+                                onClick={() => showToast('Viewing order details')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#334155',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F8FAFC')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                View Details
+                              </button>
+                              <button
+                                onClick={() =>
+                                  showToast(
+                                    'Refund details: Rs 18,500 refunded to eSewa on Dec 10, 2025'
+                                  )
+                                }
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#E12B38',
+                                  border: '1.5px solid #E12B38',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFF5F5')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                Refund Details
+                              </button>
+                            </>
+                          ) : (
+                            /* ord-4 */
+                            <>
+                              <button
+                                onClick={() => {
+                                  showToast('Added to cart!');
+                                  navigate('/cart');
+                                }}
+                                style={{
+                                  backgroundColor: '#E12B38',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '8px 24px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 4px rgba(225, 43, 56, 0.2)',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#C81E2B')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#E12B38')
+                                }
+                              >
+                                Order Again
+                              </button>
+                              <button
+                                onClick={() => showToast('Viewing order details')}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#334155',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '6px',
+                                  padding: '7px 20px',
+                                  fontSize: '12.5px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#F8FAFC')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                                }
+                              >
+                                View Details
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Footer Count */}
+                <div
+                  style={{
+                    fontSize: '12.5px',
+                    color: '#64748B',
+                    marginTop: '28px',
+                    paddingTop: '8px',
+                  }}
+                >
+                  {orderSubTab === 'pending'
+                    ? 'Showing 1 upcoming order'
+                    : orderSubTab === 'completed'
+                    ? 'Showing 1 upcoming order'
+                    : orderSubTab === 'cancelled'
+                    ? 'Showing 2 cancelled orders'
+                    : 'Showing 3 of 12 orders'}
                 </div>
               </div>
             )}
@@ -1970,68 +3460,90 @@ export const MyAccountPage: React.FC = () => {
             )}
 
             {/* ============================================================== */}
-            {/* TAB: EDIT PROFILE (EXACT MOCKUP FROM SCREENSHOT)               */}
+            {/* TAB: PROFILE (Matches Mockup Image)                            */}
             {/* ============================================================== */}
             {activeTab === 'profile' && (
               <div>
-                {/* Header with Title and Editing Badge */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: '28px',
-                  }}
-                >
+                {!isEditingProfile ? (
+                  /* ========================================================== */
+                  /* VIEW MODE: PROFILE INFORMATION (Matches Image Exactly)    */
+                  /* ========================================================== */
                   <div>
-                    <h2
+                    {/* Header with Title, Subtitle, and Red Outlined Edit Profile Button */}
+                    <div
                       style={{
-                        fontSize: '22px',
-                        fontWeight: 800,
-                        color: '#111827',
-                        margin: '0 0 4px 0',
-                        fontFamily: "'Poppins', sans-serif",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '16px',
                       }}
                     >
-                      Edit Profile
-                    </h2>
-                    <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
-                      Update your personal details and contact information
-                    </p>
-                  </div>
+                      <div>
+                        <h2
+                          style={{
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            color: '#111827',
+                            margin: '0 0 4px 0',
+                          }}
+                        >
+                          Profile Information
+                        </h2>
+                        <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
+                          Your personal details and contact information
+                        </p>
+                      </div>
 
-                  {/* Editing Badge */}
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      backgroundColor: '#EFF6FF',
-                      color: '#0B4EA2',
-                      padding: '5px 14px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <span style={{ fontSize: '9px', color: '#0B4EA2' }}>●</span>
-                    <span>Editing</span>
-                  </div>
-                </div>
+                      {/* Edit Profile Button (Red Outline with Edit Icon) */}
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(true)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #E12B38',
+                          color: '#E12B38',
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FFF5F5')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                      >
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#E12B38"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>Edit Profile</span>
+                      </button>
+                    </div>
 
-                <form onSubmit={handleProfileSave}>
-                  {/* Avatar Upload Center Section */}
-                  <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-                    <div style={{ position: 'relative', display: 'inline-block', width: '96px', height: '96px' }}>
+                    {/* Centered Avatar and Name Block */}
+                    <div style={{ textAlign: 'center', margin: '20px 0 28px 0' }}>
                       <div
                         style={{
-                          width: '96px',
-                          height: '96px',
+                          width: '84px',
+                          height: '84px',
                           borderRadius: '50%',
                           overflow: 'hidden',
-                          backgroundColor: '#0F172A',
+                          margin: '0 auto 10px auto',
                           border: '2px solid #E2E8F0',
-                          boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
+                          backgroundColor: '#1E293B',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -2046,379 +3558,637 @@ export const MyAccountPage: React.FC = () => {
                             objectFit: 'cover',
                             filter: 'grayscale(100%)',
                           }}
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
                         />
                       </div>
-
-                      {/* Change Camera Overlay at bottom of Avatar */}
-                      <label
+                      <h3
                         style={{
-                          position: 'absolute',
-                          bottom: '0',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                          color: '#FFFFFF',
-                          padding: '3px 10px',
-                          borderRadius: '12px',
-                          fontSize: '10.5px',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                          backdropFilter: 'blur(4px)',
+                          fontSize: '18px',
+                          fontWeight: 700,
+                          color: '#111827',
+                          margin: '0 0 4px 0',
+                          lineHeight: 1.25,
                         }}
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                          <circle cx="12" cy="13" r="4" />
-                        </svg>
-                        <span>Change</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              const file = e.target.files[0];
-                              const url = URL.createObjectURL(file);
-                              setProfileData((prev) => ({ ...prev, avatarUrl: url }));
-                              showToast('Avatar photo updated!');
-                            }
-                          }}
-                        />
-                      </label>
+                        John<br />Cena
+                      </h3>
+                      <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
+                        Member since {profileData.memberSince}
+                      </p>
                     </div>
 
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#111827', margin: '10px 0 2px 0' }}>
-                      {profileData.fullName}
-                    </h3>
-                    <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
-                      Member since {profileData.memberSince}
-                    </p>
+                    {/* Key-Value Details Rows (Matches Mockup Image Exactly) */}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {[
+                        { label: 'Full Name', value: profileData.fullName },
+                        { label: 'Occupation', value: profileData.occupation },
+                        { label: 'Date of Birth', value: profileData.dateOfBirth },
+                        { label: 'Age', value: profileData.age },
+                        { label: 'Gender', value: profileData.gender },
+                        { label: 'Nationality', value: profileData.nationality },
+                        { label: 'Email Address', value: profileData.email },
+                        { label: 'Address', value: profileData.address },
+                      ].map((item, idx, arr) => (
+                        <div
+                          key={item.label}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '13px 0',
+                            borderBottom: idx < arr.length - 1 ? '1px solid #F1F5F9' : 'none',
+                          }}
+                        >
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
+                            {item.label}
+                          </span>
+                          <span style={{ fontSize: '13px', color: '#111827', fontWeight: 500 }}>
+                            {item.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-
-                  {/* Section Divider */}
-                  <div style={{ borderTop: '1px solid #EDE8E1', margin: '24px 0' }} />
-
-                  {/* 1. PERSONAL INFORMATION */}
-                  <div style={{ marginBottom: '24px' }}>
+                ) : (
+                  /* ========================================================== */
+                  /* EDIT MODE FORM (Matches Mockup Image Exactly)             */
+                  /* ========================================================== */
+                  <div>
+                    {/* Header with Title and Blue Editing Pill Badge */}
                     <div
                       style={{
-                        fontSize: '11.5px',
-                        fontWeight: 800,
-                        color: '#0B4EA2',
-                        letterSpacing: '0.6px',
-                        textTransform: 'uppercase',
-                        marginBottom: '16px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '26px',
                       }}
                     >
-                      PERSONAL INFORMATION
-                    </div>
-
-                    <div className="account-form-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                      {/* Full Name */}
                       <div>
-                        <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                          Full Name
-                        </label>
-                        <input
-                          type="text"
-                          value={profileData.fullName}
-                          onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
-                          required
+                        <h2
                           style={{
-                            width: '100%',
-                            padding: '11px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5DFD7',
-                            backgroundColor: '#FAF7F2',
-                            fontSize: '13.5px',
+                            fontSize: '22px',
+                            fontWeight: 700,
                             color: '#111827',
-                            outline: 'none',
+                            margin: '0 0 4px 0',
                           }}
-                          onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                          onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
-                        />
+                        >
+                          Edit Profile
+                        </h2>
+                        <p style={{ fontSize: '12.5px', color: '#64748B', margin: 0 }}>
+                          Update your personal details and contact information
+                        </p>
                       </div>
 
-                      {/* Date of Birth */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                          Date of Birth
-                        </label>
-                        <input
-                          type="text"
-                          value={profileData.dateOfBirth}
-                          onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
+                      {/* Blue Editing Pill Badge (Matches Image) */}
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          backgroundColor: '#EDF4FC',
+                          color: '#0E5AA7',
+                          padding: '5px 14px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span
                           style={{
-                            width: '100%',
-                            padding: '11px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5DFD7',
-                            backgroundColor: '#FAF7F2',
-                            fontSize: '13.5px',
-                            color: '#111827',
-                            outline: 'none',
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#0E5AA7',
                           }}
-                          onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                          onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
                         />
-                      </div>
-
-                      {/* Occupation */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                          Occupation
-                        </label>
-                        <input
-                          type="text"
-                          value={profileData.occupation}
-                          onChange={(e) => setProfileData({ ...profileData, occupation: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '11px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5DFD7',
-                            backgroundColor: '#FAF7F2',
-                            fontSize: '13.5px',
-                            color: '#111827',
-                            outline: 'none',
-                          }}
-                          onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                          onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
-                        />
-                      </div>
-
-                      {/* Age */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                          Age
-                        </label>
-                        <input
-                          type="text"
-                          value={profileData.age}
-                          onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '11px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5DFD7',
-                            backgroundColor: '#FAF7F2',
-                            fontSize: '13.5px',
-                            color: '#111827',
-                            outline: 'none',
-                          }}
-                          onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                          onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
-                        />
+                        <span>Editing</span>
                       </div>
                     </div>
 
-                    {/* Gender Radio Pill Selectors */}
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '8px' }}>
-                        Gender
-                      </label>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        {['Male', 'Female'].map((gen) => {
-                          const isSelected = profileData.gender === gen;
-                          return (
-                            <div
-                              key={gen}
-                              onClick={() => setProfileData({ ...profileData, gender: gen })}
+                    <form onSubmit={handleProfileSave}>
+                      {/* Avatar Upload Center Section with Dark Blue Overlay Banner */}
+                      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                        <div
+                          style={{
+                            position: 'relative',
+                            display: 'inline-block',
+                            width: '96px',
+                            height: '96px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            border: '2px solid #E2E8F0',
+                            backgroundColor: '#1E293B',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                          }}
+                        >
+                          <img
+                            src={profileData.avatarUrl}
+                            alt={profileData.fullName}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              filter: 'grayscale(100%)',
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+
+                          {/* Dark Blue Camera Change Overlay at bottom of Avatar (Matches Image) */}
+                          <label
+                            style={{
+                              position: 'absolute',
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: '38px',
+                              backgroundColor: '#0A3871',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              gap: '2px',
+                            }}
+                            title="Change photo"
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#FFFFFF"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                              <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <span style={{ fontSize: '9.5px', fontWeight: 600 }}>Change</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  const file = e.target.files[0];
+                                  const url = URL.createObjectURL(file);
+                                  setProfileData((prev) => ({ ...prev, avatarUrl: url }));
+                                  showToast('Avatar photo updated!');
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+
+                        <h3
+                          style={{
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            color: '#111827',
+                            margin: '8px 0 2px 0',
+                          }}
+                        >
+                          John Cena
+                        </h3>
+                        <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
+                          Member since 2021
+                        </p>
+                      </div>
+
+                      {/* 1. PERSONAL INFORMATION SECTION */}
+                      <div style={{ marginBottom: '24px' }}>
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: '#111827',
+                            letterSpacing: '0.8px',
+                            textTransform: 'uppercase',
+                            marginBottom: '14px',
+                          }}
+                        >
+                          PERSONAL INFORMATION
+                        </div>
+
+                        {/* 2-Column Inputs Grid */}
+                        <div
+                          className="account-form-2col"
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '16px',
+                            marginBottom: '16px',
+                          }}
+                        >
+                          {/* Full Name */}
+                          <div>
+                            <label
                               style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '9px 24px',
-                                borderRadius: '8px',
-                                border: isSelected ? '1.5px solid #0B4EA2' : '1px solid #E5DFD7',
-                                backgroundColor: '#FAF7F2',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease',
+                                display: 'block',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                color: '#111827',
+                                marginBottom: '6px',
                               }}
                             >
-                              <div
-                                style={{
-                                  width: '16px',
-                                  height: '16px',
-                                  borderRadius: '50%',
-                                  border: isSelected ? '5px solid #0B4EA2' : '1.5px solid #94A3B8',
-                                  backgroundColor: '#FFFFFF',
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <span
-                                style={{
-                                  fontSize: '13px',
-                                  fontWeight: isSelected ? 700 : 500,
-                                  color: '#111827',
-                                }}
-                              >
-                                {gen}
-                              </span>
-                            </div>
-                          );
-                        })}
+                              Full Name
+                            </label>
+                            <input
+                              type="text"
+                              value={profileData.fullName}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, fullName: e.target.value })
+                              }
+                              required
+                              style={{
+                                width: '100%',
+                                padding: '11px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '13px',
+                                color: '#111827',
+                                outline: 'none',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            />
+                          </div>
+
+                          {/* Date of Birth */}
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                color: '#111827',
+                                marginBottom: '6px',
+                              }}
+                            >
+                              Date of Birth
+                            </label>
+                            <input
+                              type="text"
+                              value={profileData.dateOfBirth}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, dateOfBirth: e.target.value })
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '11px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '13px',
+                                color: '#111827',
+                                outline: 'none',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            />
+                          </div>
+
+                          {/* Occupation */}
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                color: '#111827',
+                                marginBottom: '6px',
+                              }}
+                            >
+                              Occupation
+                            </label>
+                            <input
+                              type="text"
+                              value={profileData.occupation}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, occupation: e.target.value })
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '11px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '13px',
+                                color: '#111827',
+                                outline: 'none',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            />
+                          </div>
+
+                          {/* Age */}
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                color: '#111827',
+                                marginBottom: '6px',
+                              }}
+                            >
+                              Age
+                            </label>
+                            <input
+                              type="text"
+                              value={profileData.age}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, age: e.target.value })
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '11px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '13px',
+                                color: '#111827',
+                                outline: 'none',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Gender Pill Selectors (Matches Mockup Image) */}
+                        <div>
+                          <label
+                            style={{
+                              display: 'block',
+                              fontSize: '12.5px',
+                              fontWeight: 600,
+                              color: '#111827',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            Gender
+                          </label>
+                          <div style={{ display: 'flex', gap: '14px' }}>
+                            {['Male', 'Female'].map((gen) => {
+                              const isSelected = profileData.gender === gen;
+                              return (
+                                <div
+                                  key={gen}
+                                  onClick={() =>
+                                    setProfileData({ ...profileData, gender: gen })
+                                  }
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    padding: '10px 22px',
+                                    borderRadius: '8px',
+                                    border: isSelected
+                                      ? '1.5px solid #0E5AA7'
+                                      : '1px solid #E2E8F0',
+                                    backgroundColor: '#FFFFFF',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    minWidth: '120px',
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: '18px',
+                                      height: '18px',
+                                      borderRadius: '50%',
+                                      border: isSelected
+                                        ? '2px solid #0E5AA7'
+                                        : '1.5px solid #CBD5E1',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      backgroundColor: '#FFFFFF',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {isSelected && (
+                                      <div
+                                        style={{
+                                          width: '8px',
+                                          height: '8px',
+                                          borderRadius: '50%',
+                                          backgroundColor: '#0E5AA7',
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                  <span
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: isSelected ? 600 : 500,
+                                      color: isSelected ? '#111827' : '#64748B',
+                                    }}
+                                  >
+                                    {gen}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Section Divider */}
-                  <div style={{ borderTop: '1px solid #EDE8E1', margin: '24px 0' }} />
-
-                  {/* 2. CONTACT & LOCATION */}
-                  <div style={{ marginBottom: '28px' }}>
-                    <div
-                      style={{
-                        fontSize: '11.5px',
-                        fontWeight: 800,
-                        color: '#0B4EA2',
-                        letterSpacing: '0.6px',
-                        textTransform: 'uppercase',
-                        marginBottom: '16px',
-                      }}
-                    >
-                      CONTACT & LOCATION
-                    </div>
-
-                    <div className="account-form-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                      {/* Email Address */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          value={profileData.email}
-                          onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                          required
+                      {/* 2. CONTACT & LOCATION SECTION */}
+                      <div style={{ marginBottom: '28px' }}>
+                        <div
                           style={{
-                            width: '100%',
-                            padding: '11px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5DFD7',
-                            backgroundColor: '#FAF7F2',
-                            fontSize: '13.5px',
+                            fontSize: '11px',
+                            fontWeight: 700,
                             color: '#111827',
-                            outline: 'none',
+                            letterSpacing: '0.8px',
+                            textTransform: 'uppercase',
+                            marginBottom: '14px',
                           }}
-                          onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                          onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
-                        />
-                      </div>
+                        >
+                          CONTACT & LOCATION
+                        </div>
 
-                      {/* Nationality */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                          Nationality
-                        </label>
-                        <input
-                          type="text"
-                          value={profileData.nationality}
-                          onChange={(e) => setProfileData({ ...profileData, nationality: e.target.value })}
+                        {/* 2-Column Inputs Grid */}
+                        <div
+                          className="account-form-2col"
                           style={{
-                            width: '100%',
-                            padding: '11px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5DFD7',
-                            backgroundColor: '#FAF7F2',
-                            fontSize: '13.5px',
-                            color: '#111827',
-                            outline: 'none',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '16px',
+                            marginBottom: '16px',
                           }}
-                          onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                          onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
-                        />
+                        >
+                          {/* Email Address */}
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                color: '#111827',
+                                marginBottom: '6px',
+                              }}
+                            >
+                              Email Address
+                            </label>
+                            <input
+                              type="email"
+                              value={profileData.email}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, email: e.target.value })
+                              }
+                              required
+                              style={{
+                                width: '100%',
+                                padding: '11px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '13px',
+                                color: '#111827',
+                                outline: 'none',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            />
+                          </div>
+
+                          {/* Nationality */}
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                color: '#111827',
+                                marginBottom: '6px',
+                              }}
+                            >
+                              Nationality
+                            </label>
+                            <input
+                              type="text"
+                              value={profileData.nationality}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, nationality: e.target.value })
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '11px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '13px',
+                                color: '#111827',
+                                outline: 'none',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Address (Full Width) */}
+                        <div>
+                          <label
+                            style={{
+                              display: 'block',
+                              fontSize: '12.5px',
+                              fontWeight: 600,
+                              color: '#111827',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            Address
+                          </label>
+                          <input
+                            type="text"
+                            value={profileData.address}
+                            onChange={(e) =>
+                              setProfileData({ ...profileData, address: e.target.value })
+                            }
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '11px 16px',
+                              borderRadius: '8px',
+                              border: '1px solid #E2E8F0',
+                              fontSize: '13px',
+                              color: '#111827',
+                              outline: 'none',
+                              backgroundColor: '#FFFFFF',
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Address (Full Width) */}
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        value={profileData.address}
-                        onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                        required
+                      {/* Footer Actions (Matches Mockup Image) */}
+                      <div
                         style={{
-                          width: '100%',
-                          padding: '11px 14px',
-                          borderRadius: '8px',
-                          border: '1px solid #E5DFD7',
-                          backgroundColor: '#FAF7F2',
-                          fontSize: '13.5px',
-                          color: '#111827',
-                          outline: 'none',
-                        }}
-                        onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                        onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Form Footer Actions (Matching Mockup) */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginTop: '32px',
-                      paddingTop: '8px',
-                    }}
-                  >
-                    <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
-                      All fields marked are required to save your profile.
-                    </p>
-
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('overview');
-                          showToast('Profile editing cancelled.');
-                        }}
-                        style={{
-                          backgroundColor: '#FFFFFF',
-                          color: '#334155',
-                          border: '1px solid #D5CDC0',
-                          borderRadius: '8px',
-                          padding: '10px 24px',
-                          fontSize: '13.5px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          minWidth: '100px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginTop: '32px',
+                          paddingTop: '12px',
                         }}
                       >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        style={{
-                          backgroundColor: '#0B4EA2',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '10px 26px',
-                          fontSize: '13.5px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          minWidth: '140px',
-                          boxShadow: '0 2px 6px rgba(11, 78, 162, 0.25)',
-                        }}
-                      >
-                        Save Changes
-                      </button>
-                    </div>
+                        <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
+                          All fields marked are required to save your profile.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingProfile(false)}
+                            style={{
+                              backgroundColor: '#FFFFFF',
+                              border: '1px solid #E2E8F0',
+                              color: '#E12B38',
+                              padding: '10px 28px',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.backgroundColor = '#FFF5F5')
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                            }
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            style={{
+                              backgroundColor: '#E12B38',
+                              border: 'none',
+                              color: '#FFFFFF',
+                              padding: '10px 32px',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'background-color 0.15s ease',
+                              boxShadow: '0 2px 6px rgba(225, 43, 56, 0.25)',
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.backgroundColor = '#C81E2B')
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.backgroundColor = '#E12B38')
+                            }
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                )}
               </div>
             )}
+
 
 
             {activeTab === 'wishlist' && (
@@ -2688,277 +4458,428 @@ export const MyAccountPage: React.FC = () => {
       )}
 
       {/* ================================================================== */}
-      {/* 2. ADD NEW LOCATION MODAL (EXACT MOCKUP IMAGE 2)                   */}
+      {/* 2. ADD NEW LOCATION MODAL (EXACT MOCKUP IMAGE 1)                   */}
       {/* ================================================================== */}
       {isAddressModalOpen && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(0,0,0,0.45)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
+            padding: '16px',
+            backdropFilter: 'blur(2px)',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddressModalOpen(false);
           }}
         >
           <div
             className="responsive-modal-box"
             style={{
               backgroundColor: '#FFFFFF',
-              borderRadius: '18px',
-              padding: '32px',
-              width: '90%',
-              maxWidth: '560px',
-              boxShadow: '0 20px 35px rgba(0,0,0,0.2)',
+              borderRadius: '16px',
+              padding: '28px 32px 24px 32px',
+              width: '100%',
+              maxWidth: '520px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.18)',
               position: 'relative',
+              boxSizing: 'border-box',
             }}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '22px',
+              }}
+            >
               <div>
-                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#111827', margin: '0 0 6px 0', fontFamily: "'Poppins', sans-serif" }}>
-                  Add New Location
+                <h2
+                  style={{
+                    fontSize: '22px',
+                    fontWeight: 700,
+                    color: '#111827',
+                    margin: '0 0 5px 0',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                  }}
+                >
+                  {editingAddress ? 'Edit Location' : 'Add New Location'}
                 </h2>
                 <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
                   Enter your delivery details so we can save this address for future orders.
                 </p>
               </div>
 
-              {/* Close Button Circle */}
+              {/* Top Right Subtle Close Icon Button (Matches Image 1) */}
               <button
+                type="button"
                 onClick={() => setIsAddressModalOpen(false)}
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  backgroundColor: '#F1F5F9',
+                  background: 'none',
                   border: 'none',
-                  color: '#475569',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  color: '#CBD5E1',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
-                  fontSize: '14px',
+                  transition: 'color 0.15s ease',
+                  marginTop: '2px',
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#64748B')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#CBD5E1')}
                 title="Close"
               >
-                ✕
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
               </button>
             </div>
 
             <form onSubmit={handleSaveLocation}>
               {/* Full Name */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    marginBottom: '6px',
+                  }}
+                >
                   Full Name
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. John Cena"
                   value={addressForm.fullName}
-                  onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })}
-                  required
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, fullName: e.target.value })
+                  }
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '11px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #E5DFD7',
-                    backgroundColor: '#FAF7F2',
-                    fontSize: '13.5px',
+                    border: '1px solid #E2E8F0',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: '13px',
                     color: '#111827',
                     outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.15s ease',
                   }}
                   onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                  onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
+                  onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                 />
               </div>
 
               {/* Phone Number */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    marginBottom: '6px',
+                  }}
+                >
                   Phone Number
                 </label>
                 <input
                   type="text"
                   placeholder="+977 9845XXXXXX"
                   value={addressForm.phone}
-                  onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
-                  required
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, phone: e.target.value })
+                  }
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '11px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #E5DFD7',
-                    backgroundColor: '#FAF7F2',
-                    fontSize: '13.5px',
+                    border: '1px solid #E2E8F0',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: '13px',
                     color: '#111827',
                     outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.15s ease',
                   }}
                   onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                  onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
+                  onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                 />
               </div>
 
               {/* Address Line */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    marginBottom: '6px',
+                  }}
+                >
                   Address Line
                 </label>
                 <input
                   type="text"
                   placeholder="Enter your full address"
                   value={addressForm.addressLine}
-                  onChange={(e) => setAddressForm({ ...addressForm, addressLine: e.target.value })}
-                  required
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, addressLine: e.target.value })
+                  }
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '11px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #E5DFD7',
-                    backgroundColor: '#FAF7F2',
-                    fontSize: '13.5px',
+                    border: '1px solid #E2E8F0',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: '13px',
                     color: '#111827',
                     outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.15s ease',
                   }}
                   onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                  onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
+                  onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                 />
               </div>
 
               {/* City & State/Province Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '14px',
+                  marginBottom: '16px',
+                }}
+              >
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '6px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#111827',
+                      marginBottom: '6px',
+                    }}
+                  >
                     City
                   </label>
                   <input
                     type="text"
                     placeholder="Pokhara"
                     value={addressForm.city}
-                    onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                    required
+                    onChange={(e) =>
+                      setAddressForm({ ...addressForm, city: e.target.value })
+                    }
                     style={{
                       width: '100%',
-                      padding: '12px 14px',
+                      padding: '11px 14px',
                       borderRadius: '8px',
-                      border: '1px solid #E5DFD7',
-                      backgroundColor: '#FAF7F2',
-                      fontSize: '13.5px',
+                      border: '1px solid #E2E8F0',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '13px',
                       color: '#111827',
                       outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.15s ease',
                     }}
                     onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                    onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
+                    onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '6px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#111827',
+                      marginBottom: '6px',
+                    }}
+                  >
                     State/Province
                   </label>
                   <input
                     type="text"
                     placeholder="Gandaki"
                     value={addressForm.province}
-                    onChange={(e) => setAddressForm({ ...addressForm, province: e.target.value })}
-                    required
+                    onChange={(e) =>
+                      setAddressForm({ ...addressForm, province: e.target.value })
+                    }
                     style={{
                       width: '100%',
-                      padding: '12px 14px',
+                      padding: '11px 14px',
                       borderRadius: '8px',
-                      border: '1px solid #E5DFD7',
-                      backgroundColor: '#FAF7F2',
-                      fontSize: '13.5px',
+                      border: '1px solid #E2E8F0',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '13px',
                       color: '#111827',
                       outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.15s ease',
                     }}
                     onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                    onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
+                    onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                   />
                 </div>
               </div>
 
               {/* Postal Code */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '6px' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    marginBottom: '6px',
+                  }}
+                >
                   Postal Code
                 </label>
                 <input
                   type="text"
                   placeholder="33700"
                   value={addressForm.postalCode}
-                  onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
-                  required
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, postalCode: e.target.value })
+                  }
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '11px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #E5DFD7',
-                    backgroundColor: '#FAF7F2',
-                    fontSize: '13.5px',
+                    border: '1px solid #E2E8F0',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: '13px',
                     color: '#111827',
                     outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.15s ease',
                   }}
                   onFocus={(e) => (e.target.style.borderColor = '#0B4EA2')}
-                  onBlur={(e) => (e.target.style.borderColor = '#E5DFD7')}
+                  onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                 />
               </div>
 
               {/* Default Address Checkbox */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '8px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    marginBottom: '8px',
+                  }}
+                >
                   Default Address
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#1E293B', cursor: 'pointer' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={addressForm.isDefault}
-                    onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
+                    onChange={(e) =>
+                      setAddressForm({ ...addressForm, isDefault: e.target.checked })
+                    }
                     style={{
-                      width: '16px',
-                      height: '16px',
+                      width: '18px',
+                      height: '18px',
                       borderRadius: '4px',
-                      accentColor: '#0B4EA2',
+                      accentColor: '#E12B38',
                       cursor: 'pointer',
                     }}
                   />
-                  <span>Set as default address</span>
+                  <span style={{ fontSize: '13px', color: '#111827', fontWeight: 500 }}>
+                    Set as default address
+                  </span>
                 </label>
               </div>
 
-              {/* Divider Line Above Buttons (Exact Image 2) */}
-              <div style={{ borderTop: '1px solid #F1EDE6', paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '14px' }}>
+              {/* Modal Footer Divider & Right-Aligned Buttons (Matches Image 1 Exactly) */}
+              <div
+                style={{
+                  borderTop: '1px solid #F1F5F9',
+                  paddingTop: '20px',
+                  marginTop: '24px',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '12px',
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsAddressModalOpen(false)}
                   style={{
                     backgroundColor: '#FFFFFF',
-                    color: '#0B4EA2',
-                    border: '1px solid #D5CDC0',
-                    borderRadius: '8px',
-                    padding: '10px 32px',
-                    fontSize: '14px',
-                    fontWeight: 700,
+                    border: '1px solid #E2E8F0',
+                    color: '#E12B38',
+                    padding: '10px 28px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    minWidth: '130px',
+                    transition: 'all 0.15s ease',
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#FFF5F5')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#FFFFFF')
+                  }
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   style={{
-                    backgroundColor: '#0B4EA2',
-                    color: '#FFFFFF',
+                    backgroundColor: '#E12B38',
                     border: 'none',
-                    borderRadius: '8px',
+                    color: '#FFFFFF',
                     padding: '10px 32px',
-                    fontSize: '14px',
-                    fontWeight: 700,
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    minWidth: '150px',
+                    transition: 'background-color 0.15s ease',
+                    boxShadow: '0 2px 6px rgba(225, 43, 56, 0.25)',
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#C81E2B')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#E12B38')
+                  }
                 >
                   Save Location
                 </button>

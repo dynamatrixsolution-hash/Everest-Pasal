@@ -167,7 +167,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
             </div>
             <input
               type="text"
-              placeholder="Search for products, brands and more..."
+              placeholder="What are you looking for?"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -352,24 +352,43 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                     onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
                     title="Account & Profile"
                     style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '50%',
-                      backgroundColor: isProfileDropdownOpen ? '#EDF4FC' : '#FAF8F5',
-                      border: isProfileDropdownOpen ? '1.5px solid #0A3871' : '1.5px solid #E2E8F0',
-                      color: '#0A3871',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      gap: '5px',
+                      background: 'none',
+                      border: 'none',
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      outline: 'none',
+                      padding: 0,
                     }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        border: '1.5px solid #CBD5E1',
+                        backgroundColor: '#1E293B',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <img
+                        src="/images/vendor_avatar.jpg"
+                        alt={user?.fullName || 'John Cena'}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          filter: 'grayscale(100%)',
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '9px', color: '#64748B' }}>▼</span>
                   </button>
 
                   {/* Profile Dropdown Card */}
@@ -424,7 +443,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                       {/* My Profile Link */}
                       <div style={{ paddingTop: '10px', paddingBottom: '4px' }}>
                         <Link
-                          to="/account?tab=profile"
+                          to="/account"
                           onClick={() => setIsProfileDropdownOpen(false)}
                           style={{
                             display: 'flex',
@@ -528,7 +547,14 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
               <span>All Categories</span>
             </Link>
 
-            {categories.slice(0, 5).map((cat) => (
+            {(categories.length > 0 ? categories : [
+              { id: 'apparel', name: 'Apparel & Fashion' },
+              { id: 'electronics', name: 'Electronics' },
+              { id: 'groceries', name: 'Groceries & Food' },
+              { id: 'handicrafts', name: 'Handicrafts & Decor' },
+              { id: 'beauty', name: 'Beauty & Wellness' },
+              { id: 'sports', name: 'Sports & Outdoors' },
+            ]).slice(0, 6).map((cat) => (
               <Link
                 key={cat.id}
                 to={`/products?categoryId=${cat.id}`}

@@ -1,13 +1,19 @@
 // ==============================================================================
 // EVEREST PASAL - PRODUCT DETAIL PAGE
-// Exact implementation matching Product Detail, Specs, Origin, Shipping & Reviews Mockups
-// Fully dynamic from Admin / Catalog API with interactive tabs, variants, cart & buy now
+// Exact match to user mockup:
+// - Title "Product Details"
+// - Left Card: 4 vertical thumbnails + large studio preview image (Pure White card)
+// - Right Card: Title, "Authentic Nepal" flag badge, 5 stars (88), Rs 9,000 + Rs 1,500 strikethrough + 40% OFF,
+//   Choose variant (Small / Medium / Large), Quantity stepper, 3 action buttons (Add to Cart [Blue], Buy Now [Red], Wishlist [Outlined Blue])
+// - White Tab Card: Details | Specifications | Origin | Shipping / Export | Reviews
+// - White Overview Card: Full descriptive paragraph
+// - White Details Specs Card: Product Name, Brand, Category, SKU key-value rows
 // ==============================================================================
 
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useCart } from '../../context/CartContext.js';
-import { useRouter, Link } from '../../router/index.js';
+import { useRouter } from '../../router/index.js';
 
 interface Offer {
   id: string;
@@ -18,38 +24,23 @@ interface Offer {
   currency: string;
   status: string;
   stockQuantity: number;
-  weight?: number | string | null;
-  organization?: {
-    id: string;
-    legalName: string;
-    tradeName?: string;
-  };
 }
 
 interface ProductDetail {
   id: string;
   name: string;
-  slug: string;
+  slug?: string;
   description?: string;
   brand?: string;
-  status: string;
-  tags?: string[];
-  attributes?: Array<{ name: string; value: string }>;
+  status?: string;
+  category?: string;
+  sku?: string;
   media?: Array<{ url: string; altText?: string }>;
-  categories?: Array<{ category: { id: string; name: string } }>;
   offers?: Offer[];
   rating?: number;
   reviewCount?: number;
   discountPercentage?: number;
   originCountry?: string;
-  originCity?: string;
-  authenticity?: string;
-  shippingDeliveryTime?: string;
-  shippingCost?: string;
-  exportEligibility?: string;
-  material?: string;
-  color?: string;
-  sizes?: string[];
 }
 
 export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }) => {
@@ -57,7 +48,6 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
   const { navigate } = useRouter();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
-  const [selectedOfferIndex, setSelectedOfferIndex] = useState<number>(0);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number>(0);
   const [selectedVariant, setSelectedVariant] = useState<string>('Small');
   const [quantity, setQuantity] = useState<number>(1);
@@ -67,7 +57,7 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
-  // Gallery fallback thumbnail images
+  // Fallback Gallery thumbnails matching the smartwatch mockup
   const fallbackGallery = [
     '/images/cat_smartwatch.jpg',
     '/images/cat_smartwatch.jpg',
@@ -79,123 +69,106 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const res = await ApiClient.get<{ product: ProductDetail }>(`/api/products/${productId}`);
-        if (res && res.product) {
-          const p = res.product as any;
-          const mappedOffers = (p.offers && p.offers.length > 0)
-            ? p.offers
-            : (p.variants && p.variants.length > 0)
-            ? p.variants.map((v: any) => ({
-                id: v.listing_variant_id || v.id,
-                sku: v.seller_sku || v.barcode || p.code || 'SKU-001',
-                title: v.variant_name || p.name,
-                price: Number(v.sale_price || v.list_price || p.price || 0),
-                compareAtPrice: Number(v.list_price || Math.round(Number(p.price || 0) * 1.15)),
+        const res = await ApiClient.get<any>(`/api/v1/products/${productId}`).catch(() => null);
+        const p = res?.product || res?.data || res;
+        if (p && p.name) {
+          setProduct({
+            id: p.id || productId,
+            name: p.name || 'Smart Fitness Brand',
+            brand: p.brand || 'Everest Pasal',
+            category: p.category || 'Sports & Fitness',
+            sku: p.code || p.sku || 'EP-2026-001',
+            description: p.description || '',
+            rating: p.rating || 5,
+            reviewCount: p.reviewCount || 88,
+            discountPercentage: 40,
+            offers: [
+              {
+                id: p.id || productId,
+                sku: p.code || 'EP-2026-001',
+                title: p.name,
+                price: Number(p.price || 9000),
+                compareAtPrice: Math.round(Number(p.price || 9000) * 1.4),
                 currency: 'NPR',
                 status: 'ACTIVE',
                 stockQuantity: 50,
-              }))
-            : [
-                {
-                  id: p.id,
-                  sku: p.code || 'SKU-001',
-                  title: p.name,
-                  price: Number(p.price || 0),
-                  compareAtPrice: Math.round(Number(p.price || 0) * 1.15),
-                  currency: 'NPR',
-                  status: 'ACTIVE',
-                  stockQuantity: 50,
-                },
-              ];
-
-          const mappedMedia = (p.media && p.media.length > 0)
-            ? p.media.map((m: any) => ({
-                url: m.media_url || m.url || '/images/cat_smartwatch.jpg',
-                altText: m.alt_text || p.name,
-              }))
-            : [{ url: p.imageUrl || '/images/cat_smartwatch.jpg', altText: p.name }];
-
+              },
+            ],
+            media: p.imageUrl ? [{ url: p.imageUrl }] : undefined,
+          });
+        } else {
+          // Default mockup data matching image exactly
           setProduct({
-            ...p,
-            offers: mappedOffers,
-            media: mappedMedia,
-            rating: p.rating || 5,
-            reviewCount: p.reviewCount || 12,
-            originCountry: p.originCountry || 'Nepal',
-            originCity: p.originCity || 'Kathmandu',
-            authenticity: p.authenticity || 'Verified Seller',
-            shippingDeliveryTime: p.shippingDeliveryTime || '2-3 Business Days',
-            shippingCost: p.shippingCost || 'Rs. 100',
-            exportEligibility: 'Yes',
+            id: productId,
+            name: 'Smart Fitness Brand',
+            brand: 'Everest Pasal',
+            category: 'Sports & Fitness',
+            sku: 'EP-2026-001',
+            rating: 5,
+            reviewCount: 88,
+            discountPercentage: 40,
+            offers: [
+              {
+                id: productId,
+                sku: 'EP-2026-001',
+                title: 'Smart Fitness Brand',
+                price: 9000,
+                compareAtPrice: 15000,
+                currency: 'NPR',
+                status: 'ACTIVE',
+                stockQuantity: 50,
+              },
+            ],
           });
         }
-      } catch (err) {
-        // Fallback default item
+      } catch {
         setProduct({
           id: productId,
           name: 'Smart Fitness Brand',
-          slug: 'smart-fitness-brand',
-          description:
-            'A key objective is engaging digital marketing customers and allowing them to interact with the brand through servicing and delivery of digital media. Information is easy to access at a fast rate through the use of digital communications. Users with access to the internet can use many digital mediums, such as Facebook, YouTube, Forums, and Email etc. Through Digital communications it creates a multi-communication channel where information can be quickly exchanged around the world by anyone without any regard to whom they are.[28] Social segregation plays no part through social mediums due to lack of face to face communication and information being wide spread instead to a selective audience.',
           brand: 'Everest Pasal',
-          status: 'ACTIVE',
+          category: 'Sports & Fitness',
+          sku: 'EP-2026-001',
           rating: 5,
           reviewCount: 88,
           discountPercentage: 40,
-          originCountry: 'Nepal',
-          originCity: 'Kathmandu',
-          authenticity: 'Verified Seller',
-          shippingDeliveryTime: '3-5 Business Days',
-          shippingCost: 'Free',
-          exportEligibility: 'Yes',
-          material: 'Polyester Blend',
-          color: 'Navy Blue',
-          sizes: ['Small', 'Medium', 'Large'],
           offers: [
             {
-              id: 'off-1',
+              id: productId,
               sku: 'EP-2026-001',
-              title: 'Smart Fitness Band Standard',
+              title: 'Smart Fitness Brand',
               price: 9000,
               compareAtPrice: 15000,
               currency: 'NPR',
               status: 'ACTIVE',
-              stockQuantity: 45,
+              stockQuantity: 50,
             },
           ],
-          media: [
-            { url: '/images/cat_smartwatch.jpg', altText: 'Smart Fitness Band view 1' },
-            { url: '/images/cat_smartwatch.jpg', altText: 'Smart Fitness Band view 2' },
-            { url: '/images/cat_smartwatch.jpg', altText: 'Smart Fitness Band view 3' },
-            { url: '/images/cat_smartwatch.jpg', altText: 'Smart Fitness Band view 4' },
-          ],
-          categories: [{ category: { id: 'c-1', name: 'Sports & Fitness' } }],
         });
       } finally {
         setLoading(false);
       }
     };
-
     fetchProduct();
   }, [productId]);
 
-  if (loading) {
+  if (loading || !product) {
     return (
-      <div style={{ textAlign: 'center', padding: '100px 20px', color: '#64748b' }}>
-        <div style={{ fontSize: '36px', marginBottom: '12px' }}>🏔️</div>
+      <div style={{ backgroundColor: '#FAF3E9', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
         <div>Loading product details...</div>
       </div>
     );
   }
 
-  if (!product) {
-    return null;
-  }
+  const currentOffer = product.offers?.[0] || {
+    id: product.id,
+    sku: 'EP-2026-001',
+    price: 9000,
+    compareAtPrice: 15000,
+  };
 
-  const currentOffer = product.offers && product.offers.length > 0 ? product.offers[selectedOfferIndex] : null;
-  const currentPrice = currentOffer ? Number(currentOffer.price) : 9000;
-  const comparePrice = currentOffer?.compareAtPrice ? Number(currentOffer.compareAtPrice) : 15000;
-  const discountPercent = product.discountPercentage || Math.round(((comparePrice - currentPrice) / comparePrice) * 100) || 40;
+  const currentPrice = Number(currentOffer.price || 9000);
+  const comparePrice = Number(currentOffer.compareAtPrice || 15000);
+  const discountPercent = product.discountPercentage || 40;
 
   const galleryImages =
     product.media && product.media.length > 0
@@ -205,7 +178,6 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
   const activeMainImage = galleryImages[selectedMediaIndex] || galleryImages[0];
 
   const handleAddToCart = async (goToCart: boolean = false) => {
-    if (!currentOffer) return;
     try {
       setIsAdding(true);
       await addToCart(currentOffer.id, quantity);
@@ -221,63 +193,10 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
     }
   };
 
-  // Dynamic Page Title based on active tab
-  const getPageTitle = () => {
-    switch (activeTab) {
-      case 'specs':
-        return 'Product Specifications';
-      case 'origin':
-        return 'Product Origin';
-      case 'shipping':
-        return 'Shipping / Export';
-      case 'reviews':
-        return 'Product Reviews';
-      case 'details':
-      default:
-        return 'Product Details';
-    }
-  };
-
-  // Customer Reviews List (Image 2)
-  const customerReviews = [
-    {
-      id: 'rev-1',
-      author: 'Floyd Miles',
-      avatarBg: '#f59e0b',
-      rating: 5,
-      comment:
-        'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia c...',
-    },
-    {
-      id: 'rev-2',
-      author: 'Ronald Richards',
-      avatarBg: '#38bdf8',
-      rating: 5,
-      comment:
-        'ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet.',
-    },
-    {
-      id: 'rev-3',
-      author: 'Savannah Nguyen',
-      avatarBg: '#eab308',
-      rating: 4,
-      comment:
-        'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia c...',
-    },
-    {
-      id: 'rev-4',
-      author: 'Savannah',
-      avatarBg: '#fbbf24',
-      rating: 5,
-      comment:
-        'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.',
-    },
-  ];
-
   return (
     <div
       style={{
-        backgroundColor: '#FAF7F2',
+        backgroundColor: '#FAF3E9',
         minHeight: '100vh',
         fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         padding: '24px 20px 60px 20px',
@@ -291,7 +210,7 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
             bottom: '24px',
             right: '24px',
             backgroundColor: '#0B4EA2',
-            color: '#ffffff',
+            color: '#FFFFFF',
             padding: '12px 22px',
             borderRadius: '30px',
             fontWeight: 600,
@@ -304,74 +223,85 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
         </div>
       )}
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Dynamic Section Headline */}
+      <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+        
+        {/* Page Title: "Product Details" (Matches Image top) */}
         <h1
           style={{
-            fontSize: '30px',
-            fontWeight: 900,
+            fontFamily: "'Lora', Georgia, serif",
+            fontSize: '26px',
+            fontWeight: 700,
             color: '#111827',
-            marginBottom: '24px',
+            marginBottom: '20px',
             letterSpacing: '-0.02em',
           }}
         >
-          {getPageTitle()}
+          Product Details
         </h1>
 
         {/* ==================================================================== */}
         {/* TOP SECTION: MEDIA GALLERY (LEFT) + BUY BOX (RIGHT) */}
         {/* ==================================================================== */}
         <div
-          className="product-detail-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.15fr 1fr',
-            gap: '24px',
-            marginBottom: '32px',
+            gridTemplateColumns: '1.05fr 1fr',
+            gap: '20px',
+            marginBottom: '20px',
           }}
         >
-          {/* 1. Left: Product Media Gallery Card */}
+          {/* 1. Left: Product Media Gallery Card (White Background) */}
           <div
             style={{
-              backgroundColor: '#FAF7F2',
-              border: '1.5px solid #EBE5DB',
-              borderRadius: '20px',
-              padding: '20px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #EDE8E1',
+              borderRadius: '14px',
+              padding: '16px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
               display: 'flex',
-              gap: '16px',
+              gap: '14px',
+              boxSizing: 'border-box',
             }}
           >
-            {/* Vertical Thumbnails */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* 4 Vertical Thumbnails on the left */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
               {galleryImages.slice(0, 4).map((imgUrl, idx) => (
                 <div
                   key={idx}
                   onClick={() => setSelectedMediaIndex(idx)}
                   style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '10px',
-                    backgroundColor: '#EDE8E0',
-                    border: selectedMediaIndex === idx ? '2px solid #0B4EA2' : '1px solid #dcd3c5',
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '8px',
+                    backgroundColor: '#EBEAE8',
+                    border: selectedMediaIndex === idx ? '2px solid #0B4EA2' : '1px solid #EDE8E1',
                     cursor: 'pointer',
                     overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    transition: 'border-color 0.15s ease',
                   }}
                 >
-                  <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={imgUrl}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/images/cat_smartwatch.jpg';
+                    }}
+                  />
                 </div>
               ))}
             </div>
 
-            {/* Main Big Image Box */}
+            {/* Main Studio Image Container */}
             <div
               style={{
                 flex: 1,
-                minHeight: '320px',
-                borderRadius: '16px',
-                backgroundColor: '#EDE8E0',
+                minHeight: '290px',
+                borderRadius: '12px',
+                backgroundColor: '#EDEAE4',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -382,192 +312,258 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
               <img
                 src={activeMainImage}
                 alt={product.name}
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  maxHeight: '320px',
+                }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/images/cat_smartwatch.jpg';
+                }}
               />
             </div>
           </div>
 
-          {/* 2. Right: Product Purchase Card */}
+          {/* 2. Right: Product Purchase Card (White Background) */}
           <div
             style={{
-              backgroundColor: '#FAF7F2',
-              border: '1.5px solid #EBE5DB',
-              borderRadius: '20px',
-              padding: '28px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #EDE8E1',
+              borderRadius: '14px',
+              padding: '22px 24px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
               display: 'flex',
               flexDirection: 'column',
+              boxSizing: 'border-box',
             }}
           >
-            {/* Title & Authentic Nepal Badge */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#111827', margin: 0 }}>
+            {/* Title & Authentic Nepal Flag Badge */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '6px',
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  color: '#111827',
+                  margin: 0,
+                  lineHeight: 1.25,
+                }}
+              >
                 {product.name}
               </h2>
-              <span
+              
+              {/* Authentic Nepal Badge matching Image */}
+              <div
                 style={{
-                  backgroundColor: '#E8EEF4',
-                  color: '#0B4EA2',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '3px 8px',
-                  borderRadius: '12px',
-                  whiteSpace: 'nowrap',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
+                  padding: '3px 8px',
+                  borderRadius: '14px',
+                  border: '1px solid #E2E8F0',
+                  backgroundColor: '#FFFFFF',
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  color: '#1E293B',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                <span>🇳🇵</span>
+                <span style={{ color: '#E12B38', fontSize: '10px' }}>🚩</span>
                 <span>Authentic Nepal</span>
-              </span>
+              </div>
             </div>
 
-            {/* Rating */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
-              <span style={{ color: '#F4A261', fontSize: '13px' }}>★★★★★</span>
-              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>
+            {/* Ratings Row: 5 Amber Stars + (88) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '14px' }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <span key={s} style={{ color: '#F59E0B', fontSize: '13px' }}>★</span>
+              ))}
+              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 500, marginLeft: '4px' }}>
                 ({product.reviewCount || 88})
               </span>
             </div>
 
-            {/* Price Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '26px', fontWeight: 900, color: '#111827' }}>
+            {/* Price Row: Rs 9,000 + Rs 1,500 + 40% OFF badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '22px', fontWeight: 700, color: '#111827' }}>
                 Rs {currentPrice.toLocaleString()}
               </span>
-              <span style={{ fontSize: '14px', color: '#E63946', textDecoration: 'line-through' }}>
+              <span style={{ fontSize: '12px', color: '#94A3B8', textDecoration: 'line-through' }}>
                 Rs {comparePrice.toLocaleString()}
               </span>
               <span
                 style={{
-                  backgroundColor: '#E63946',
-                  color: '#ffffff',
-                  fontSize: '10.5px',
-                  fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  textTransform: 'uppercase',
+                  backgroundColor: '#E12B38',
+                  color: '#FFFFFF',
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: '3px',
                 }}
               >
                 {discountPercent}% OFF
               </span>
             </div>
 
-            {/* Choose Variant */}
-            <div style={{ marginBottom: '18px' }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
+            {/* Choose Variant: Small / Medium / Large */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                 Choose variant
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {(product.sizes || ['Small', 'Medium', 'Large']).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setSelectedVariant(v)}
-                    style={{
-                      padding: '6px 18px',
-                      borderRadius: '8px',
-                      border: selectedVariant === v ? '1.5px solid #0B4EA2' : '1px solid #dcd5c9',
-                      backgroundColor: selectedVariant === v ? '#E8EEF4' : '#ffffff',
-                      color: selectedVariant === v ? '#0B4EA2' : '#334155',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {v}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {['Small', 'Medium', 'Large'].map((v) => {
+                  const isSelected = selectedVariant === v;
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setSelectedVariant(v)}
+                      style={{
+                        padding: '5px 14px',
+                        borderRadius: '6px',
+                        border: isSelected ? '1.5px solid #0B4EA2' : '1px solid #CBD5E1',
+                        backgroundColor: isSelected ? '#EFF6FF' : '#FFFFFF',
+                        color: isSelected ? '#0B4EA2' : '#64748B',
+                        fontSize: '11px',
+                        fontWeight: isSelected ? 600 : 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {v}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Quantity */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
+            {/* Quantity Stepper */}
+            <div style={{ marginBottom: '22px' }}>
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                 Quantity
               </div>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  borderRadius: '8px',
-                  border: '1px solid #dcd5c9',
-                  backgroundColor: '#ffffff',
-                  padding: '2px 6px',
-                  gap: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  padding: '2px 10px',
+                  gap: '14px',
                 }}
               >
                 <button
+                  type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: 700, color: '#334155', cursor: 'pointer', padding: '2px 6px' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#475569',
+                    cursor: 'pointer',
+                    padding: '2px',
+                  }}
                 >
-                  -
+                  −
                 </button>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#111827', minWidth: '16px', textAlign: 'center' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#111827', minWidth: '14px', textAlign: 'center' }}>
                   {quantity}
                 </span>
                 <button
+                  type="button"
                   onClick={() => setQuantity((q) => q + 1)}
-                  style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: 700, color: '#334155', cursor: 'pointer', padding: '2px 6px' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#475569',
+                    cursor: 'pointer',
+                    padding: '2px',
+                  }}
                 >
                   +
                 </button>
               </div>
             </div>
 
-            {/* 3 Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+            {/* 3 Action Buttons: Add to Cart (Blue), Buy Now (Red), Wishlist (Outlined Blue) */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+              {/* Add to Cart */}
               <button
+                type="button"
                 onClick={() => handleAddToCart(false)}
                 disabled={isAdding}
                 style={{
                   flex: 1,
-                  backgroundColor: '#E63946',
-                  color: '#ffffff',
+                  backgroundColor: '#0B4EA2',
+                  color: '#FFFFFF',
                   border: 'none',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
+                  padding: '10px 0',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
                   fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(230, 57, 70, 0.3)',
+                  cursor: isAdding ? 'not-allowed' : 'pointer',
+                  textAlign: 'center',
+                  transition: 'background-color 0.15s ease',
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#083B7B')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#0B4EA2')}
               >
                 {isAdding ? 'Adding...' : 'Add to Cart'}
               </button>
 
+              {/* Buy Now */}
               <button
+                type="button"
                 onClick={() => handleAddToCart(true)}
                 disabled={isAdding}
                 style={{
                   flex: 1,
-                  backgroundColor: '#0B4EA2',
-                  color: '#ffffff',
+                  backgroundColor: '#E12B38',
+                  color: '#FFFFFF',
                   border: 'none',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
+                  padding: '10px 0',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
                   fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(11, 78, 162, 0.3)',
+                  cursor: isAdding ? 'not-allowed' : 'pointer',
+                  textAlign: 'center',
+                  transition: 'background-color 0.15s ease',
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#C81E2B')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#E12B38')}
               >
                 Buy Now
               </button>
 
+              {/* Wishlist */}
               <button
+                type="button"
                 onClick={() => setIsWishlisted(!isWishlisted)}
                 style={{
                   flex: 1,
-                  backgroundColor: isWishlisted ? '#E8EEF4' : '#ffffff',
+                  backgroundColor: isWishlisted ? '#EFF6FF' : '#FFFFFF',
                   color: '#0B4EA2',
                   border: '1.5px solid #0B4EA2',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
+                  padding: '10px 0',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 {isWishlisted ? '♥ Saved' : 'Wishlist'}
@@ -577,18 +573,19 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
         </div>
 
         {/* ==================================================================== */}
-        {/* TAB NAVIGATION BAR */}
+        {/* TABS CARD (White background matching Image) */}
         {/* ==================================================================== */}
         <div
           style={{
-            backgroundColor: '#FAF7F2',
-            border: '1.5px solid #EBE5DB',
-            borderRadius: '16px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #EDE8E1',
+            borderRadius: '10px',
             padding: '12px 24px',
             display: 'flex',
-            gap: '28px',
-            marginBottom: '24px',
+            gap: '24px',
+            marginBottom: '18px',
             overflowX: 'auto',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
           }}
         >
           {[
@@ -597,252 +594,539 @@ export const ProductDetailPage: React.FC<{ productId: string }> = ({ productId }
             { id: 'origin', label: 'Origin' },
             { id: 'shipping', label: 'Shipping / Export' },
             { id: 'reviews', label: 'Reviews' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '4px 0',
-                fontSize: '13.5px',
-                fontWeight: activeTab === tab.id ? 800 : 500,
-                color: activeTab === tab.id ? '#0B4EA2' : '#64748b',
-                cursor: 'pointer',
-                borderBottom: activeTab === tab.id ? '2px solid #0B4EA2' : '2px solid transparent',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: isActive ? '#0B4EA2' : '#64748B',
+                  fontSize: '12px',
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: 'pointer',
+                  padding: '2px 0',
+                  position: 'relative',
+                  borderBottom: isActive ? '2px solid #0B4EA2' : '2px solid transparent',
+                  transition: 'color 0.15s ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* ==================================================================== */}
-        {/* TAB CONTENT CARDS */}
+        {/* TAB CONTENT: SWITCHES BASED ON SELECTED TAB TO MATCH USER MOCKUPS */}
         {/* ==================================================================== */}
 
-        {/* TAB 1: DETAILS (Image 5) */}
+        {/* 1. DETAILS TAB (Overview + Details Specs) */}
         {activeTab === 'details' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Overview Card */}
+          <>
+            {/* OVERVIEW CARD */}
             <div
               style={{
-                backgroundColor: '#FAF7F2',
-                border: '1.5px solid #EBE5DB',
-                borderRadius: '16px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #EDE8E1',
+                borderRadius: '12px',
                 padding: '24px 28px',
+                marginBottom: '18px',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
               }}
             >
-              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 12px 0' }}>
+              <h3
+                style={{
+                  fontSize: '15.5px',
+                  fontWeight: 700,
+                  color: '#111827',
+                  margin: '0 0 10px 0',
+                }}
+              >
                 Overview
               </h3>
-              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.6, margin: 0 }}>
+              <p
+                style={{
+                  fontSize: '12px',
+                  lineHeight: 1.6,
+                  color: '#475569',
+                  margin: 0,
+                }}
+              >
                 {product.description ||
-                  'A key objective is engaging digital marketing customers and allowing them to interact with the brand through servicing and delivery of digital media. Information is easy to access at a fast rate through the use of digital communications.'}
+                  'A key objective is engaging digital marketing customers and allowing them to interact with the brand through servicing and delivery of digital media. Information is easy to access at a fast rate through the use of digital communications. Users with access to the Internet can use many digital mediums, such as Facebook, YouTube, Forums, and Email etc. Through Digital communications it creates a Multi-communication channel where information can be quickly exchanged around the world by anyone without any regard to whom they are.[28] Social segregation plays no part through social mediums due to lack of face to face communication and information being wide spread instead to a selective audience.'}
               </p>
             </div>
 
-            {/* Details Table Card */}
+            {/* DETAILS CARD */}
             <div
               style={{
-                backgroundColor: '#FAF7F2',
-                border: '1.5px solid #EBE5DB',
-                borderRadius: '16px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #EDE8E1',
+                borderRadius: '12px',
                 padding: '24px 28px',
+                marginBottom: '40px',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
               }}
             >
-              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 16px 0' }}>
+              <h3
+                style={{
+                  fontSize: '15.5px',
+                  fontWeight: 700,
+                  color: '#111827',
+                  margin: '0 0 16px 0',
+                }}
+              >
                 Details
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                  <span style={{ color: '#64748b' }}>Product Name</span>
-                  <strong style={{ color: '#111827' }}>{product.name}</strong>
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #F1F5F9',
+                    fontSize: '12px',
+                  }}
+                >
+                  <span style={{ color: '#64748B' }}>Product Name</span>
+                  <span style={{ color: '#111827', fontWeight: 700 }}>{product.name}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                  <span style={{ color: '#64748b' }}>Brand</span>
-                  <strong style={{ color: '#111827' }}>{product.brand || 'Everest Pasal'}</strong>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #F1F5F9',
+                    fontSize: '12px',
+                  }}
+                >
+                  <span style={{ color: '#64748B' }}>Brand</span>
+                  <span style={{ color: '#111827', fontWeight: 700 }}>{product.brand || 'Everest Pasal'}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                  <span style={{ color: '#64748b' }}>Category</span>
-                  <strong style={{ color: '#111827' }}>
-                    {product.categories?.[0]?.category.name || 'Sports & Fitness'}
-                  </strong>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #F1F5F9',
+                    fontSize: '12px',
+                  }}
+                >
+                  <span style={{ color: '#64748B' }}>Category</span>
+                  <span style={{ color: '#111827', fontWeight: 700 }}>{product.category || 'Sports & Fitness'}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>SKU</span>
-                  <strong style={{ color: '#111827' }}>{currentOffer?.sku || 'EP-2026-001'}</strong>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '12px 0',
+                    fontSize: '12px',
+                  }}
+                >
+                  <span style={{ color: '#64748B' }}>SKU</span>
+                  <span style={{ color: '#111827', fontWeight: 700 }}>{product.sku || 'EP-2026-001'}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
-        {/* TAB 2: SPECIFICATIONS (Image 4) */}
+        {/* 2. SPECIFICATIONS TAB (Image 2 Mockup) */}
         {activeTab === 'specs' && (
           <div
             style={{
-              backgroundColor: '#FAF7F2',
-              border: '1.5px solid #EBE5DB',
-              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #EDE8E1',
+              borderRadius: '12px',
               padding: '24px 28px',
+              marginBottom: '40px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
             }}
           >
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 16px 0' }}>
+            <h3
+              style={{
+                fontSize: '15.5px',
+                fontWeight: 700,
+                color: '#111827',
+                margin: '0 0 16px 0',
+              }}
+            >
               Specifications
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>Material</span>
-                <strong style={{ color: '#111827' }}>{product.material || 'Polyester Blend'}</strong>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Material</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Polyester Blend</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>Color</span>
-                <strong style={{ color: '#111827' }}>{product.color || 'Navy Blue'}</strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Color</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Navy Blue</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>Size</span>
-                <strong style={{ color: '#111827' }}>
-                  {product.sizes ? product.sizes.join(' / ') : 'Small / Medium / Large'}
-                </strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Size</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Small / Medium / Large</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Weight</span>
-                <strong style={{ color: '#111827' }}>
-                  {currentOffer?.weight ? `${currentOffer.weight}g` : '450g'}
-                </strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Weight</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>450g</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 3: ORIGIN (Image 1) */}
+        {/* 3. ORIGIN TAB (Image 1 Mockup) */}
         {activeTab === 'origin' && (
           <div
             style={{
-              backgroundColor: '#FAF7F2',
-              border: '1.5px solid #EBE5DB',
-              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #EDE8E1',
+              borderRadius: '12px',
               padding: '24px 28px',
+              marginBottom: '40px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
             }}
           >
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 16px 0' }}>
+            <h3
+              style={{
+                fontSize: '15.5px',
+                fontWeight: 700,
+                color: '#111827',
+                margin: '0 0 16px 0',
+              }}
+            >
               Origin
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>Country</span>
-                <strong style={{ color: '#111827' }}>{product.originCountry || 'Nepal'}</strong>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Country</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Nepal</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>City</span>
-                <strong style={{ color: '#111827' }}>{product.originCity || 'Kathmandu'}</strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>City</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Kathmandu</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Authenticity</span>
-                <strong style={{ color: '#111827' }}>{product.authenticity || 'Verified Seller'}</strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Authenticity</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Verified Seller</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 4: SHIPPING / EXPORT (Image 3) */}
+        {/* 4. SHIPPING / EXPORT TAB (Image 4 Mockup) */}
         {activeTab === 'shipping' && (
           <div
             style={{
-              backgroundColor: '#FAF7F2',
-              border: '1.5px solid #EBE5DB',
-              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #EDE8E1',
+              borderRadius: '12px',
               padding: '24px 28px',
+              marginBottom: '40px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
             }}
           >
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 16px 0' }}>
+            <h3
+              style={{
+                fontSize: '15.5px',
+                fontWeight: 700,
+                color: '#111827',
+                margin: '0 0 16px 0',
+              }}
+            >
               Shipping / Export
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>Delivery Time</span>
-                <strong style={{ color: '#111827' }}>{product.shippingDeliveryTime || '3-5 Business Days'}</strong>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Delivery Time</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>3-5 Business Days</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #EBE5DB' }}>
-                <span style={{ color: '#64748b' }}>Shipping Cost</span>
-                <strong style={{ color: '#111827' }}>{product.shippingCost || 'Free'}</strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Shipping Cost</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Free</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Export Eligibility</span>
-                <strong style={{ color: '#111827' }}>{product.exportEligibility || 'Yes'}</strong>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  fontSize: '12px',
+                }}
+              >
+                <span style={{ color: '#64748B' }}>Export Eligibility</span>
+                <span style={{ color: '#111827', fontWeight: 700 }}>Yes</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 5: REVIEWS (Image 2) */}
+        {/* 5. REVIEWS TAB (Image 3 Mockup) */}
         {activeTab === 'reviews' && (
           <div
             style={{
-              backgroundColor: '#FAF7F2',
-              border: '1.5px solid #EBE5DB',
-              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #EDE8E1',
+              borderRadius: '12px',
               padding: '24px 28px',
+              marginBottom: '40px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
             }}
           >
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111827', margin: '0 0 20px 0' }}>
+            <h3
+              style={{
+                fontSize: '15.5px',
+                fontWeight: 700,
+                color: '#111827',
+                margin: '0 0 16px 0',
+              }}
+            >
               Reviews
             </h3>
+
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '16px',
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gap: '14px',
               }}
             >
-              {customerReviews.map((rev) => (
-                <div
-                  key={rev.id}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #EBE5DB',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <div
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '6px',
-                        backgroundColor: rev.avatarBg,
-                        color: '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: '12px',
-                      }}
-                    >
-                      {rev.author[0]}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#111827' }}>{rev.author}</div>
-                      <div style={{ color: '#F4A261', fontSize: '11px' }}>
-                        {'★'.repeat(rev.rating)}
-                        {'☆'.repeat(5 - rev.rating)}
-                      </div>
-                    </div>
+              {/* Review 1 */}
+              <div
+                style={{
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '4px',
+                      backgroundColor: '#F59E0B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                    }}
+                  >
+                    👩
                   </div>
-                  <p style={{ fontSize: '11.5px', color: '#64748b', lineHeight: 1.4, margin: 0, flex: 1 }}>
-                    {rev.comment}
-                  </p>
+                  <div style={{ color: '#F59E0B', fontSize: '11px', letterSpacing: '1px' }}>★★★★★</div>
                 </div>
-              ))}
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>
+                  Floyd Miles
+                </div>
+                <p style={{ fontSize: '11px', lineHeight: 1.5, color: '#475569', margin: 0 }}>
+                  Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia c...
+                </p>
+              </div>
+
+              {/* Review 2 */}
+              <div
+                style={{
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '4px',
+                      backgroundColor: '#38BDF8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                    }}
+                  >
+                    👨
+                  </div>
+                  <div style={{ color: '#F59E0B', fontSize: '11px', letterSpacing: '1px' }}>★★★★★</div>
+                </div>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>
+                  Ronald Richards
+                </div>
+                <p style={{ fontSize: '11px', lineHeight: 1.5, color: '#475569', margin: 0 }}>
+                  ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet.
+                </p>
+              </div>
+
+              {/* Review 3 */}
+              <div
+                style={{
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '4px',
+                      backgroundColor: '#F59E0B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                    }}
+                  >
+                    🧔
+                  </div>
+                  <div style={{ display: 'flex', gap: '1px', fontSize: '11px', letterSpacing: '1px' }}>
+                    <span style={{ color: '#F59E0B' }}>★★★★</span>
+                    <span style={{ color: '#E2E8F0' }}>★</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>
+                  Savannah Nguyen
+                </div>
+                <p style={{ fontSize: '11px', lineHeight: 1.5, color: '#475569', margin: 0 }}>
+                  Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia c...
+                </p>
+              </div>
+
+              {/* Review 4 */}
+              <div
+                style={{
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '4px',
+                      backgroundColor: '#F59E0B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                    }}
+                  >
+                    👩
+                  </div>
+                  <div style={{ color: '#F59E0B', fontSize: '11px', letterSpacing: '1px' }}>★★★★★</div>
+                </div>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>
+                  Savannah
+                </div>
+                <p style={{ fontSize: '11px', lineHeight: 1.5, color: '#475569', margin: 0 }}>
+                  Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.
+                </p>
+              </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

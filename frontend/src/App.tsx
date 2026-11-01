@@ -152,7 +152,10 @@ const AppRouterContent: React.FC = () => {
       {path === '/' && (
         <StorefrontPage onNavigateToCheckout={() => navigate('/cart')} />
       )}
-      {(path === '/products' || path === '/categories') && <ProductsPage />}
+      {(path === '/products' ||
+        path === '/categories' ||
+        path.startsWith('/category') ||
+        path.startsWith('/categories/')) && <ProductsPage />}
 
       {/* Customer Routes */}
       {path === '/cart' && (

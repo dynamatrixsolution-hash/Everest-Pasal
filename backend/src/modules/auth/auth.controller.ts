@@ -35,6 +35,20 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function googleAuthHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const authService = new AuthService(companyCode);
+    const ip = (req as any).context?.clientIp;
+    const userAgent = (req as any).context?.userAgent;
+
+    const result = await authService.authenticateGoogle(req.body, ip, userAgent);
+    sendSuccess(res, result, 'Google authentication successful', 200);
+  } catch (error: any) {
+    sendError(res, 'GOOGLE_AUTH_FAILED', error.message, 400);
+  }
+}
+
 export async function logoutHandler(req: Request, res: Response): Promise<void> {
   try {
     const authHeader = req.headers.authorization;

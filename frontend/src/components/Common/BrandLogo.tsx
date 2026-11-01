@@ -24,8 +24,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       case 'app-icon':
         return '/logo-icon.png';
       case 'stacked':
+        return '/logo-stacked.png';
       case 'dark':
       case 'white':
+        return '/logo-dark.png';
       case 'horizontal':
       default:
         return '/logo.png';

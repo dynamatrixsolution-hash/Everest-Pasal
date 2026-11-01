@@ -16,6 +16,8 @@ export interface UserProfile {
   phone: string | null;
   fullName: string;
   status: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   roles: UserRoleAssignment[];
   permissions: string[];
 }
@@ -25,7 +27,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<UserProfile>;
+  loginWithGoogle: (data: { credential?: string; email?: string; fullName?: string; avatarUrl?: string; googleId?: string }) => Promise<UserProfile>;
   register: (data: any) => Promise<UserProfile>;
+  requestOtp: (destination: string, purpose?: string) => Promise<{ message: string; otp?: string; expiresInSeconds?: number }>;
+  verifyOtp: (destination: string, code: string, purpose?: string) => Promise<{ verified: boolean; message: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -83,6 +88,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async (data: {
+    credential?: string;
+    email?: string;
+    fullName?: string;
+    avatarUrl?: string;
+    googleId?: string;
+  }): Promise<UserProfile> => {
+    setIsLoading(true);
+    try {
+      const res = await ApiClient.post<{
+        account: UserProfile;
+        session: { token: string };
+      }>('/auth/google', data);
+
+      if (res.session && res.session.token) {
+        ApiClient.setToken(res.session.token);
+        setUser(res.account);
+      }
+      return res.account;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (data: any): Promise<UserProfile> => {
     setIsLoading(true);
     try {
@@ -99,6 +128,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const requestOtp = async (destination: string, purpose: string = 'VERIFICATION'): Promise<{ message: string; otp?: string; expiresInSeconds?: number }> => {
+    return await ApiClient.post('/auth/request-otp', { destination, purpose });
+  };
+
+  const verifyOtp = async (destination: string, code: string, purpose: string = 'VERIFICATION'): Promise<{ verified: boolean; message: string }> => {
+    const res = await ApiClient.post('/auth/verify-otp', { destination, code, purpose });
+    // After OTP verification, refresh the user profile so email_verified is true in state
+    await refreshUser();
+    return res;
   };
 
   const logout = async () => {
@@ -119,7 +159,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithGoogle,
         register,
+        requestOtp,
+        verifyOtp,
         logout,
         refreshUser,
       }}

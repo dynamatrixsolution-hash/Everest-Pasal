@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { useRouter, Link } from '../router/index.js';
 import { BrandLogo } from '../components/Common/BrandLogo.js';
+import { GoogleAuthModal } from '../components/Auth/GoogleAuthModal.js';
 
 interface RegisterPageProps {
   onSwitchToLogin?: () => void;
@@ -24,6 +25,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
   const [agreeTerms, setAgreeTerms] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -413,6 +415,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
             <button
               type="button"
               aria-label="Register with Google"
+              onClick={() => setIsGoogleModalOpen(true)}
               style={{
                 backgroundColor: '#ffffff',
                 border: '1.5px solid #dcd5c9',
@@ -481,6 +484,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
           </div>
         </div>
       </div>
+
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSuccess={() => navigate('/')}
+      />
     </div>
   );
 };

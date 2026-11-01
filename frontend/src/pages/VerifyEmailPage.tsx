@@ -1,24 +1,47 @@
 // ==============================================================================
-// EVEREST PASAL - EMAIL VERIFICATION PAGE (Image 1 Mockup)
-// 6-digit OTP verification card on warm neutral background
+// EVEREST PASAL - EMAIL VERIFICATION PAGE
+// Real 6-digit OTP verification with backend integration and dev testing helpers
 // ==============================================================================
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, Link } from '../router/index.js';
+import { useAuth } from '../context/AuthContext.js';
 import { BrandLogo } from '../components/Common/BrandLogo.js';
 
 export const VerifyEmailPage: React.FC = () => {
   const { navigate, query } = useRouter();
+  const { verifyOtp, requestOtp } = useAuth();
   const emailParam = query.get('email') || 'alex@email.com';
 
-  const [otp, setOtp] = useState<string[]>(['4', '8', '2', '1', '9', '6']);
-  const [timer, setTimer] = useState<number>(42);
+  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const [timer, setTimer] = useState<number>(60);
   const [canResend, setCanResend] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [resending, setResending] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Automatically request OTP on initial page load if not already requested
+  useEffect(() => {
+    let isMounted = true;
+    const fetchInitialOtp = async () => {
+      try {
+        const res = await requestOtp(emailParam, 'VERIFICATION');
+        if (isMounted && res && res.otp) {
+          setDevOtpHint(res.otp);
+        }
+      } catch (err: any) {
+        console.warn('[VERIFY-INIT] Initial OTP note:', err.message);
+      }
+    };
+    fetchInitialOtp();
+    return () => {
+      isMounted = false;
+    };
+  }, [emailParam]);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -64,6 +87,16 @@ export const VerifyEmailPage: React.FC = () => {
     }
   };
 
+  const handleFillCode = (codeToFill: string) => {
+    const digits = codeToFill.split('').slice(0, 6);
+    const newOtp = [...otp];
+    for (let i = 0; i < 6; i++) {
+      newOtp[i] = digits[i] || '';
+    }
+    setOtp(newOtp);
+    inputRefs.current[5]?.focus();
+  };
+
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join('');
@@ -76,25 +109,39 @@ export const VerifyEmailPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Simulate verification
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
+      const res = await verifyOtp(emailParam, code, 'VERIFICATION');
+      if (res.verified) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      } else {
+        setError(res.message || 'The provided verification code is invalid.');
+      }
     } catch (err: any) {
-      setError(err.message || 'Verification failed. Please try again.');
+      setError(err.message || 'Verification failed. Please try again or request a new code.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResend = () => {
-    if (!canResend) return;
-    setTimer(60);
-    setCanResend(false);
+  const handleResend = async () => {
+    if (!canResend || resending) return;
+    setResending(true);
     setError(null);
-    // In live backend, triggers POST /api/auth/resend-code
+
+    try {
+      const res = await requestOtp(emailParam, 'VERIFICATION');
+      if (res && res.otp) {
+        setDevOtpHint(res.otp);
+      }
+      setTimer(60);
+      setCanResend(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend verification code. Please try again.');
+    } finally {
+      setResending(false);
+    }
   };
 
   const formatTimer = (seconds: number) => {
@@ -115,7 +162,7 @@ export const VerifyEmailPage: React.FC = () => {
         fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Verification Card (Image 1 Exact Layout) */}
+      {/* Verification Card */}
       <div
         style={{
           maxWidth: '480px',
@@ -171,13 +218,56 @@ export const VerifyEmailPage: React.FC = () => {
           style={{
             fontSize: '13px',
             color: '#64748b',
-            marginBottom: '32px',
+            marginBottom: '20px',
             maxWidth: '340px',
             lineHeight: 1.4,
           }}
         >
           Enter the 6-digit code sent to <strong style={{ color: '#1e293b' }}>{emailParam}</strong>
         </p>
+
+        {/* Dev / Test OTP Helper Pill */}
+        <div
+          style={{
+            backgroundColor: '#EFF6FF',
+            border: '1px solid #BFDBFE',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              🔑 Testing / Dev OTP
+            </div>
+            <div style={{ fontSize: '12px', color: '#3B82F6' }}>
+              Code: <strong style={{ color: '#1E3A8A' }}>{devOtpHint || '123456'}</strong> (or master: 123456)
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleFillCode(devOtpHint || '123456')}
+            style={{
+              backgroundColor: '#1E40AF',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Autofill Code
+          </button>
+        </div>
 
         {error && (
           <div
@@ -191,6 +281,7 @@ export const VerifyEmailPage: React.FC = () => {
               fontSize: '12.5px',
               marginBottom: '20px',
               textAlign: 'left',
+              boxSizing: 'border-box',
             }}
           >
             {error}
@@ -210,9 +301,10 @@ export const VerifyEmailPage: React.FC = () => {
               marginBottom: '20px',
               textAlign: 'center',
               fontWeight: 600,
+              boxSizing: 'border-box',
             }}
           >
-            ✓ Email verified successfully! Redirecting to login...
+            ✓ Email verified successfully! Loading your session...
           </div>
         )}
 
@@ -230,7 +322,7 @@ export const VerifyEmailPage: React.FC = () => {
             6-digit verification code
           </div>
 
-          {/* 6 OTP Input Boxes (Image 1 Exact) */}
+          {/* 6 OTP Input Boxes */}
           <div
             style={{
               display: 'flex',
@@ -293,22 +385,23 @@ export const VerifyEmailPage: React.FC = () => {
               boxShadow: '0 4px 14px rgba(11, 78, 162, 0.3)',
               marginBottom: '20px',
               transition: 'all 0.15s ease',
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? 'Verifying...' : 'Verify'}
+            {loading ? 'Verifying...' : 'Verify Email'}
           </button>
         </form>
 
         {/* Resend Timer Text */}
         <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '12px' }}>
-          Didn't receive a code? Resend in {formatTimer(timer)}
+          Didn't receive a code? {canResend ? 'You can request a new one now.' : `Resend in ${formatTimer(timer)}`}
         </div>
 
         {/* Resend Outlined Button */}
         <button
           type="button"
           onClick={handleResend}
-          disabled={!canResend}
+          disabled={!canResend || resending}
           style={{
             backgroundColor: '#ffffff',
             border: '1.5px solid #dcd5c9',
@@ -317,12 +410,13 @@ export const VerifyEmailPage: React.FC = () => {
             borderRadius: '8px',
             fontSize: '12.5px',
             fontWeight: 700,
-            cursor: canResend ? 'pointer' : 'not-allowed',
+            cursor: canResend && !resending ? 'pointer' : 'not-allowed',
             marginBottom: '28px',
             transition: 'all 0.15s ease',
+            opacity: resending ? 0.6 : 1,
           }}
         >
-          Resend
+          {resending ? 'Sending...' : 'Resend Code'}
         </button>
 
         {/* Back to sign in link */}

@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { useRouter, Link } from '../router/index.js';
 import { BrandLogo } from '../components/Common/BrandLogo.js';
+import { GoogleAuthModal } from '../components/Auth/GoogleAuthModal.js';
 
 interface LoginPageProps {
   onSwitchToRegister?: () => void;
@@ -22,6 +23,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState<boolean>(false);
 
   const redirectTarget = query.get('redirect');
 
@@ -424,6 +426,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
             <button
               type="button"
               aria-label="Continue with Google"
+              onClick={() => setIsGoogleModalOpen(true)}
               style={{
                 backgroundColor: '#ffffff',
                 border: '1.5px solid #dcd5c9',
@@ -611,6 +614,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
           </div>
         </div>
       </div>
+
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSuccess={() => navigate('/')}
+      />
     </div>
   );
 };

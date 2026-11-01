@@ -726,5 +726,21 @@ tr:hover td {
   .ticket-chat-layout {
     grid-template-columns: 1fr !important;
   }
+
+  .cart-checkout-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cart-recommendations-grid,
+  .account-recommended-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 540px) {
+  .cart-recommendations-grid,
+  .account-recommended-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 

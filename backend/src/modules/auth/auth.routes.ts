@@ -6,6 +6,7 @@ import { Router } from 'express';
 import {
   registerHandler,
   loginHandler,
+  googleAuthHandler,
   logoutHandler,
   meHandler,
   refreshHandler,
@@ -38,6 +39,8 @@ router.post(
   loginHandler
 );
 
+router.post('/google', googleAuthHandler);
+router.post('/oauth/google', googleAuthHandler);
 router.post('/forgot-password', forgotPasswordHandler);
 router.post('/reset-password', resetPasswordHandler);
 router.post('/request-otp', requestOtpHandler);
