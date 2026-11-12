@@ -63,7 +63,10 @@ body,
 button,
 input,
 select,
-textarea {
+textarea,
+table,
+th,
+td {
   font-family: var(--font-primary);
 }
 

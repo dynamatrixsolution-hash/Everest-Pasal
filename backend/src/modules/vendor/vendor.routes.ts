@@ -380,4 +380,409 @@ router.put('/store/policies', async (req: Request, res: Response) => {
   }
 });
 
+// ==============================================================================
+// 1. CUSTOMER INQUIRIES & CONVERSATION ROUTES
+// Exact mapping to media_1794203813509, media_1794203813520, media_1794203813534
+// ==============================================================================
+
+router.get('/inquiries', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getVendorInquiries(merchantId, req.query);
+    sendSuccess(res, data, 'Customer inquiries retrieved successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_INQUIRIES_FAILED', error.message, 500);
+  }
+});
+
+router.get('/inquiries/:id', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getInquiryById(merchantId, String(req.params.id));
+    sendSuccess(res, data, 'Inquiry details retrieved successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_INQUIRY_DETAIL_FAILED', error.message, 500);
+  }
+});
+
+router.post('/inquiries', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.createInquiry(merchantId, req.body);
+    sendSuccess(res, result, 'Inquiry ticket created successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'CREATE_INQUIRY_FAILED', error.message, 400);
+  }
+});
+
+router.post('/inquiries/:id/messages', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.addInquiryMessage(merchantId, String(req.params.id), req.body);
+    sendSuccess(res, result, 'Inquiry reply sent successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'SEND_MESSAGE_FAILED', error.message, 400);
+  }
+});
+
+router.patch('/inquiries/:id/status', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.updateInquiryStatus(merchantId, String(req.params.id), req.body.status, req.body.assignedTo);
+    sendSuccess(res, result, 'Inquiry status updated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'UPDATE_INQUIRY_STATUS_FAILED', error.message, 400);
+  }
+});
+
+router.post('/inquiries/verify-order', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const trackingId = req.body.trackingId || req.body.orderTrackingId || req.body.orderId || '';
+    const result = await vendorRepo.verifyOrderLinkage(merchantId, trackingId);
+    sendSuccess(res, result, 'Order linkage verified successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'VERIFY_ORDER_FAILED', error.message, 400);
+  }
+});
+
+// ==============================================================================
+// 2. ANALYTICS & REPORTS ROUTES
+// Exact mapping to media_1794204509159_6a214b89.jpg
+// ==============================================================================
+
+router.get('/analytics/overview', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const timeframe = (req.query.timeframe as string) || '30d';
+    const data = await vendorRepo.getAnalyticsOverview(merchantId, timeframe);
+    sendSuccess(res, data, 'Analytics overview metrics retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_ANALYTICS_FAILED', error.message, 500);
+  }
+});
+
+router.get('/analytics/sales-performance', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const timeframe = (req.query.timeframe as string) || '30d';
+    const overview = await vendorRepo.getAnalyticsOverview(merchantId, timeframe);
+    sendSuccess(res, overview.salesPerformance, 'Sales performance time series retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_PERFORMANCE_FAILED', error.message, 500);
+  }
+});
+
+router.get('/analytics/categories', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const overview = await vendorRepo.getAnalyticsOverview(merchantId);
+    sendSuccess(res, overview.categorySales, 'Category sales distribution retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_CATEGORIES_ANALYTICS_FAILED', error.message, 500);
+  }
+});
+
+router.get('/analytics/lifecycle', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const overview = await vendorRepo.getAnalyticsOverview(merchantId);
+    sendSuccess(res, { lifecycle: overview.orderLifecycle, averageTransitTime: overview.averageTransitTime }, 'Order lifecycle metrics retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_LIFECYCLE_FAILED', error.message, 500);
+  }
+});
+
+router.get('/analytics/top-products', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const overview = await vendorRepo.getAnalyticsOverview(merchantId);
+    sendSuccess(res, overview.topPerformingProducts, 'Top performing products retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_TOP_PRODUCTS_FAILED', error.message, 500);
+  }
+});
+
+router.get('/analytics/insights', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const overview = await vendorRepo.getAnalyticsOverview(merchantId);
+    sendSuccess(
+      res,
+      {
+        insights: overview.businessInsights,
+        customerInsights: overview.customerInsights,
+        inventoryPerformance: overview.inventoryPerformance,
+      },
+      'Actionable business insights retrieved',
+      200
+    );
+  } catch (error: any) {
+    sendError(res, 'FETCH_INSIGHTS_FAILED', error.message, 500);
+  }
+});
+
+router.post('/analytics/export', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.exportReport(merchantId, req.body);
+    sendSuccess(res, result, 'Report export initiated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'EXPORT_REPORT_FAILED', error.message, 400);
+  }
+});
+
+// ==============================================================================
+// 3. EARNINGS & PAYOUTS ROUTES
+// Exact mapping to media_1794204829703_f1726be1.jpg
+// ==============================================================================
+
+router.get('/finance/overview', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const timeframe = (req.query.timeframe as string) || '30d';
+    const data = await vendorRepo.getEarningsFinanceOverview(merchantId, timeframe);
+    sendSuccess(res, data, 'Financial earnings overview retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_FINANCE_OVERVIEW_FAILED', error.message, 500);
+  }
+});
+
+router.get('/finance/reconciliation', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getEarningsFinanceOverview(merchantId);
+    sendSuccess(res, data.reconciliationEquation, 'Earnings reconciliation equation retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_RECONCILIATION_FAILED', error.message, 500);
+  }
+});
+
+router.post('/finance/payout-request', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.requestPayout(merchantId, req.body);
+    sendSuccess(res, result, 'Payout request processed successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'PAYOUT_REQUEST_FAILED', error.message, 400);
+  }
+});
+
+router.get('/finance/payout-history', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getEarningsFinanceOverview(merchantId);
+    sendSuccess(res, data.payoutHistory, 'Payout history retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_PAYOUT_HISTORY_FAILED', error.message, 500);
+  }
+});
+
+router.get('/finance/receipt/:id', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.getPayoutReceipt(merchantId, String(req.params.id));
+    sendSuccess(res, result, 'Payout voucher receipt generated', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_RECEIPT_FAILED', error.message, 500);
+  }
+});
+
+router.get('/finance/ledger', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getEarningsFinanceOverview(merchantId);
+    sendSuccess(res, data.adjustmentLedger, 'Adjustment ledger records retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_LEDGER_FAILED', error.message, 500);
+  }
+});
+
+// ==============================================================================
+// 4. CUSTOMER MANAGEMENT & MULTI-TENANT PRIVACY PROTECTION
+// Strict rule: details shown ONLY after customer placed order from this store
+// ==============================================================================
+
+router.get('/customers', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getVendorCustomers(merchantId, req.query);
+    sendSuccess(res, data, 'Vendor customers retrieved with privacy enforcement', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_CUSTOMERS_FAILED', error.message, 500);
+  }
+});
+
+router.get('/customers/:id', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getCustomerProfile(merchantId, String(req.params.id));
+    sendSuccess(res, data, 'Customer profile retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_CUSTOMER_PROFILE_FAILED', error.message, 500);
+  }
+});
+
+router.post('/customers/:id/notes', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const note = req.body.note || req.body.text || '';
+    const author = req.body.author || 'Manish';
+    const result = await vendorRepo.addCustomerInternalNote(merchantId, String(req.params.id), note, author);
+    sendSuccess(res, result, 'Internal team note added to customer profile', 201);
+  } catch (error: any) {
+    sendError(res, 'ADD_CUSTOMER_NOTE_FAILED', error.message, 400);
+  }
+});
+
+router.get('/customer-segments', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getCustomerSegments(merchantId);
+    sendSuccess(res, data, 'Customer segments retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_SEGMENTS_FAILED', error.message, 500);
+  }
+});
+
+// ==============================================================================
+// 5. CATEGORIES & ATTRIBUTES MANAGEMENT ROUTES
+// Exact mapping to media_1794160889467_7a6197c1.png & media_1794161336079_bbde0fe9.png
+// ==============================================================================
+
+router.get('/categories', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getCatalogCategoriesWithStats(merchantId);
+    sendSuccess(res, data, 'Categories tree and stats retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_CATEGORIES_FAILED', error.message, 500);
+  }
+});
+
+router.post('/categories', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.createCategory(merchantId, req.body);
+    sendSuccess(res, result, 'Category created successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'CREATE_CATEGORY_FAILED', error.message, 400);
+  }
+});
+
+router.get('/attributes', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const categoryId = (req.query.categoryId as string) || undefined;
+    const data = await vendorRepo.getCatalogAttributeGroups(merchantId, categoryId);
+    sendSuccess(res, data, 'Catalog attribute groups retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_ATTRIBUTES_FAILED', error.message, 500);
+  }
+});
+
+router.post('/attributes', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.createAttributeGroup(merchantId, req.body);
+    sendSuccess(res, result, 'Attribute group created successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'CREATE_ATTRIBUTE_FAILED', error.message, 400);
+  }
+});
+
+router.patch('/attributes/:id/toggle', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.toggleAttributeGroup(merchantId, String(req.params.id), req.body.enabled);
+    sendSuccess(res, result, 'Attribute group toggle updated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'TOGGLE_ATTRIBUTE_FAILED', error.message, 400);
+  }
+});
+
 export default router;

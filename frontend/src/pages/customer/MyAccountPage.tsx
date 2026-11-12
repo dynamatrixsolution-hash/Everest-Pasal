@@ -915,7 +915,7 @@ export const MyAccountPage: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#FAF8F5', minHeight: 'calc(100vh - 200px)', padding: '28px 20px 60px 20px' }}>
+    <div style={{ backgroundColor: '#FAF3E9', minHeight: 'calc(100vh - 200px)', padding: '28px 20px 60px 20px' }}>
       {/* Toast notification */}
       {toastMessage && (
         <div
@@ -1160,9 +1160,13 @@ export const MyAccountPage: React.FC = () => {
           {/* RIGHT MAIN CONTENT CONTAINER                                     */}
           {/* ================================================================ */}
           <div
-            className={activeTab === 'overview' ? 'account-overview-container' : 'account-card-container'}
+            className={
+              activeTab === 'overview' || activeTab === 'addresses'
+                ? 'account-overview-container'
+                : 'account-card-container'
+            }
             style={
-              activeTab === 'overview'
+              activeTab === 'overview' || activeTab === 'addresses'
                 ? { minHeight: '560px' }
                 : {
                     backgroundColor: '#FFFFFF',

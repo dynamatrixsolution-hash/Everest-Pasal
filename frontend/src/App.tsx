@@ -49,8 +49,10 @@ import { VendorUsersRolesPage } from './pages/vendor/VendorUsersRolesPage.js';
 import { VendorSubscriptionPage } from './pages/vendor/VendorSubscriptionPage.js';
 import { VendorSettingsPage } from './pages/vendor/VendorSettingsPage.js';
 import { VendorFulfillmentPage } from './pages/vendor/VendorFulfillmentPage.js';
+import { VendorReturnsPage } from './pages/vendor/VendorReturnsPage.js';
 import { VendorInventoryPage } from './pages/vendor/VendorInventoryPage.js';
 import { VendorStorePage } from './pages/vendor/VendorStorePage.js';
+import { VendorInquiriesPage } from './pages/vendor/VendorInquiriesPage.js';
 
 // Admin Control Center Pages
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage.js';
@@ -81,23 +83,25 @@ const AppRouterContent: React.FC = () => {
           {path === '/vendor/pos' && <VendorPOSBillingPage />}
           {(path === '/vendor/products' || path.startsWith('/vendor/products')) && <VendorProductsPage />}
           {(path === '/vendor/orders' || path.startsWith('/vendor/orders')) && <VendorOrdersPage />}
-          {path === '/vendor/categories-units' && <VendorCategoryUnitPage />}
+          {(path === '/vendor/categories-units' || path.startsWith('/vendor/categories') || path.startsWith('/vendor/attributes')) && <VendorCategoryUnitPage />}
           {path === '/vendor/purchases' && <VendorPurchasesPage />}
           {(path === '/vendor/inventory' || path.startsWith('/vendor/inventory')) && <VendorInventoryPage />}
-          {path === '/vendor/customers' && <VendorCustomersPage />}
+          {(path === '/vendor/customers' || path.startsWith('/vendor/customers') || path.startsWith('/vendor/customer-segments')) && <VendorCustomersPage />}
           {path === '/vendor/suppliers' && <VendorSuppliersPage />}
-          {(path === '/vendor/payments' || path === '/vendor/finance' || path.startsWith('/vendor/finance')) && <VendorFinancePage />}
+          {(path === '/vendor/payments' || path === '/vendor/finance' || path === '/vendor/earnings' || path === '/vendor/payouts' || path.startsWith('/vendor/finance') || path.startsWith('/vendor/earnings') || path.startsWith('/vendor/payouts')) && <VendorFinancePage />}
           {(path === '/vendor/promotions' || path.startsWith('/vendor/promotions')) && <VendorPromotionsPage />}
           {(path === '/vendor/store' || path.startsWith('/vendor/store')) && <VendorStorePage />}
           {path === '/vendor/reviews' && <VendorCustomersPage />}
-          {path === '/vendor/export' && <VendorReportsPage />}
-          {path === '/vendor/reports' && <VendorReportsPage />}
+          {(path === '/vendor/reports' || path === '/vendor/analytics' || path === '/vendor/export' || path.startsWith('/vendor/reports') || path.startsWith('/vendor/analytics')) && <VendorReportsPage />}
           {path === '/vendor/expenses' && <VendorExpensesPage />}
           {path === '/vendor/branches' && <VendorBranchesPage />}
           {path === '/vendor/users-roles' && <VendorUsersRolesPage />}
           {path === '/vendor/subscription' && <VendorSubscriptionPage />}
           {path === '/vendor/settings' && <VendorSettingsPage />}
           {path === '/vendor/fulfillment' && <VendorFulfillmentPage />}
+          {(path === '/vendor/returns' || path.startsWith('/vendor/returns')) && <VendorReturnsPage />}
+          {(path === '/vendor/inquiries' || path.startsWith('/vendor/inquiries')) && <VendorInquiriesPage />}
+          {path === '/vendor/help' && <VendorSettingsPage />}
         </VendorLayout>
       </VendorGuard>
     );

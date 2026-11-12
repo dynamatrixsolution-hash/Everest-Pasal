@@ -1,125 +1,344 @@
 // ==============================================================================
-// EVEREST PASAL - VENDOR ORDERS MANAGEMENT PAGE
-// Exact pixel-perfect implementation of:
-// 1. orders-main-view.png
-// 2. orders-detail-drawer.png
-// 3. orders-status-update-modal.png
-// Fully connected to backend REST API endpoints
+// EVEREST PASAL - VENDOR ORDERS & FULFILLMENT MANAGEMENT
+// Pixel-perfect match to:
+// 1. Orders Main Table View (Image 3)
+// 2. Order Detail & Pick/Pack Drawer (Image 2)
+// 3. RMA Return & Replacement Audit Drawer (Image 1)
 // ==============================================================================
 
-import React, { useState, useEffect } from 'react';
-import { ApiClient } from '../../api/client.js';
+import React, { useState } from 'react';
 import { useRouter } from '../../router/index.js';
 
 interface OrderItem {
   id: string;
   title: string;
   sku: string;
+  vendor: string;
   qty: number;
   price: number;
   total: number;
   image: string;
+  stockRemaining?: number;
+  picked?: boolean;
 }
 
-interface OrderTimelineStep {
-  title: string;
-  time: string;
-  completed: boolean;
-}
-
-interface VendorOrder {
+interface OrderRecord {
   id: string;
   order_no: string;
+  items_count: number;
   customer_name: string;
   customer_location: string;
   customer_phone: string;
-  customer_email: string;
   customer_address: string;
-  items_count: number;
   total_amount: number;
-  subtotal: number;
-  delivery_fee: number;
-  discount: number;
-  payment_method: string;
-  payment_status: string;
-  fulfillment_status: string;
+  payment_status: 'Paid' | 'Pending' | 'Refunded';
+  payment_method?: string;
+  fulfillment_status: 'Processing' | 'Ready to ship' | 'Delivered' | 'New' | 'Shipped' | 'Cancelled' | 'Returned';
   created_at: string;
-  date_formatted: string;
   items: OrderItem[];
-  timeline: OrderTimelineStep[];
+  isRMA?: boolean;
 }
 
 export const VendorOrdersPage: React.FC = () => {
   const { navigate } = useRouter();
 
-  // Data states
-  const [orders, setOrders] = useState<VendorOrder[]>([]);
-  const [metrics, setMetrics] = useState({
-    totalOrders: 1284,
-    newOrders: 24,
-    processing: 18,
-    readyToShip: 12,
-    completed: 1180,
-    shipped: 36,
-    cancelled: 14,
-    returns: 6,
-  });
-  const [attentionBanner, setAttentionBanner] = useState<string | null>(
-    '24 new orders awaiting processing and 6 orders are delayed beyond expected time.'
-  );
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // Filter states
+  // Active status tab
   const [activeTab, setActiveTab] = useState<string>('ALL');
+
+  // Multi-selection states (3 selected by default matching Image 3)
+  const [selectedIds, setSelectedIds] = useState<string[]>(['EP-1048', 'EP-1047', 'EP-1046']);
+
+  // Modals & Slide-over Drawer States
+  const [activeOrderDrawer, setActiveOrderDrawer] = useState<OrderRecord | null>(null);
+  const [activeRMADrawer, setActiveRMADrawer] = useState<boolean>(false);
+
+  // Pick & Pack verification state
+  const [pickedItems, setPickedItems] = useState<{ [key: string]: boolean }>({});
+
+  // Courier partner selection
+  const [selectedCourier, setSelectedCourier] = useState<'NCM' | 'PATHAO'>('NCM');
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
   const [fulfillmentFilter, setFulfillmentFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<string>('newest');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(25);
 
-  // Selection states
-  const [selectedIds, setSelectedIds] = useState<string[]>(['ord-1048', 'ord-1047', 'ord-1046']);
+  // Mock Orders List matching Image 3 exactly
+  const orders: OrderRecord[] = [
+    {
+      id: 'EP-1048',
+      order_no: 'EP-1048',
+      items_count: 3,
+      customer_name: 'Suman Thapa',
+      customer_location: 'Kathmandu',
+      customer_phone: '+977 9841234567',
+      customer_address: '123 Durbar Marg, Kathmandu, Nepal',
+      total_amount: 4250,
+      payment_status: 'Paid',
+      payment_method: 'eSewa',
+      fulfillment_status: 'Processing',
+      created_at: 'Sep 16, 2026 10:32 AM',
+      items: [
+        {
+          id: 'it-1',
+          title: 'Traditional Dhaka Topi × 2',
+          sku: 'EP-TEA-003',
+          vendor: 'Orthodox Tea Estate',
+          qty: 2,
+          price: 1000,
+          total: 1000,
+          stockRemaining: 40,
+          image: '/images/product_dhaka_topi.jpg',
+        },
+        {
+          id: 'it-2',
+          title: 'Organic Ilam Green Tea 250g × 1',
+          sku: 'EP-TEA-003',
+          vendor: 'Orthodox Tea Estate',
+          qty: 1,
+          price: 840,
+          total: 840,
+          stockRemaining: 40,
+          image: '/images/hero_tea_coffee.jpg',
+        },
+      ],
+    },
+    {
+      id: 'EP-1047',
+      order_no: 'EP-1047',
+      items_count: 2,
+      customer_name: 'Anisha Rai',
+      customer_location: 'Pokhara',
+      customer_phone: '+977 9812345678',
+      customer_address: 'Lakeside, Pokhara, Nepal',
+      total_amount: 2800,
+      payment_status: 'Paid',
+      payment_method: 'Khalti',
+      fulfillment_status: 'Ready to ship',
+      created_at: 'Sep 16, 2026 9:15 AM',
+      items: [
+        {
+          id: 'it-3',
+          title: 'Organic Mustard Oil',
+          sku: 'EP-OIL-001',
+          vendor: 'Himalayan Organics',
+          qty: 1,
+          price: 1400,
+          total: 1400,
+          image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=100&auto=format&fit=crop&q=80',
+        },
+        {
+          id: 'it-4',
+          title: 'Wireless Earbuds',
+          sku: 'EP-EAR-002',
+          vendor: 'Everest Tech',
+          qty: 1,
+          price: 1400,
+          total: 1400,
+          image: '/images/cat_earbuds.jpg',
+        },
+      ],
+    },
+    {
+      id: 'EP-1046',
+      order_no: 'EP-1046',
+      items_count: 5,
+      customer_name: 'Bikash Gurung',
+      customer_location: 'Lalitpur',
+      customer_phone: '+977 9801122334',
+      customer_address: 'Jhamsikhel, Lalitpur, Nepal',
+      total_amount: 8400,
+      payment_status: 'Paid',
+      payment_method: 'eSewa',
+      fulfillment_status: 'Delivered',
+      created_at: 'Sep 15, 2026',
+      items: [
+        {
+          id: 'it-5',
+          title: 'Premium Basmati Rice',
+          sku: 'EP-RICE-001',
+          vendor: 'Terai Mills',
+          qty: 2,
+          price: 2500,
+          total: 5000,
+          image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&auto=format&fit=crop&q=80',
+        },
+        {
+          id: 'it-6',
+          title: 'Organic Mustard Oil',
+          sku: 'EP-OIL-001',
+          vendor: 'Himalayan Organics',
+          qty: 2,
+          price: 1200,
+          total: 2400,
+          image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=100&auto=format&fit=crop&q=80',
+        },
+        {
+          id: 'it-7',
+          title: 'Chyawanprash Jar',
+          sku: 'EP-HLT-004',
+          vendor: 'Dabur Nepal',
+          qty: 1,
+          price: 1000,
+          total: 1000,
+          image: '/images/hero_tea_coffee.jpg',
+        },
+      ],
+    },
+    {
+      id: 'EP-1045',
+      order_no: 'EP-1045',
+      items_count: 1,
+      customer_name: 'Riya Sharma',
+      customer_location: 'Bhaktapur',
+      customer_phone: '+977 9860123456',
+      customer_address: 'Durbar Square, Bhaktapur',
+      total_amount: 1200,
+      payment_status: 'Pending',
+      payment_method: 'COD',
+      fulfillment_status: 'New',
+      created_at: 'Sep 15, 2026',
+      items: [
+        {
+          id: 'it-8',
+          title: 'Wireless Earbuds',
+          sku: 'EP-EAR-002',
+          vendor: 'Everest Tech',
+          qty: 1,
+          price: 1200,
+          total: 1200,
+          image: '/images/cat_earbuds.jpg',
+        },
+      ],
+    },
+    {
+      id: 'EP-1044',
+      order_no: 'EP-1044',
+      items_count: 4,
+      customer_name: 'Prakash KC',
+      customer_location: 'Kathmandu',
+      customer_phone: '+977 9849887766',
+      customer_address: 'Baneshwor, Kathmandu',
+      total_amount: 6750,
+      payment_status: 'Paid',
+      payment_method: 'Fonepay',
+      fulfillment_status: 'Shipped',
+      created_at: 'Sep 14, 2026',
+      items: [
+        {
+          id: 'it-9',
+          title: 'Cotton Kurta & Pajama',
+          sku: 'EP-FSH-001',
+          vendor: 'Nepal Weaves',
+          qty: 2,
+          price: 2500,
+          total: 5000,
+          image: '/images/cat_fashion.jpg',
+        },
+        {
+          id: 'it-10',
+          title: 'Dhaka Shawl',
+          sku: 'EP-FSH-002',
+          vendor: 'Palpa Handloom',
+          qty: 2,
+          price: 875,
+          total: 1750,
+          image: '/images/promo_sweater.jpg',
+        },
+      ],
+    },
+    {
+      id: 'EP-1043',
+      order_no: 'EP-1043',
+      items_count: 2,
+      customer_name: 'Sunita Tamang',
+      customer_location: 'Chitwan',
+      customer_phone: '+977 9811224455',
+      customer_address: 'Bharatpur-10, Chitwan',
+      total_amount: 3200,
+      payment_status: 'Paid',
+      payment_method: 'eSewa',
+      fulfillment_status: 'Delivered',
+      created_at: 'Sep 13, 2026',
+      items: [
+        {
+          id: 'it-11',
+          title: 'Handcrafted Pashmina Scarf',
+          sku: 'EP-PSH-001',
+          vendor: 'Himalayan Silk',
+          qty: 1,
+          price: 2200,
+          total: 2200,
+          image: '/images/hero_pashmina.jpg',
+        },
+        {
+          id: 'it-12',
+          title: 'Himalayan Green Tea',
+          sku: 'EP-TEA-001',
+          vendor: 'Orthodox Tea',
+          qty: 1,
+          price: 1000,
+          total: 1000,
+          image: '/images/hero_tea_coffee.jpg',
+        },
+      ],
+    },
+    {
+      id: 'EP-1042',
+      order_no: 'EP-1042',
+      items_count: 3,
+      customer_name: 'Ram Basnet',
+      customer_location: 'Biratnagar',
+      customer_phone: '+977 9803344556',
+      customer_address: 'Main Road, Biratnagar',
+      total_amount: 5100,
+      payment_status: 'Refunded',
+      payment_method: 'eSewa',
+      fulfillment_status: 'Cancelled',
+      created_at: 'Sep 12, 2026',
+      items: [
+        {
+          id: 'it-13',
+          title: 'Organic Cold Pressed Mustard Oil',
+          sku: 'EP-OIL-002',
+          vendor: 'Himalayan Organics',
+          qty: 3,
+          price: 1700,
+          total: 5100,
+          image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=100&auto=format&fit=crop&q=80',
+        },
+      ],
+    },
+    {
+      id: 'EP-1041',
+      order_no: 'EP-1041',
+      items_count: 1,
+      customer_name: 'Deepa Shrestha',
+      customer_location: 'Kathmandu',
+      customer_phone: '+977 9841892011',
+      customer_address: 'Thamel, Kathmandu, Nepal',
+      total_amount: 1800,
+      payment_status: 'Paid',
+      payment_method: 'Khalti',
+      fulfillment_status: 'Returned',
+      created_at: 'Sep 11, 2026',
+      isRMA: true,
+      items: [
+        {
+          id: 'it-14',
+          title: 'Handcrafted Woolen Sweater',
+          sku: 'EP-SWT-001',
+          vendor: 'Patan Knits',
+          qty: 1,
+          price: 1800,
+          total: 1800,
+          image: '/images/promo_sweater.jpg',
+        },
+      ],
+    },
+  ];
 
-  // Drawer & Modal states
-  const [selectedOrder, setSelectedOrder] = useState<VendorOrder | null>(null);
-  const [statusModalOrder, setStatusModalOrder] = useState<VendorOrder | null>(null);
-  const [newStatus, setNewStatus] = useState<string>('Ready to ship');
-  const [statusNote, setStatusNote] = useState<string>('Order packed and ready for dispatch.');
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const query = new URLSearchParams({
-        tab: activeTab,
-        search: searchQuery,
-        payment: paymentFilter,
-        fulfillment: fulfillmentFilter,
-        sort: sortBy,
-        page: String(currentPage),
-        pageSize: String(pageSize),
-      });
-
-      const res = await ApiClient.get<any>(`/api/v1/vendor/orders?${query.toString()}`);
-      if (res?.orders) {
-        setOrders(res.orders);
-      }
-      if (res?.metrics) {
-        setMetrics(res.metrics);
-      }
-    } catch (err) {
-      console.error('Failed to load vendor orders:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, [activeTab, searchQuery, paymentFilter, fulfillmentFilter, sortBy, currentPage, pageSize]);
-
-  // Bulk selection helpers
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedIds(orders.map((o) => o.id));
@@ -134,466 +353,283 @@ export const VendorOrdersPage: React.FC = () => {
     );
   };
 
-  // Status update
-  const handleStatusUpdateSubmit = async () => {
-    if (!statusModalOrder) return;
-    try {
-      setIsUpdatingStatus(true);
-      await ApiClient.patch(`/api/v1/vendor/orders/${statusModalOrder.id}/status`, {
-        status: newStatus,
-        note: statusNote,
-      });
-
-      // Update in state
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === statusModalOrder.id
-            ? { ...o, fulfillment_status: newStatus }
-            : o
-        )
-      );
-
-      if (selectedOrder?.id === statusModalOrder.id) {
-        setSelectedOrder((prev) => (prev ? { ...prev, fulfillment_status: newStatus } : null));
-      }
-
-      setStatusModalOrder(null);
-    } catch (err: any) {
-      alert(`Update failed: ${err.message}`);
-    } finally {
-      setIsUpdatingStatus(false);
+  const handleRowClick = (order: OrderRecord) => {
+    if (order.fulfillment_status === 'Returned' || order.isRMA) {
+      setActiveRMADrawer(true);
+    } else {
+      setActiveOrderDrawer(order);
     }
-  };
-
-  const renderPaymentPill = (status: string) => {
-    const s = status.toLowerCase();
-    if (s.includes('paid')) {
-      return <span style={{ backgroundColor: '#DCFCE7', color: '#166534', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Paid</span>;
-    }
-    if (s.includes('pending')) {
-      return <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Pending</span>;
-    }
-    return <span style={{ backgroundColor: '#F1F5F9', color: '#475569', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Refunded</span>;
-  };
-
-  const renderFulfillmentPill = (status: string) => {
-    const s = status.toLowerCase();
-    if (s.includes('processing')) {
-      return <span style={{ backgroundColor: '#E0F2FE', color: '#0369A1', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Processing</span>;
-    }
-    if (s.includes('ready')) {
-      return <span style={{ backgroundColor: '#E0F2FE', color: '#0369A1', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Ready to ship</span>;
-    }
-    if (s.includes('delivered')) {
-      return <span style={{ backgroundColor: '#DCFCE7', color: '#166534', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Delivered</span>;
-    }
-    if (s.includes('shipped')) {
-      return <span style={{ backgroundColor: '#EFF6FF', color: '#2563EB', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Shipped</span>;
-    }
-    if (s.includes('new')) {
-      return <span style={{ backgroundColor: '#EFF6FF', color: '#2563EB', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>New</span>;
-    }
-    if (s.includes('cancelled')) {
-      return <span style={{ backgroundColor: '#FEE2E2', color: '#DC2626', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Cancelled</span>;
-    }
-    return <span style={{ backgroundColor: '#F1F5F9', color: '#475569', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>Returned</span>;
   };
 
   const tabs = [
-    { id: 'ALL', label: 'All', count: metrics.totalOrders },
-    { id: 'NEW', label: 'New', count: metrics.newOrders },
-    { id: 'PROCESSING', label: 'Processing', count: metrics.processing },
-    { id: 'READY_TO_SHIP', label: 'Ready to ship', count: metrics.readyToShip },
-    { id: 'SHIPPED', label: 'Shipped', count: metrics.shipped },
-    { id: 'DELIVERED', label: 'Delivered', count: metrics.completed },
-    { id: 'CANCELLED', label: 'Cancelled', count: metrics.cancelled },
-    { id: 'RETURNS', label: 'Returns', count: metrics.returns },
+    { id: 'ALL', label: 'All', count: '1,284' },
+    { id: 'NEW', label: 'New', count: '24' },
+    { id: 'PROCESSING', label: 'Processing', count: '18' },
+    { id: 'READY_TO_SHIP', label: 'Ready to ship', count: '12' },
+    { id: 'SHIPPED', label: 'Shipped', count: '36' },
+    { id: 'DELIVERED', label: 'Delivered', count: '1,180' },
+    { id: 'CANCELLED', label: 'Cancelled', count: '14', isRed: true },
+    { id: 'RETURNS', label: 'Returns', count: '6' },
   ];
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
-      {/* ========================================================================= */}
-      {/* BREADCRUMB & HEADER */}
-      {/* ========================================================================= */}
-      <div>
-        <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '4px' }}>
-          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/vendor')}>Dashboard</span> / <span style={{ color: '#0F172A', fontWeight: 600 }}>Orders</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.4px' }}>
-              Orders
-            </h1>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
-              Manage customer orders, track fulfillment, and keep your store running smoothly.
-            </p>
-          </div>
+  const renderPaymentBadge = (status: string) => {
+    switch (status) {
+      case 'Paid':
+        return (
+          <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Paid
+          </span>
+        );
+      case 'Pending':
+        return (
+          <span style={{ backgroundColor: '#FEF3C7', color: '#D97706', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Pending
+          </span>
+        );
+      case 'Refunded':
+      default:
+        return (
+          <span style={{ backgroundColor: '#F1F5F9', color: '#475569', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Refunded
+          </span>
+        );
+    }
+  };
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+  const renderFulfillmentBadge = (status: string) => {
+    switch (status) {
+      case 'Processing':
+        return (
+          <span style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Processing
+          </span>
+        );
+      case 'Ready to ship':
+        return (
+          <span style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Ready to ship
+          </span>
+        );
+      case 'Delivered':
+        return (
+          <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Delivered
+          </span>
+        );
+      case 'New':
+        return (
+          <span style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            New
+          </span>
+        );
+      case 'Shipped':
+        return (
+          <span style={{ backgroundColor: '#E0F2FE', color: '#0284C7', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Shipped
+          </span>
+        );
+      case 'Cancelled':
+        return (
+          <span style={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Cancelled
+          </span>
+        );
+      case 'Returned':
+      default:
+        return (
+          <span style={{ backgroundColor: '#F1F5F9', color: '#475569', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px' }}>
+            Returned
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      {/* ========================================================================= */}
+      {/* HEADER SECTION (Image 3) */}
+      {/* ========================================================================= */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+            Orders
+          </h1>
+          <p style={{ fontSize: '12.5px', color: '#64748B', margin: '3px 0 0 0' }}>
+            Manage customer orders, track fulfillment, and keep your store running smoothly.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={() => alert('Exporting orders CSV')}
+            style={{
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              border: '1px solid #E2E8F0',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Export orders
+          </button>
+          <button
+            onClick={() => navigate('/vendor/pos')}
+            style={{
+              backgroundColor: '#E11D48',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 1px 2px rgba(225, 29, 72, 0.2)',
+            }}
+          >
+            <span>+</span> Create order
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TOP 5 METRIC STAT CARDS (Image 3) */}
+      {/* ========================================================================= */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Total Orders</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>1,284</div>
+        </div>
+
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>New Orders</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>24</div>
+        </div>
+
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Processing</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>18</div>
+        </div>
+
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Ready to Ship</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>12</div>
+        </div>
+
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Completed</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>1,180</div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* STATUS TABS BAR (Image 3) */}
+      {/* ========================================================================= */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #ECECEC', gap: '24px', overflowX: 'auto' }}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
             <button
-              onClick={() => alert('Exporting orders CSV')}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               style={{
-                backgroundColor: '#FFFFFF',
-                color: '#0F172A',
-                border: '1px solid #ECE7DE',
-                padding: '9px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Export orders
-            </button>
-            <button
-              onClick={() => navigate('/vendor/pos')}
-              style={{
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
+                background: 'none',
                 border: 'none',
-                padding: '9px 18px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 700,
+                padding: '10px 0',
+                borderBottom: isActive ? '2px solid #1A56DB' : '2px solid transparent',
+                color: isActive ? '#1A56DB' : tab.isRed ? '#DC2626' : '#64748B',
+                fontWeight: isActive ? 700 : 500,
+                fontSize: '12.5px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                whiteSpace: 'nowrap',
               }}
             >
-              <span>+</span> Create order
+              <span>{tab.label}</span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: tab.isRed ? '#DC2626' : isActive ? '#1A56DB' : '#64748B',
+                }}
+              >
+                {tab.count}
+              </span>
             </button>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
       {/* ========================================================================= */}
-      {/* 5 TOP METRIC KPI CARDS */}
-      {/* ========================================================================= */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '14px' }}>
-        {/* Total Orders */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 20px', border: '1px solid #ECE7DE' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>TOTAL ORDERS</span>
-            <span style={{ color: '#94A3B8', fontSize: '13px' }}>📦</span>
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{metrics.totalOrders.toLocaleString()}</div>
-          <div style={{ fontSize: '11.5px', color: '#94A3B8' }}>All orders</div>
-        </div>
-
-        {/* New Orders */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 20px', border: '1px solid #ECE7DE' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>NEW ORDERS</span>
-            <span style={{ color: '#2563EB', fontSize: '13px' }}>🖊</span>
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#2563EB', margin: '8px 0 4px 0' }}>{metrics.newOrders}</div>
-          <div style={{ fontSize: '11.5px', color: '#94A3B8' }}>Awaiting processing</div>
-        </div>
-
-        {/* Processing */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 20px', border: '1px solid #ECE7DE' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>PROCESSING</span>
-            <span style={{ color: '#2563EB', fontSize: '13px' }}>🕒</span>
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#2563EB', margin: '8px 0 4px 0' }}>{metrics.processing}</div>
-          <div style={{ fontSize: '11.5px', color: '#94A3B8' }}>Being prepared</div>
-        </div>
-
-        {/* Ready to Ship */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 20px', border: '1px solid #ECE7DE' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>READY TO SHIP</span>
-            <span style={{ color: '#10B981', fontSize: '13px' }}>🎁</span>
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#16A34A', margin: '8px 0 4px 0' }}>{metrics.readyToShip}</div>
-          <div style={{ fontSize: '11.5px', color: '#94A3B8' }}>Awaiting dispatch</div>
-        </div>
-
-        {/* Completed */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 20px', border: '1px solid #ECE7DE' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>COMPLETED</span>
-            <span style={{ color: '#94A3B8', fontSize: '13px' }}>✓</span>
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{metrics.completed.toLocaleString()}</div>
-          <div style={{ fontSize: '11.5px', color: '#16A34A', fontWeight: 600 }}>↑ 8.2% <span style={{ color: '#94A3B8', fontWeight: 400 }}>Successfully fulfilled</span></div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* STATUS TABS */}
-      {/* ========================================================================= */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #ECE7DE', gap: '20px' }}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '10px 0',
-              borderBottom: activeTab === tab.id ? '2px solid #2563EB' : '2px solid transparent',
-              color: activeTab === tab.id ? '#2563EB' : '#64748B',
-              fontWeight: activeTab === tab.id ? 700 : 500,
-              fontSize: '13px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <span>{tab.label}</span>
-            <span
-              style={{
-                backgroundColor: activeTab === tab.id ? '#EFF6FF' : '#F1F5F9',
-                color: activeTab === tab.id ? '#2563EB' : '#64748B',
-                fontSize: '11px',
-                padding: '1px 6px',
-                borderRadius: '10px',
-                fontWeight: 600,
-              }}
-            >
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* ========================================================================= */}
-      {/* ATTENTION ALERT BANNER */}
-      {/* ========================================================================= */}
-      {attentionBanner && (
-        <div
-          style={{
-            backgroundColor: '#EFF6FF',
-            border: '1px solid #BFDBFE',
-            borderRadius: '10px',
-            padding: '12px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: '13px',
-            color: '#1E40AF',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>⚠️</span>
-            <span>{attentionBanner}</span>
-            <span
-              onClick={() => setActiveTab('NEW')}
-              style={{ fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', marginLeft: '4px' }}
-            >
-              View new orders →
-            </span>
-          </div>
-          <button
-            onClick={() => setAttentionBanner(null)}
-            style={{ background: 'none', border: 'none', color: '#60A5FA', fontSize: '14px', cursor: 'pointer' }}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* SEARCH AND FILTER BAR */}
-      {/* ========================================================================= */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '300px' }}>
-          <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
-            <input
-              type="text"
-              placeholder="Search by order ID, customer name, or produ..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 32px',
-                borderRadius: '8px',
-                border: '1px solid #ECE7DE',
-                backgroundColor: '#FFFFFF',
-                fontSize: '12.5px',
-                outline: 'none',
-              }}
-            />
-            <span style={{ position: 'absolute', left: '10px', top: '9px', color: '#94A3B8', fontSize: '12px' }}>🔍</span>
-          </div>
-
-          <div
-            style={{
-              padding: '7px 12px',
-              borderRadius: '20px',
-              border: '1px solid #ECE7DE',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12px',
-              color: '#334155',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <span>📅</span>
-            <span>Sep 1 – Sep 16, 2026</span>
-          </div>
-
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            style={{
-              padding: '7px 12px',
-              borderRadius: '20px',
-              border: '1px solid #ECE7DE',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12px',
-              color: '#334155',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <option value="ALL">Payment ▾</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-            <option value="Refunded">Refunded</option>
-          </select>
-
-          <select
-            value={fulfillmentFilter}
-            onChange={(e) => setFulfillmentFilter(e.target.value)}
-            style={{
-              padding: '7px 12px',
-              borderRadius: '20px',
-              border: '1px solid #ECE7DE',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12px',
-              color: '#334155',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <option value="ALL">Fulfillment ▾</option>
-            <option value="Processing">Processing</option>
-            <option value="Ready to ship">Ready to ship</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-
-          <button
-            onClick={() => alert('Delivery method filter')}
-            style={{
-              padding: '7px 12px',
-              borderRadius: '20px',
-              border: '1px solid #ECE7DE',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12px',
-              color: '#334155',
-              cursor: 'pointer',
-            }}
-          >
-            Delivery method ▾
-          </button>
-
-          <button
-            onClick={() => alert('More filters')}
-            style={{
-              padding: '7px 12px',
-              borderRadius: '20px',
-              border: '1px solid #ECE7DE',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12px',
-              color: '#64748B',
-              cursor: 'pointer',
-            }}
-          >
-            + More filters
-          </button>
-        </div>
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          style={{
-            padding: '7px 12px',
-            borderRadius: '8px',
-            border: '1px solid #ECE7DE',
-            backgroundColor: '#FFFFFF',
-            fontSize: '12px',
-            color: '#0F172A',
-            fontWeight: 500,
-            cursor: 'pointer',
-            outline: 'none',
-          }}
-        >
-          <option value="newest">Sort by: Newest first ▾</option>
-          <option value="oldest">Sort by: Oldest first</option>
-          <option value="amount_high">Sort by: Highest value</option>
-        </select>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* BULK SELECTION BAR */}
+      {/* BULK ACTION BAR (Image 3) */}
       {/* ========================================================================= */}
       {selectedIds.length > 0 && (
         <div
           style={{
             backgroundColor: '#FFFFFF',
-            border: '1.5px solid #2563EB',
-            borderRadius: '10px',
-            padding: '10px 16px',
+            border: '1px solid #E2E8F0',
+            borderRadius: '6px',
+            padding: '8px 14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)',
+            flexWrap: 'wrap',
+            gap: '10px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <input
               type="checkbox"
               checked={selectedIds.length === orders.length}
               onChange={handleSelectAll}
-              style={{ accentColor: '#2563EB', cursor: 'pointer' }}
+              style={{ accentColor: '#1A56DB', cursor: 'pointer', width: '15px', height: '15px' }}
             />
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#2563EB' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A' }}>
               {selectedIds.length} orders selected
             </span>
-            <span onClick={() => setSelectedIds([])} style={{ fontSize: '12px', color: '#2563EB', cursor: 'pointer', textDecoration: 'underline' }}>
+            <span
+              onClick={() => setSelectedIds([])}
+              style={{ fontSize: '11.5px', color: '#1A56DB', cursor: 'pointer', textDecoration: 'underline' }}
+            >
               Clear selection
             </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
-              onClick={() => {
-                if (orders[0]) setStatusModalOrder(orders[0]);
-              }}
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #ECE7DE', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }}
+              onClick={() => setActiveOrderDrawer(orders[0])}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Update status
             </button>
             <button
               onClick={() => alert('Printing invoices')}
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #ECE7DE', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Print invoices
             </button>
             <button
               onClick={() => alert('Printing packing slips')}
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #ECE7DE', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Print packing slips
             </button>
             <button
-              onClick={() => alert('Export selected orders')}
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #ECE7DE', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }}
+              onClick={() => alert('Export selected')}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Export
             </button>
             <button
-              onClick={() => alert('Cancel selected orders')}
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #EF4444', color: '#EF4444', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              onClick={() => alert('Cancel selected')}
+              style={{ backgroundColor: '#DC2626', border: 'none', color: '#FFFFFF', padding: '6px 14px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 600, cursor: 'pointer' }}
             >
               Cancel
             </button>
@@ -602,29 +638,29 @@ export const VendorOrdersPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* ORDERS DATA TABLE */}
+      {/* ORDERS DATA TABLE (Image 3) */}
       {/* ========================================================================= */}
-      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #ECE7DE', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #ECECEC', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #F1F5F9', color: '#64748B', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'left', backgroundColor: '#FFFFFF' }}>
-                <th style={{ padding: '12px 16px', width: '40px' }}>
+              <tr style={{ borderBottom: '1px solid #F1F5F9', color: '#64748B', fontSize: '10.5px', textAlign: 'left', backgroundColor: '#FFFFFF' }}>
+                <th style={{ padding: '10px 14px', width: '36px' }}>
                   <input
                     type="checkbox"
                     checked={selectedIds.length === orders.length}
                     onChange={handleSelectAll}
-                    style={{ accentColor: '#2563EB', cursor: 'pointer' }}
+                    style={{ accentColor: '#1A56DB', cursor: 'pointer' }}
                   />
                 </th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Order</th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Customer</th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Items</th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Total</th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Payment</th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Fulfillment</th>
-                <th style={{ padding: '12px 14px', fontWeight: 700 }}>Date</th>
-                <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Order</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Customer</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Items</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Total</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Payment</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Fulfillment</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600 }}>Date</th>
+                <th style={{ padding: '10px 14px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -636,69 +672,85 @@ export const VendorOrdersPage: React.FC = () => {
                     style={{
                       borderBottom: '1px solid #F8FAFC',
                       backgroundColor: isChecked ? '#F8FAFC' : '#FFFFFF',
-                      transition: 'background-color 0.15s',
                     }}
                   >
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '10px 14px' }}>
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => handleToggleSelect(o.id)}
-                        style={{ accentColor: '#2563EB', cursor: 'pointer' }}
+                        style={{ accentColor: '#1A56DB', cursor: 'pointer' }}
                       />
                     </td>
 
                     {/* Order ID */}
-                    <td style={{ padding: '12px 14px', cursor: 'pointer' }} onClick={() => setSelectedOrder(o)}>
-                      <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '13.5px' }}>#{o.order_no}</div>
-                      <div style={{ fontSize: '11px', color: '#64748B' }}>{o.items_count} items</div>
+                    <td style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => handleRowClick(o)}>
+                      <div style={{ fontWeight: 600, color: '#0F172A', fontSize: '12px' }}>#{o.order_no}</div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B' }}>{o.items_count} item{o.items_count > 1 ? 's' : ''}</div>
                     </td>
 
                     {/* Customer */}
-                    <td style={{ padding: '12px 14px', cursor: 'pointer' }} onClick={() => setSelectedOrder(o)}>
-                      <div style={{ fontWeight: 700, color: '#0F172A' }}>{o.customer_name}</div>
-                      <div style={{ fontSize: '11.5px', color: '#64748B' }}>{o.customer_location}</div>
+                    <td style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => handleRowClick(o)}>
+                      <div style={{ fontWeight: 600, color: '#0F172A' }}>{o.customer_name}</div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B' }}>{o.customer_location}</div>
                     </td>
 
                     {/* Items Thumbnails Stack */}
-                    <td style={{ padding: '12px 14px' }}>
+                    <td style={{ padding: '10px 12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {o.items.map((it, idx) => (
-                          <img
+                          <div
                             key={idx}
-                            src={it.image}
-                            alt=""
-                            style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #ECE7DE' }}
-                          />
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '4px',
+                              backgroundColor: '#F8FAFC',
+                              border: '1px solid #E2E8F0',
+                              overflow: 'hidden',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <img
+                              src={it.image}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={(e: any) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
                         ))}
                       </div>
                     </td>
 
                     {/* Total */}
-                    <td style={{ padding: '12px 14px', fontWeight: 700, color: '#0F172A' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0F172A' }}>
                       NPR {o.total_amount.toLocaleString()}
                     </td>
 
                     {/* Payment Status */}
-                    <td style={{ padding: '12px 14px' }}>
-                      {renderPaymentPill(o.payment_status)}
+                    <td style={{ padding: '10px 12px' }}>
+                      {renderPaymentBadge(o.payment_status)}
                     </td>
 
                     {/* Fulfillment Status */}
-                    <td style={{ padding: '12px 14px' }}>
-                      {renderFulfillmentPill(o.fulfillment_status)}
+                    <td style={{ padding: '10px 12px' }}>
+                      {renderFulfillmentBadge(o.fulfillment_status)}
                     </td>
 
                     {/* Date */}
-                    <td style={{ padding: '12px 14px', color: '#475569', fontSize: '12px' }}>
+                    <td style={{ padding: '10px 12px', color: '#64748B', fontSize: '11px' }}>
                       {o.created_at}
                     </td>
 
                     {/* Action Icon */}
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                       <button
-                        onClick={() => setSelectedOrder(o)}
-                        style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '16px', cursor: 'pointer', padding: '4px' }}
+                        onClick={() => handleRowClick(o)}
+                        style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '15px', cursor: 'pointer', padding: '2px' }}
                       >
                         ≡
                       </button>
@@ -712,31 +764,139 @@ export const VendorOrdersPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* PAGINATION BAR */}
+      {/* FILTER BAR (Image 3) */}
       {/* ========================================================================= */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ fontSize: '12.5px', color: '#64748B' }}>
-          Showing 1–{orders.length} of {metrics.totalOrders} orders
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, flexWrap: 'wrap' }}>
+          {/* Search */}
+          <div style={{ position: 'relative', width: '180px' }}>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 10px 6px 28px',
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                fontSize: '11.5px',
+                outline: 'none',
+              }}
+            />
+            <span style={{ position: 'absolute', left: '8px', top: '7px', color: '#94A3B8', fontSize: '11px' }}>🔍</span>
+          </div>
+
+          {/* Date pill */}
+          <div
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              backgroundColor: '#FFFFFF',
+              fontSize: '11.5px',
+              color: '#334155',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>📅</span>
+            <span>Sep 1 – Sep 16, 2026</span>
+          </div>
+
+          {/* Payment dropdown */}
+          <div
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              backgroundColor: '#FFFFFF',
+              fontSize: '11.5px',
+              color: '#334155',
+              cursor: 'pointer',
+            }}
+          >
+            Payment ▾
+          </div>
+
+          {/* Fulfillment dropdown */}
+          <div
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              backgroundColor: '#FFFFFF',
+              fontSize: '11.5px',
+              color: '#334155',
+              cursor: 'pointer',
+            }}
+          >
+            Fulfillment ▾
+          </div>
+
+          {/* Delivery method dropdown */}
+          <div
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              backgroundColor: '#FFFFFF',
+              fontSize: '11.5px',
+              color: '#334155',
+              cursor: 'pointer',
+            }}
+          >
+            Delivery method ▾
+          </div>
+
+          {/* More filters */}
+          <div
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              backgroundColor: '#FFFFFF',
+              fontSize: '11.5px',
+              color: '#64748B',
+              cursor: 'pointer',
+            }}
+          >
+            + More filters
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <button style={{ width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #ECE7DE', backgroundColor: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>←</button>
-          <button style={{ width: '32px', height: '32px', borderRadius: '6px', border: 'none', backgroundColor: '#2563EB', color: '#FFFFFF', fontWeight: 700 }}>1</button>
-          <button style={{ width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #ECE7DE', backgroundColor: '#FFFFFF', color: '#475569', cursor: 'pointer' }}>2</button>
-          <button style={{ width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #ECE7DE', backgroundColor: '#FFFFFF', color: '#475569', cursor: 'pointer' }}>3</button>
-          <span style={{ padding: '0 4px', color: '#94A3B8' }}>...</span>
-          <button style={{ width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #ECE7DE', backgroundColor: '#FFFFFF', color: '#475569', cursor: 'pointer' }}>161</button>
-          <button style={{ width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #ECE7DE', backgroundColor: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>→</button>
+        {/* Sort by */}
+        <div style={{ fontSize: '11.5px', color: '#334155', cursor: 'pointer' }}>
+          Sort by: Newest first ▾
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* PAGINATION BAR (Image 3) */}
+      {/* ========================================================================= */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ fontSize: '11.5px', color: '#64748B' }}>
+          Showing 1–8 of 1,284 orders
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#64748B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#64748B', cursor: 'pointer', fontSize: '11px' }}>←</button>
+          <button style={{ width: '28px', height: '28px', borderRadius: '4px', border: 'none', backgroundColor: '#1A56DB', color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}>1</button>
+          <button style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#334155', cursor: 'pointer', fontSize: '11px' }}>2</button>
+          <button style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#334155', cursor: 'pointer', fontSize: '11px' }}>3</button>
+          <span style={{ padding: '0 2px', color: '#94A3B8', fontSize: '11px' }}>...</span>
+          <button style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#334155', cursor: 'pointer', fontSize: '11px' }}>161</button>
+          <button style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#64748B', cursor: 'pointer', fontSize: '11px' }}>→</button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#64748B' }}>
           <span>Items per page:</span>
           <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #ECE7DE', backgroundColor: '#FFFFFF', fontSize: '12px' }}
+            style={{ padding: '2px 6px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', fontSize: '11.5px' }}
           >
-            <option value="25">25</option>
+            <option value="25">25 ▾</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
@@ -744,177 +904,452 @@ export const VendorOrdersPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* ORDERS DETAIL DRAWER (orders-detail-drawer.png) */}
+      {/* ORDER DETAIL DRAWER (Image 2: Order #EP-1048) */}
       {/* ========================================================================= */}
-      {selectedOrder && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.4)' }}>
+      {activeOrderDrawer && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.45)' }}>
           <div
             style={{
-              width: '450px',
-              maxWidth: '92vw',
+              width: '460px',
+              maxWidth: '94vw',
               height: '100%',
               backgroundColor: '#FFFFFF',
-              boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
+              boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
               display: 'flex',
               flexDirection: 'column',
               overflowY: 'auto',
             }}
           >
             {/* Header */}
-            <div style={{ padding: '20px 24px 16px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                    Order #{selectedOrder.order_no}
+            <div style={{ padding: '16px 20px 12px 20px', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Order #{activeOrderDrawer.order_no}
                   </h2>
-                  {renderFulfillmentPill(selectedOrder.fulfillment_status)}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" style={{ cursor: 'pointer' }}>
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span style={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#DC2626' }}></span>
+                    Processing
+                  </span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#64748B' }}>{selectedOrder.created_at}</div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    onClick={() => alert('Printing order')}
+                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '2px' }}
+                    title="Print"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                      <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setActiveOrderDrawer(null)}
+                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '2px' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  onClick={() => alert(`Printing invoice for #${selectedOrder.order_no}`)}
-                  style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: '16px' }}
-                  title="Print"
-                >
-                  🖨️
-                </button>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  style={{ background: 'none', border: 'none', color: '#64748B', width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#F1F5F9', cursor: 'pointer' }}
-                >
-                  ✕
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: '#64748B' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>👤</span>
+                  <span style={{ fontWeight: 600, color: '#0F172A' }}>{activeOrderDrawer.customer_name}</span>
+                  <span>•</span>
+                  <span>{activeOrderDrawer.customer_location}</span>
+                </div>
+                <span>16 Sept, 10:32 AM</span>
               </div>
             </div>
 
-            {/* Customer Section */}
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #F1F5F9' }}>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', marginBottom: '10px' }}>Customer</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12.5px' }}>
-                <div><span style={{ color: '#64748B', width: '60px', display: 'inline-block' }}>Name:</span> <strong style={{ color: '#0F172A' }}>{selectedOrder.customer_name}</strong></div>
-                <div><span style={{ color: '#64748B', width: '60px', display: 'inline-block' }}>Phone:</span> <span style={{ color: '#334155' }}>{selectedOrder.customer_phone}</span></div>
-                <div><span style={{ color: '#64748B', width: '60px', display: 'inline-block' }}>Email:</span> <span style={{ color: '#334155' }}>{selectedOrder.customer_email}</span></div>
-                <div><span style={{ color: '#64748B', width: '60px', display: 'inline-block' }}>Address:</span> <span style={{ color: '#334155' }}>{selectedOrder.customer_address}</span></div>
-              </div>
-            </div>
+            {/* Content Body */}
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* FULFILLMENT STAGE (Stepper) */}
+              <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B' }}>
+                    FULFILLMENT STAGE
+                  </span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>
+                    Step 3 of 8 (Picking)
+                  </span>
+                </div>
 
-            {/* Order Items */}
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #F1F5F9' }}>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', marginBottom: '12px' }}>Order items ({selectedOrder.items.length})</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {selectedOrder.items.map((it) => (
-                  <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img src={it.image} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{it.title}</div>
-                        <div style={{ fontSize: '11px', color: '#64748B' }}>SKU: {it.sku} — Qty: {it.qty}</div>
+                {/* Stepper Progress Bar */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '8px' }}>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#10B981', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#10B981' }}>✔ Confirmed</div>
+                  </div>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#10B981', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#10B981' }}>✔ Reserved</div>
+                  </div>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#1E40AF', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#1E40AF' }}>● Picking</div>
+                  </div>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', color: '#94A3B8' }}>Packed</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', color: '#94A3B8' }}>Courier</div>
+                  </div>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', color: '#94A3B8' }}>Out for Deliv.</div>
+                  </div>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', color: '#94A3B8' }}>Delivered</div>
+                  </div>
+                  <div>
+                    <div style={{ height: '3.5px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginBottom: '4px' }}></div>
+                    <div style={{ fontSize: '9.5px', color: '#94A3B8' }}>Settled</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Two Info Cards: Payment status & Stock Allocation */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', padding: '10px 12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '10px', color: '#64748B' }}>Payment status</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>NPR 2,640</div>
+                    <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '9.5px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                      Paid (eSewa)
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', padding: '10px 12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '10px', color: '#64748B' }}>Stock Allocation</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>Central Hub</div>
+                    <span style={{ backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '9.5px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                      Reserved (3)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pick & Pack Verification */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #ECECEC', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Pick & Pack Verification</div>
+                  <span style={{ backgroundColor: '#FEF3C7', color: '#D97706', fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                    {Object.values(pickedItems).filter(Boolean).length} / 2 Picked
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '12px' }}>
+                  Tick every verified physical item before packing.
+                </div>
+
+                {/* Items to verify */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {/* Item 1 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px', backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!pickedItems['it-1']}
+                      onChange={(e) => setPickedItems({ ...pickedItems, 'it-1': e.target.checked })}
+                      style={{ accentColor: '#1A56DB', marginTop: '3px', cursor: 'pointer' }}
+                    />
+                    <div style={{ width: '38px', height: '38px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src="/images/product_dhaka_topi.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>Traditional Dhaka Topi × 2</div>
+                      <div style={{ fontSize: '10px', color: '#64748B' }}>SKU: EP-TEA-003 • Orthodox Tea Estate</div>
+                      <div style={{ fontSize: '10px', color: '#10B981', fontWeight: 600, marginTop: '2px' }}>✔ 40 units remaining in stock</div>
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>NPR 1,000</div>
+                  </div>
+
+                  {/* Item 2 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px', backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!pickedItems['it-2']}
+                      onChange={(e) => setPickedItems({ ...pickedItems, 'it-2': e.target.checked })}
+                      style={{ accentColor: '#1A56DB', marginTop: '3px', cursor: 'pointer' }}
+                    />
+                    <div style={{ width: '38px', height: '38px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src="/images/hero_tea_coffee.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>Organic Ilam Green Tea 250g × 1</div>
+                      <div style={{ fontSize: '10px', color: '#64748B' }}>SKU: EP-TEA-003 • Orthodox Tea Estate</div>
+                      <div style={{ fontSize: '10px', color: '#10B981', fontWeight: 600, marginTop: '2px' }}>✔ 40 units remaining in stock</div>
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>NPR 840</div>
+                  </div>
+                </div>
+
+                {/* Info Notice */}
+                <div style={{ backgroundColor: '#EFF6FF', borderRadius: '4px', padding: '8px 10px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10.5px', color: '#1E40AF' }}>
+                  <span>ⓘ</span>
+                  <span>Both items must be checked before proceeding to the "Packed" state.</span>
+                </div>
+              </div>
+
+              {/* Logistics & Courier Service */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #ECECEC', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Logistics & Courier Service</div>
+                  <span style={{ backgroundColor: '#FEF3C7', color: '#D97706', fontSize: '9.5px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                    Not Shipped
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '10px' }}>
+                  Assigned Delivery Partner
+                </div>
+
+                {/* Two Courier Radio Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                  {/* Nepal Can Move */}
+                  <div
+                    onClick={() => setSelectedCourier('NCM')}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: selectedCourier === 'NCM' ? '1.5px solid #1A56DB' : '1px solid #E2E8F0',
+                      backgroundColor: selectedCourier === 'NCM' ? '#EFF6FF' : '#FFFFFF',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      checked={selectedCourier === 'NCM'}
+                      onChange={() => setSelectedCourier('NCM')}
+                      style={{ accentColor: '#1A56DB' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A' }}>Nepal Can Move</div>
+                      <div style={{ fontSize: '10px', color: '#64748B' }}>Standard Dispatch</div>
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>NPR 95</div>
+                  </div>
+
+                  {/* Pathao */}
+                  <div
+                    onClick={() => setSelectedCourier('PATHAO')}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: selectedCourier === 'PATHAO' ? '1.5px solid #1A56DB' : '1px solid #E2E8F0',
+                      backgroundColor: selectedCourier === 'PATHAO' ? '#EFF6FF' : '#FFFFFF',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      checked={selectedCourier === 'PATHAO'}
+                      onChange={() => setSelectedCourier('PATHAO')}
+                      style={{ accentColor: '#1A56DB' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A' }}>Pathao</div>
+                      <div style={{ fontSize: '10px', color: '#64748B' }}>Express Bike</div>
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>NPR 110</div>
+                  </div>
+                </div>
+
+                {/* Consignment Tracking ID Container */}
+                <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0', padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#64748B' }}>Consignment Tracking ID</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>EP1048NP165</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" style={{ cursor: 'pointer' }}>
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
                       </div>
                     </div>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>
-                      NPR {it.total.toLocaleString()}
-                    </div>
+                    <button
+                      onClick={() => alert('Downloading AWB Label')}
+                      style={{
+                        backgroundColor: '#EFF6FF',
+                        color: '#1D4ED8',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <span>📥</span> AWB / Shipping Label
+                    </button>
                   </div>
-                ))}
+
+                  {/* Barcode Graphic */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '2px', height: '24px', backgroundColor: '#FFFFFF', padding: '4px 8px', borderRadius: '4px', border: '1px dashed #CBD5E1' }}>
+                    {[2, 1, 3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 2, 4, 2, 1, 3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 2].map((w, i) => (
+                      <span key={i} style={{ width: `${w}px`, height: '100%', backgroundColor: '#0F172A' }}></span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* Price Breakdown */}
-              <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12.5px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                  <span>Subtotal</span>
-                  <span>NPR {selectedOrder.subtotal.toLocaleString()}</span>
+              {/* Order Activity & Audit Trail */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #ECECEC', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Order Activity & Audit Trail</div>
+                  <span style={{ fontSize: '10.5px', color: '#64748B' }}>4 logged events</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
-                  <span>Delivery fee</span>
-                  <span>NPR {selectedOrder.delivery_fee}</span>
-                </div>
-                {selectedOrder.discount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#EF4444' }}>
-                    <span>Discount</span>
-                    <span>-NPR {selectedOrder.discount}</span>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative' }}>
+                  {/* Event 1 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1A56DB', marginTop: '4px', flexShrink: 0 }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                        <span style={{ fontWeight: 700, color: '#0F172A' }}>Assigned Nepal Can Move</span>
+                        <span style={{ color: '#64748B', fontSize: '10.5px' }}>Today, 19:43</span>
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '1px' }}>
+                        Tracking AWB #EP1048NP165 auto-generated by Manish Sharma
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 800, color: '#0F172A', marginTop: '4px', paddingTop: '6px', borderTop: '1px solid #ECE7DE' }}>
-                  <span>Total</span>
-                  <span>NPR {selectedOrder.total_amount.toLocaleString()}</span>
+
+                  {/* Event 2 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1A56DB', marginTop: '4px', flexShrink: 0 }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                        <span style={{ fontWeight: 700, color: '#0F172A' }}>Stock Allocated</span>
+                        <span style={{ color: '#64748B', fontSize: '10.5px' }}>16 Sept, 10:40</span>
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '1px' }}>
+                        Automated reservation locked at Kathmandu Central Warehouse
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Event 3 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', marginTop: '4px', flexShrink: 0 }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                        <span style={{ fontWeight: 700, color: '#0F172A' }}>Payment Settled</span>
+                        <span style={{ color: '#64748B', fontSize: '10.5px' }}>16 Sept, 10:33</span>
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '1px' }}>
+                        NPR 2,640 captured via eSewa digital wallet (Ref: ESW-989201)
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Event 4 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1A56DB', marginTop: '4px', flexShrink: 0 }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                        <span style={{ fontWeight: 700, color: '#0F172A' }}>Order Placed</span>
+                        <span style={{ color: '#64748B', fontSize: '10.5px' }}>16 Sept, 10:32</span>
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '1px' }}>
+                        Submitted via Everest Pasal Android Mobile App by Suman Thapa
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                  <span style={{ fontSize: '11.5px', color: '#64748B' }}>Paid via {selectedOrder.payment_method}</span>
-                  <span style={{ backgroundColor: '#DCFCE7', color: '#166534', fontSize: '10.5px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>Paid</span>
+              </div>
+
+              {/* Customer Contact Footer Card */}
+              <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: '#E0E7FF', color: '#1E3A8A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '11px' }}>
+                    ST
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>Suman Thapa</div>
+                    <div style={{ fontSize: '10px', color: '#64748B' }}>123 Durbar Marg, Kathmandu, Nepal</div>
+                  </div>
                 </div>
+                <a href="tel:+9779841234567" style={{ fontSize: '11px', fontWeight: 600, color: '#1A56DB', textDecoration: 'none' }}>
+                  📞 +977 9841234567
+                </a>
               </div>
             </div>
 
-            {/* Order Timeline */}
-            <div style={{ padding: '18px 24px', flex: 1 }}>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', marginBottom: '14px' }}>Order Timeline</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', position: 'relative' }}>
-                {selectedOrder.timeline.map((step, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '12.5px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <span
-                        style={{
-                          width: '10px',
-                          height: '10px',
-                          borderRadius: '50%',
-                          backgroundColor: step.completed ? '#10B981' : '#CBD5E1',
-                        }}
-                      ></span>
-                      {idx < selectedOrder.timeline.length - 1 && (
-                        <div style={{ width: '2px', height: '24px', backgroundColor: step.completed ? '#10B981' : '#E2E8F0', marginTop: '2px' }}></div>
-                      )}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: step.completed ? 700 : 500, color: step.completed ? '#0F172A' : '#94A3B8' }}>{step.title}</div>
-                      <div style={{ fontSize: '11px', color: '#64748B' }}>{step.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Drawer Bottom Actions */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid #ECE7DE', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            {/* Bottom Action Footer */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid #ECECEC', backgroundColor: '#FFFFFF', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
                 <button
-                  onClick={() => setStatusModalOrder(selectedOrder)}
+                  onClick={() => alert('Order moved to Packed!')}
                   style={{
                     flex: 1,
-                    backgroundColor: '#2563EB',
+                    backgroundColor: '#E11D48',
                     color: '#FFFFFF',
                     border: 'none',
                     padding: '10px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
+                    borderRadius: '6px',
+                    fontSize: '12.5px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
                   }}
                 >
-                  Update status
+                  <span>📦</span> Move to Packed
                 </button>
                 <button
-                  onClick={() => alert(`Print invoice for #${selectedOrder.order_no}`)}
+                  onClick={() => setActiveOrderDrawer(null)}
                   style={{
-                    flex: 1,
                     backgroundColor: '#FFFFFF',
-                    color: '#0F172A',
-                    border: '1px solid #ECE7DE',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
+                    color: '#DC2626',
+                    border: '1px solid #FCA5A5',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    fontSize: '12.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                 >
-                  Print invoice
+                  <span>🚫</span> Cancel
                 </button>
               </div>
-              <div style={{ textAlign: 'center', marginTop: '4px' }}>
-                <span onClick={() => alert(`Calling customer ${selectedOrder.customer_phone}`)} style={{ fontSize: '12px', color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>
-                  Contact customer
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: '#64748B' }}>
+                <span style={{ cursor: 'pointer' }} onClick={() => alert('Printing packing slip')}>
+                  🖨 Print Packing Slip
                 </span>
+                <span>Estimated Dispatch: Today 17:00</span>
               </div>
             </div>
           </div>
@@ -922,110 +1357,317 @@ export const VendorOrdersPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* STATUS UPDATE MODAL (orders-status-update-modal.png) */}
+      {/* RMA / RETURN & REPLACEMENT DRAWER (Image 1: RMA #RET-41048-01) */}
       {/* ========================================================================= */}
-      {statusModalOrder && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(15, 23, 42, 0.5)' }}>
-          <div style={{ width: '420px', maxWidth: '92vw', backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '24px', boxShadow: '0 8px 30px rgba(0,0,0,0.18)', position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                Update order status
-              </h3>
-              <button
-                onClick={() => setStatusModalOrder(null)}
-                style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '14px', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
+      {activeRMADrawer && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.45)' }}>
+          <div
+            style={{
+              width: '490px',
+              maxWidth: '94vw',
+              height: '100%',
+              backgroundColor: '#FFFFFF',
+              boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '16px 20px 12px 20px', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    RMA #RET-41048-01
+                  </h2>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" style={{ cursor: 'pointer' }}>
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF', fontSize: '9.5px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>
+                    RETURN & REPLACEMENT
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => alert('Printing RMA Slip')}
+                    style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}
+                  >
+                    🖨 Print Slip
+                  </button>
+                  <button
+                    onClick={() => setActiveRMADrawer(false)}
+                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '2px' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '6px' }}>
+                <span style={{ backgroundColor: '#FEF3C7', color: '#D97706', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
+                  Priority RMA
+                </span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', marginBottom: '16px' }}>
-              <span style={{ color: '#64748B' }}>Order: <strong style={{ color: '#0F172A' }}>#{statusModalOrder.order_no}</strong></span>
-              <span style={{ color: '#CBD5E1' }}>|</span>
-              <span style={{ color: '#64748B' }}>Current status:</span>
-              {renderFulfillmentPill(statusModalOrder.fulfillment_status)}
+            {/* RMA Content Body */}
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Customer Box */}
+              <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '6px', backgroundColor: '#0A2540', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
+                      ST
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Suman Thapa</span>
+                        <span style={{ color: '#1A56DB', fontSize: '12px' }}>✔</span>
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B' }}>Kathmandu, Bagmati • +977 9841892011</div>
+                      <div style={{ fontSize: '10.5px', color: '#1A56DB', cursor: 'pointer', marginTop: '2px' }}>Order History (4)</div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '11px', color: '#64748B' }}>
+                      Original Order: <strong style={{ color: '#0F172A' }}>#EP-048</strong> 16 Sept, 2024
+                    </div>
+                    <div style={{ backgroundColor: '#FEF9C3', color: '#854D0E', fontSize: '10.5px', padding: '4px 8px', borderRadius: '4px', marginTop: '4px', fontWeight: 600 }}>
+                      Reason: Size / Fit Issue & Packaging Damage
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#94A3B8', marginTop: '4px' }}>Received at Hub: Today, 11:20 AM</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* WORKFLOW PROGRESS */}
+              <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B' }}>
+                    WORKFLOW PROGRESS
+                  </span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>
+                    Stage 4 of 5 (Replacement Generation)
+                  </span>
+                </div>
+
+                {/* 5 Steps */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '10px' }}>
+                  <div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#10B981', color: '#FFFFFF', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>✓</div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#0F172A', marginTop: '3px' }}>1. Request</div>
+                    <div style={{ fontSize: '9px', color: '#94A3B8' }}>17 Sept</div>
+                  </div>
+                  <div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#10B981', color: '#FFFFFF', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>✓</div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#0F172A', marginTop: '3px' }}>2. Approval</div>
+                    <div style={{ fontSize: '9px', color: '#94A3B8' }}>18 Sept</div>
+                  </div>
+                  <div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#10B981', color: '#FFFFFF', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>✓</div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#0F172A', marginTop: '3px' }}>3. Inspect</div>
+                    <div style={{ fontSize: '9px', color: '#94A3B8' }}>Passed</div>
+                  </div>
+                  <div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#1A56DB', color: '#FFFFFF', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>⇄</div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#1A56DB', marginTop: '3px' }}>4. Replacement</div>
+                    <div style={{ fontSize: '9px', color: '#1A56DB', fontWeight: 600 }}>#EP-41048-REP</div>
+                  </div>
+                  <div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#E2E8F0', color: '#64748B', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>🚚</div>
+                    <div style={{ fontSize: '10px', color: '#64748B', marginTop: '3px' }}>5. Dispatch</div>
+                    <div style={{ fontSize: '9px', color: '#94A3B8' }}>Nepal Can Move</div>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#FFFFFF', borderRadius: '6px', border: '1px solid #E2E8F0', padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }}></span>
+                    <span>In-person inspection passed · Ready for <strong>Zero-Charge Replacement Dispatch</strong></span>
+                  </div>
+                  <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '9.5px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                    InspectionApproved
+                  </span>
+                </div>
+              </div>
+
+              {/* Eligibility & Everest Return Policy Audit */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #ECECEC', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700, color: '#0F172A' }}>
+                    <span>🛡</span> Eligibility & Everest Return Policy Audit
+                  </div>
+                  <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '9.5px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                    Compliant
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                  <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', padding: '8px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: '9.5px', color: '#64748B' }}>Policy Window</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A', margin: '2px 0' }}>4 of 7 Days</div>
+                    <div style={{ fontSize: '9px', color: '#10B981', fontWeight: 600 }}>Valid & in-time</div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', padding: '8px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: '9.5px', color: '#64748B' }}>Return Categories</div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A', margin: '2px 0' }}>Textile & Sealed Tea</div>
+                    <div style={{ fontSize: '9px', color: '#10B981', fontWeight: 600 }}>Approved for RMA</div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', padding: '8px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: '9.5px', color: '#64748B' }}>Customer Proofs</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A', margin: '2px 0' }}>2 Photos Uploaded</div>
+                    <div style={{ fontSize: '9px', color: '#1A56DB', fontWeight: 600, cursor: 'pointer' }}>Inspect Proofs</div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', padding: '8px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: '9.5px', color: '#64748B' }}>Reverse Freight</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0F172A', margin: '2px 0' }}>NPR 95 (Waived)</div>
+                    <div style={{ fontSize: '9px', color: '#64748B' }}>Paid by Platform</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Physical Item Inspection & Stock Disposition */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #ECECEC', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700, color: '#0F172A' }}>
+                    <span>📦</span> Physical Item Inspection & Stock Disposition
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: '#64748B' }}>2 Returned / 3 Ordered</span>
+                </div>
+
+                {/* Item 1 */}
+                <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0', padding: '10px', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src="/images/product_dhaka_topi.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>
+                          Handcrafted Traditional Dhaka Topi (Size: 58cm)
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>NPR 1,000</span>
+                          <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', marginLeft: '4px' }}>
+                            QC Passed
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
+                        SKU: EP-TOP-004 • Unit: NPR 1,000 • Returning: 1 of 2 Units
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Conditions */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '8px' }}>
+                    <div style={{ backgroundColor: '#FFFFFF', borderRadius: '4px', border: '1px solid #E2E8F0', padding: '6px 8px', fontSize: '10px', color: '#334155' }}>
+                      Original Palpa Tag & Weave Intact
+                    </div>
+                    <div style={{ backgroundColor: '#FFFFFF', borderRadius: '4px', border: '1px solid #E2E8F0', padding: '6px 8px', fontSize: '10px', color: '#334155' }}>
+                      Unworn Condition & No Blemish
+                    </div>
+                  </div>
+
+                  {/* Disposition Routing */}
+                  <div style={{ backgroundColor: '#FFFFFF', borderRadius: '4px', border: '1px solid #E2E8F0', padding: '6px 10px', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10.5px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748B' }}>
+                      <span>🏠</span>
+                      <span>Select Disposition Routing:</span>
+                    </div>
+                    <span style={{ backgroundColor: '#EFF6FF', color: '#1A56DB', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#10B981' }}></span>
+                      Restock to Central Hub (Sellable Inventory +1)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Item 2 */}
+                <div style={{ backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0', padding: '10px' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src="/images/hero_tea_coffee.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>
+                          Organic Ilam Green Tea 250g Tin Canister
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>NPR 840</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                New status
-              </label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #ECE7DE',
-                  fontSize: '13px',
-                  color: '#0F172A',
-                  backgroundColor: '#FFFFFF',
-                  outline: 'none',
-                }}
-              >
-                <option value="Ready to ship">Ready to ship</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
+            {/* Bottom Actions */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid #ECECEC', backgroundColor: '#FFFFFF', marginTop: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '8px', marginBottom: '10px' }}>
+                <button
+                  onClick={() => alert('Switched to monetary refund')}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    color: '#0F172A',
+                    padding: '9px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🔄</span> Switch to Monetary Refund
+                </button>
+                <button
+                  onClick={() => alert('Generated replacement order')}
+                  style={{
+                    backgroundColor: '#0A2540',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '9px 14px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🔄</span> Generate Replacement Order & Dispatch
+                </button>
+              </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                Note (optional)
-              </label>
-              <textarea
-                rows={3}
-                value={statusNote}
-                onChange={(e) => setStatusNote(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #ECE7DE',
-                  fontSize: '12.5px',
-                  backgroundColor: '#FFFDF9',
-                  outline: 'none',
-                  color: '#334155',
-                }}
-              ></textarea>
-            </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '10.5px', color: '#334155' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" defaultChecked style={{ accentColor: '#1A56DB' }} />
+                  <span>Auto-reserve inventory in Central Hub</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" defaultChecked style={{ accentColor: '#1A56DB' }} />
+                  <span>WhatsApp Dispatch Alert (+977 9841892011)</span>
+                </label>
+              </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setStatusModalOrder(null)}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  color: '#475569',
-                  border: '1px solid #ECE7DE',
-                  padding: '8px 18px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isUpdatingStatus}
-                onClick={handleStatusUpdateSubmit}
-                style={{
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  padding: '8px 20px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                {isUpdatingStatus ? 'Updating...' : 'Update status'}
-              </button>
+              <div style={{ textAlign: 'right', marginTop: '6px' }}>
+                <span onClick={() => alert('Downloading Audit PDF')} style={{ fontSize: '10.5px', color: '#0F172A', fontWeight: 600, cursor: 'pointer' }}>
+                  📥 Download Audit PDF
+                </span>
+              </div>
             </div>
           </div>
         </div>
