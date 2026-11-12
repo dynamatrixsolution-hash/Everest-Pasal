@@ -272,9 +272,9 @@ export const VendorInventoryPage: React.FC = () => {
 
   // State Management
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(INITIAL_INVENTORY_ITEMS);
-  const [recentMovements] = useState<StockMovement[]>(INITIAL_RECENT_MOVEMENTS);
-  const [needsAttention] = useState<NeedsAttentionItem[]>(INITIAL_NEEDS_ATTENTION);
-  const [metrics] = useState({
+  const [recentMovements, setRecentMovements] = useState<StockMovement[]>(INITIAL_RECENT_MOVEMENTS);
+  const [needsAttention, setNeedsAttention] = useState<NeedsAttentionItem[]>(INITIAL_NEEDS_ATTENTION);
+  const [metrics, setMetrics] = useState({
     totalProducts: 248,
     totalStockUnits: 4862,
     lowStock: 18,
@@ -303,16 +303,45 @@ export const VendorInventoryPage: React.FC = () => {
   const [isSubmittingAdjust, setIsSubmittingAdjust] = useState<boolean>(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  // Optional dynamic fetch
+  // Dynamic fetch from backend API
   useEffect(() => {
     const fetchDynamic = async () => {
       try {
         const res = await ApiClient.get<any>(`/api/v1/vendor/inventory`);
-        if (res?.data?.items && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setInventoryItems(res.data.items);
+        const itemsList = res?.items ?? res?.data?.items;
+        const m = res?.metrics ?? res?.data?.metrics;
+        const att = res?.needsAttention ?? res?.data?.needsAttention;
+        const mov = res?.recentMovements ?? res?.data?.recentMovements;
+        if (Array.isArray(itemsList)) {
+          setInventoryItems(
+            itemsList.map((it: any) => ({
+              ...it,
+              value: typeof it.value === 'number' ? Number(it.value) : Number(String(it.value || 0).replace(/[^0-9.]/g, '')) || 0,
+              images: it.images || [it.image],
+              recentMovements: it.recentMovements || [],
+            }))
+          );
+        }
+        if (Array.isArray(att)) {
+          setNeedsAttention(att);
+        }
+        if (Array.isArray(mov)) {
+          setRecentMovements(mov);
+        }
+        if (m) {
+          setMetrics({
+            totalProducts: Number(m.totalProducts ?? 0),
+            totalStockUnits: Number(m.totalStockUnits ?? 0),
+            lowStock: Number(m.lowStock ?? 0),
+            outOfStock: Number(m.outOfStock ?? 0),
+            inventoryValue:
+              typeof m.inventoryValue === 'number'
+                ? `NPR ${Number(m.inventoryValue).toLocaleString()}`
+                : m.inventoryValue || 'NPR 0',
+          });
         }
       } catch {
-        // Fallback to initial mock data
+        // Fallback to initial mock data when offline
       }
     };
     fetchDynamic();
@@ -346,7 +375,7 @@ export const VendorInventoryPage: React.FC = () => {
   };
 
   // Handle Save Stock Adjustment
-  const handleSaveAdjustment = (e: React.FormEvent) => {
+  const handleSaveAdjustment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adjustModalItem) return;
 
@@ -355,8 +384,19 @@ export const VendorInventoryPage: React.FC = () => {
     const newStatus: 'In stock' | 'Low stock' | 'Out of stock' =
       newAvailable === 0 ? 'Out of stock' : newAvailable <= adjustModalItem.threshold ? 'Low stock' : 'In stock';
 
-    setInventoryItems((prev) =>
-      prev.map((item) =>
+    try {
+      await ApiClient.post(`/api/v1/vendor/inventory/${adjustModalItem.id}/adjust`, {
+        type: adjustType,
+        quantity: adjustQty,
+        reason: adjustReason,
+        notes: adjustNotes,
+      });
+    } catch {
+      // Offline fallback
+    }
+
+    setInventoryItems((prev) => {
+      const next = prev.map((item) =>
         item.id === adjustModalItem.id
           ? {
               ...item,
@@ -366,8 +406,19 @@ export const VendorInventoryPage: React.FC = () => {
               updated_at: 'Just now',
             }
           : item
-      )
-    );
+      );
+      const totalUnits = next.reduce((s, it) => s + Number(it.total_units || 0), 0);
+      const lowCnt = next.filter((it) => it.status === 'Low stock').length;
+      const outCnt = next.filter((it) => it.status === 'Out of stock').length;
+      setMetrics((prevM) => ({
+        ...prevM,
+        totalProducts: next.length,
+        totalStockUnits: totalUnits,
+        lowStock: lowCnt,
+        outOfStock: outCnt,
+      }));
+      return next;
+    });
 
     if (selectedDrawerItem && selectedDrawerItem.id === adjustModalItem.id) {
       setSelectedDrawerItem((prev) =>

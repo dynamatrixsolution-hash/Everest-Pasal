@@ -318,7 +318,7 @@ export const VendorProductsPage: React.FC = () => {
           products?: VendorProduct[];
         }>(`/api/v1/vendor/products?${queryParams.toString()}`);
 
-        if (res?.products && Array.isArray(res.products) && res.products.length > 0) {
+        if (res && Array.isArray(res.products)) {
           setProducts(res.products);
         }
         if (res?.metrics) {
@@ -365,7 +365,17 @@ export const VendorProductsPage: React.FC = () => {
     } catch {
       // Local state deletion fallback
     }
-    setProducts((prev) => prev.filter((p) => p.id !== deleteModalProduct.id));
+    setProducts((prev) => {
+      const next = prev.filter((p) => p.id !== deleteModalProduct.id);
+      setMetrics({
+        totalProducts: next.length,
+        published: next.filter((p) => p.status === 'Published').length,
+        drafts: next.filter((p) => p.status === 'Draft').length,
+        lowStock: next.filter((p) => p.stock_units > 0 && p.stock_units <= 10).length,
+        pendingApproval: next.filter((p) => p.status === 'Pending review').length,
+      });
+      return next;
+    });
     setSelectedIds((prev) => prev.filter((id) => id !== deleteModalProduct.id));
     if (quickViewProduct?.id === deleteModalProduct.id) {
       setQuickViewProduct(null);
@@ -382,6 +392,7 @@ export const VendorProductsPage: React.FC = () => {
     }
 
     setIsSubmitting(true);
+    const stockNum = formData.stock !== '' ? Number(formData.stock) : 10;
     const newProduct: VendorProduct = {
       id: `prd-${Date.now()}`,
       title: formData.title,
@@ -389,8 +400,8 @@ export const VendorProductsPage: React.FC = () => {
       category: formData.category,
       price: Number(formData.price),
       sale_price: formData.salePrice ? Number(formData.salePrice) : null,
-      stock_units: Number(formData.stock) || 10,
-      stock_status: Number(formData.stock) > 0 ? 'In stock' : 'Out of stock',
+      stock_units: stockNum,
+      stock_status: stockNum <= 0 ? 'Out of stock' : stockNum <= 10 ? 'Low stock' : 'In stock',
       status: formData.publish ? 'Published' : 'Draft',
       approval_status: formData.publish ? 'Approved' : 'Draft',
       sales_count: 0,
@@ -408,12 +419,36 @@ export const VendorProductsPage: React.FC = () => {
     };
 
     try {
-      await ApiClient.post('/api/v1/vendor/products', newProduct);
+      const created = await ApiClient.post<any>('/api/v1/vendor/products', {
+        title: formData.title,
+        sku: newProduct.sku,
+        category: formData.category,
+        brand: formData.brand,
+        price: Number(formData.price),
+        salePrice: formData.salePrice ? Number(formData.salePrice) : undefined,
+        stock: stockNum,
+        description: formData.description,
+        imageUrl: formData.imageUrl,
+        publish: formData.publish,
+      });
+      if (created?.id) {
+        newProduct.id = created.id;
+      }
     } catch {
       // Local addition fallback
     }
 
-    setProducts((prev) => [newProduct, ...prev]);
+    setProducts((prev) => {
+      const next = [newProduct, ...prev];
+      setMetrics({
+        totalProducts: next.length,
+        published: next.filter((p) => p.status === 'Published').length,
+        drafts: next.filter((p) => p.status === 'Draft').length,
+        lowStock: next.filter((p) => p.stock_units > 0 && p.stock_units <= 10).length,
+        pendingApproval: next.filter((p) => p.status === 'Pending review').length,
+      });
+      return next;
+    });
     setIsAddModalOpen(false);
     setIsSubmitting(false);
     setFormData({

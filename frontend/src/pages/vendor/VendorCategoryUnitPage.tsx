@@ -254,20 +254,26 @@ export const VendorCategoryUnitPage: React.FC = () => {
   useEffect(() => {
     ApiClient.get('/api/v1/vendor/categories')
       .then((res: any) => {
-        if (res?.categories && Array.isArray(res.categories) && res.categories.length > 0) {
-          const mapped = res.categories.map((c: any, idx: number) => {
+        const rawCats = res?.categories ?? res?.data?.categories;
+        if (Array.isArray(rawCats)) {
+          const mapped = rawCats.map((c: any, idx: number) => {
             const fallback = INITIAL_CATEGORIES[idx] || INITIAL_CATEGORIES[0];
             return {
               ...fallback,
               id: c.id || fallback.id,
               name: c.name || fallback.name,
               slug: c.slug || fallback.slug,
-              productsCount: c.productsCount !== undefined ? c.productsCount : fallback.productsCount,
-              subcategoriesCount: c.subcategoriesCount !== undefined ? c.subcategoriesCount : fallback.subcategoriesCount,
-              status: c.active ? 'Active' : 'Draft',
+              productsCount: c.productsCount !== undefined ? Number(c.productsCount) : fallback.productsCount,
+              subcategoriesCount: c.subcategoriesCount !== undefined ? Number(c.subcategoriesCount) : fallback.subcategoriesCount,
+              attributesCount: c.attributesCount !== undefined ? Number(c.attributesCount) : fallback.attributesCount,
+              status: (c.active !== undefined ? (c.active ? 'Active' : 'Draft') : (c.status || 'Active')) as 'Active' | 'Draft',
+              updatedAt: c.updatedAt || fallback.updatedAt,
             };
           });
           setCategories(mapped);
+          if (mapped.length > 0) {
+            setSelectedCategory(mapped[0]);
+          }
         }
       })
       .catch((err) => {
@@ -571,7 +577,7 @@ export const VendorCategoryUnitPage: React.FC = () => {
                 TOTAL CATEGORIES
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                18
+                {categories.length}
               </div>
             </div>
 
@@ -580,7 +586,7 @@ export const VendorCategoryUnitPage: React.FC = () => {
                 ACTIVE CATEGORIES
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                16
+                {categories.filter((c) => c.status === 'Active').length}
               </div>
             </div>
 
@@ -589,7 +595,7 @@ export const VendorCategoryUnitPage: React.FC = () => {
                 ATTRIBUTE GROUPS
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                12
+                {Object.values(linkedGroups).filter(Boolean).length}
               </div>
             </div>
 
@@ -598,7 +604,7 @@ export const VendorCategoryUnitPage: React.FC = () => {
                 PRODUCTS MAPPED
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                1,284
+                {categories.reduce((sum, c) => sum + Number(c.productsCount || 0), 0).toLocaleString()}
               </div>
             </div>
           </div>
@@ -686,7 +692,7 @@ export const VendorCategoryUnitPage: React.FC = () => {
                     borderRadius: '16px',
                   }}
                 >
-                  18 total
+                  {categories.length} total
                 </div>
               </div>
 
@@ -845,7 +851,7 @@ export const VendorCategoryUnitPage: React.FC = () => {
 
               {/* Table Pagination Footer */}
               <div style={{ padding: '14px 20px', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px', color: '#64748B' }}>
-                <div>Showing 1–{filteredCategories.length} of 18 categories</div>
+                <div>Showing {filteredCategories.length > 0 ? `1–${filteredCategories.length}` : '0'} of {categories.length} categories</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button style={{ width: '30px', height: '30px', borderRadius: '6px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
                     ←

@@ -6,8 +6,9 @@
 // 3. RMA Return & Replacement Audit Drawer (Image 1)
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/index.js';
+import { ApiClient } from '../../api/client.js';
 
 interface OrderItem {
   id: string;
@@ -64,8 +65,8 @@ export const VendorOrdersPage: React.FC = () => {
   const [fulfillmentFilter, setFulfillmentFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<string>('newest');
 
-  // Mock Orders List matching Image 3 exactly
-  const orders: OrderRecord[] = [
+  // Initial fallback orders list matching Image 3
+  const [orders, setOrders] = useState<OrderRecord[]>([
     {
       id: 'EP-1048',
       order_no: 'EP-1048',
@@ -337,7 +338,85 @@ export const VendorOrdersPage: React.FC = () => {
         },
       ],
     },
-  ];
+  ]);
+
+  const [orderMetrics, setOrderMetrics] = useState({
+    totalOrders: 8,
+    newOrders: 1,
+    processing: 1,
+    readyToShip: 1,
+    completed: 2,
+    shipped: 1,
+    cancelled: 1,
+    returns: 1,
+  });
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await ApiClient.get<any>('/api/v1/vendor/orders');
+        const rawOrders = res?.orders ?? res?.data?.orders;
+        const rawMetrics = res?.metrics ?? res?.data?.metrics;
+        if (Array.isArray(rawOrders)) {
+          const mapped: OrderRecord[] = rawOrders.map((o: any) => ({
+            id: o.id,
+            order_no: String(o.order_no || o.id).replace(/^#/, ''),
+            items_count: Number(o.items_count ?? (Array.isArray(o.items) ? o.items.length : 1)),
+            customer_name: o.customer_name || 'Walk-in Customer',
+            customer_location: o.customer_location || 'Kathmandu',
+            customer_phone: o.customer_phone || '+977 9800000000',
+            customer_address: o.customer_address || o.customer_location || 'Kathmandu, Nepal',
+            total_amount: Number(o.total_amount || 0),
+            payment_status: (o.payment_status as any) || 'Paid',
+            payment_method: o.payment_method || 'eSewa',
+            fulfillment_status: (o.fulfillment_status as any) || 'Processing',
+            created_at: o.created_at || 'Just now',
+            isRMA: o.fulfillment_status === 'Returned',
+            items: Array.isArray(o.items) && o.items.length > 0
+              ? o.items.map((it: any, idx: number) => ({
+                  id: it.id || `it-${idx}`,
+                  title: it.title || 'Marketplace Item',
+                  sku: it.sku || 'EP-SKU-001',
+                  vendor: it.vendor || 'Everest Store',
+                  qty: Number(it.qty || 1),
+                  price: Number(it.price || o.total_amount || 0),
+                  total: Number(it.total || o.total_amount || 0),
+                  image: it.image || '/images/hero_tea_coffee.jpg',
+                }))
+              : [
+                  {
+                    id: `it-${o.id}`,
+                    title: `${o.items_count || 1}x Store Item`,
+                    sku: 'EP-SKU-001',
+                    vendor: 'Everest Store',
+                    qty: Number(o.items_count || 1),
+                    price: Number(o.total_amount || 0),
+                    total: Number(o.total_amount || 0),
+                    image: '/images/hero_tea_coffee.jpg',
+                  },
+                ],
+          }));
+          setOrders(mapped);
+          setSelectedIds(mapped.slice(0, 3).map((m) => m.id));
+        }
+        if (rawMetrics) {
+          setOrderMetrics({
+            totalOrders: Number(rawMetrics.totalOrders ?? 0),
+            newOrders: Number(rawMetrics.newOrders ?? 0),
+            processing: Number(rawMetrics.processing ?? 0),
+            readyToShip: Number(rawMetrics.readyToShip ?? 0),
+            completed: Number(rawMetrics.completed ?? 0),
+            shipped: Number(rawMetrics.shipped ?? 0),
+            cancelled: Number(rawMetrics.cancelled ?? 0),
+            returns: Number(rawMetrics.returns ?? 0),
+          });
+        }
+      } catch {
+        // Keep fallback
+      }
+    };
+    fetchOrders();
+  }, []);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -361,16 +440,46 @@ export const VendorOrdersPage: React.FC = () => {
     }
   };
 
+  const dynamicCounts = {
+    ALL: orders.length,
+    NEW: orders.filter((o) => o.fulfillment_status === 'New').length,
+    PROCESSING: orders.filter((o) => o.fulfillment_status === 'Processing').length,
+    READY_TO_SHIP: orders.filter((o) => o.fulfillment_status === 'Ready to ship').length,
+    SHIPPED: orders.filter((o) => o.fulfillment_status === 'Shipped').length,
+    DELIVERED: orders.filter((o) => o.fulfillment_status === 'Delivered').length,
+    CANCELLED: orders.filter((o) => o.fulfillment_status === 'Cancelled').length,
+    RETURNS: orders.filter((o) => o.fulfillment_status === 'Returned' || o.isRMA).length,
+  };
+
   const tabs = [
-    { id: 'ALL', label: 'All', count: '1,284' },
-    { id: 'NEW', label: 'New', count: '24' },
-    { id: 'PROCESSING', label: 'Processing', count: '18' },
-    { id: 'READY_TO_SHIP', label: 'Ready to ship', count: '12' },
-    { id: 'SHIPPED', label: 'Shipped', count: '36' },
-    { id: 'DELIVERED', label: 'Delivered', count: '1,180' },
-    { id: 'CANCELLED', label: 'Cancelled', count: '14', isRed: true },
-    { id: 'RETURNS', label: 'Returns', count: '6' },
+    { id: 'ALL', label: 'All', count: String(dynamicCounts.ALL) },
+    { id: 'NEW', label: 'New', count: String(dynamicCounts.NEW) },
+    { id: 'PROCESSING', label: 'Processing', count: String(dynamicCounts.PROCESSING) },
+    { id: 'READY_TO_SHIP', label: 'Ready to ship', count: String(dynamicCounts.READY_TO_SHIP) },
+    { id: 'SHIPPED', label: 'Shipped', count: String(dynamicCounts.SHIPPED) },
+    { id: 'DELIVERED', label: 'Delivered', count: String(dynamicCounts.DELIVERED) },
+    { id: 'CANCELLED', label: 'Cancelled', count: String(dynamicCounts.CANCELLED), isRed: true },
+    { id: 'RETURNS', label: 'Returns', count: String(dynamicCounts.RETURNS) },
   ];
+
+  const filteredOrders = orders.filter((o) => {
+    const matchesTab =
+      activeTab === 'ALL' ||
+      (activeTab === 'NEW' && o.fulfillment_status === 'New') ||
+      (activeTab === 'PROCESSING' && o.fulfillment_status === 'Processing') ||
+      (activeTab === 'READY_TO_SHIP' && o.fulfillment_status === 'Ready to ship') ||
+      (activeTab === 'SHIPPED' && o.fulfillment_status === 'Shipped') ||
+      (activeTab === 'DELIVERED' && o.fulfillment_status === 'Delivered') ||
+      (activeTab === 'CANCELLED' && o.fulfillment_status === 'Cancelled') ||
+      (activeTab === 'RETURNS' && (o.fulfillment_status === 'Returned' || o.isRMA));
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      o.order_no.toLowerCase().includes(q) ||
+      o.customer_name.toLowerCase().includes(q) ||
+      o.customer_location.toLowerCase().includes(q);
+    return matchesTab && matchesSearch;
+  });
 
   const renderPaymentBadge = (status: string) => {
     switch (status) {
@@ -503,27 +612,27 @@ export const VendorOrdersPage: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
           <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Total Orders</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>1,284</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>{dynamicCounts.ALL.toLocaleString()}</div>
         </div>
 
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
           <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>New Orders</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>24</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>{dynamicCounts.NEW.toLocaleString()}</div>
         </div>
 
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
           <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Processing</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>18</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>{dynamicCounts.PROCESSING.toLocaleString()}</div>
         </div>
 
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
           <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Ready to Ship</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>12</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>{dynamicCounts.READY_TO_SHIP.toLocaleString()}</div>
         </div>
 
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
           <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748B' }}>Completed</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>1,180</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '6px' }}>{dynamicCounts.DELIVERED.toLocaleString()}</div>
         </div>
       </div>
 
@@ -664,7 +773,7 @@ export const VendorOrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => {
+              {filteredOrders.map((o) => {
                 const isChecked = selectedIds.includes(o.id);
                 return (
                   <tr
@@ -878,7 +987,7 @@ export const VendorOrdersPage: React.FC = () => {
       {/* ========================================================================= */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ fontSize: '11.5px', color: '#64748B' }}>
-          Showing 1–8 of 1,284 orders
+          Showing {filteredOrders.length > 0 ? `1–${filteredOrders.length}` : '0'} of {orders.length.toLocaleString()} orders
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

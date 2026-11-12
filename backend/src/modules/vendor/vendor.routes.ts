@@ -174,6 +174,64 @@ router.patch('/orders/:id/status', async (req: Request, res: Response) => {
 });
 
 /**
+ * Shipping & Fulfillment
+ */
+router.get('/fulfillment', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.getVendorFulfillment(merchantId, req.query);
+    sendSuccess(res, result, 'Vendor fulfillment shipments retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_FULFILLMENT_FAILED', error.message, 500);
+  }
+});
+
+router.post('/fulfillment/dispatch', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.createVendorDispatch(merchantId, req.body);
+    sendSuccess(res, result, 'Shipment dispatch created successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'CREATE_DISPATCH_FAILED', error.message, 400);
+  }
+});
+
+/**
+ * Returns & Refunds
+ */
+router.get('/returns', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.getVendorReturns(merchantId, req.query);
+    sendSuccess(res, result, 'Vendor returns retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_RETURNS_FAILED', error.message, 500);
+  }
+});
+
+router.patch('/returns/:id', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.updateVendorReturnStatus(merchantId, String(req.params.id), req.body);
+    sendSuccess(res, result, 'Return status updated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'UPDATE_RETURN_FAILED', error.message, 400);
+  }
+});
+
+/**
  * Inventory
  */
 router.get('/inventory', async (req: Request, res: Response) => {

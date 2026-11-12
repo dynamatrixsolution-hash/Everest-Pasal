@@ -125,12 +125,53 @@ export const VendorReportsPage: React.FC = () => {
   const [timeGranularity, setTimeGranularity] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [productSearch, setProductSearch] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [overviewData, setOverviewData] = useState<any>(null);
+  const [topProductsList, setTopProductsList] = useState<ProductPerformanceItem[]>(TOP_PRODUCTS);
 
   // Load analytics overview from backend
   useEffect(() => {
     ApiClient.get(`/api/v1/vendor/analytics/overview?timeframe=${dateRange}`)
-      .then(() => {
-        // Live backend data verified
+      .then((res: any) => {
+        const data = res?.kpis ? res : res?.data;
+        if (data && data.kpis) {
+          setOverviewData(data);
+          if (Array.isArray(data.topPerformingProducts)) {
+            const icons = ['📺', '🎧', '🍳', '🔋', '📱', '📦'];
+            const colors = [
+              { bg: '#EFF6FF', text: '#1D4ED8' },
+              { bg: '#FEF3C7', text: '#D97706' },
+              { bg: '#FDF2F8', text: '#BE185D' },
+              { bg: '#ECFDF5', text: '#047857' },
+            ];
+            setTopProductsList(
+              data.topPerformingProducts.map((p: any, idx: number) => ({
+                id: p.id || `prod-${idx + 1}`,
+                rank: Number(p.rank || idx + 1),
+                icon: icons[idx % icons.length],
+                name: p.name || 'Store Product',
+                sku: p.sku ? (String(p.sku).startsWith('SKU:') ? p.sku : `SKU: ${p.sku}`) : `SKU: EP-${idx + 1}`,
+                category: p.category || 'Catalog',
+                categoryColor: colors[idx % colors.length],
+                unitsSold: Number(p.unitsSold ?? 0),
+                revenue: Number(p.revenue ?? 0),
+                grossProfit: Number(p.grossProfit ?? 0),
+                trend: p.salesTrend || '+0%',
+                trendPositive: !String(p.salesTrend || '').startsWith('-'),
+                stockStatus: p.stockStatus === 'LOW_STOCK'
+                  ? `Low Stock (${p.stockQuantity ?? 4} units)`
+                  : p.stockStatus === 'OUT_OF_STOCK'
+                  ? 'Out of Stock (0)'
+                  : `In Stock (${p.stockQuantity ?? 16})`,
+                stockType:
+                  p.stockStatus === 'LOW_STOCK'
+                    ? 'low_stock'
+                    : p.stockStatus === 'OUT_OF_STOCK'
+                    ? 'out_of_stock'
+                    : 'in_stock',
+              }))
+            );
+          }
+        }
       })
       .catch((err) => {
         console.warn('[Analytics] Using baseline analytics metrics:', err.message);
@@ -155,15 +196,24 @@ export const VendorReportsPage: React.FC = () => {
 
   // Filtered Top Products
   const filteredProducts = useMemo(() => {
-    if (!productSearch.trim()) return TOP_PRODUCTS;
+    if (!productSearch.trim()) return topProductsList;
     const q = productSearch.toLowerCase();
-    return TOP_PRODUCTS.filter(
+    return topProductsList.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q)
     );
-  }, [productSearch]);
+  }, [productSearch, topProductsList]);
+
+  const kpiSales = overviewData?.kpis?.totalSales?.value ?? 1842650;
+  const kpiSalesGrowth = overviewData?.kpis?.totalSales?.growthPct ?? 18.4;
+  const kpiOrders = overviewData?.kpis?.totalOrders?.value ?? 1428;
+  const kpiOrdersGrowth = overviewData?.kpis?.totalOrders?.growthPct ?? 12.1;
+  const kpiAov = overviewData?.kpis?.avgOrderValue?.value ?? 1290;
+  const kpiGrossProfit = overviewData?.kpis?.grossProfit?.value ?? 468200;
+  const kpiNetPayout = overviewData?.kpis?.netMargin?.value ?? 392150;
+  const kpiVelocity = overviewData?.kpis?.salesGrowth?.valuePct ?? 14.8;
 
   return (
     <div
@@ -275,11 +325,11 @@ export const VendorReportsPage: React.FC = () => {
               TOTAL SALES
             </span>
             <span style={{ backgroundColor: '#ECFDF5', color: '#16A34A', fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
-              +18.4%
+              +{kpiSalesGrowth}%
             </span>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '8px', whiteSpace: 'nowrap' }}>
-            NPR 1,842,650
+            NPR {Number(kpiSales).toLocaleString()}
           </div>
         </div>
 
@@ -290,11 +340,11 @@ export const VendorReportsPage: React.FC = () => {
               TOTAL ORDERS
             </span>
             <span style={{ backgroundColor: '#ECFDF5', color: '#16A34A', fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
-              +12.1%
+              +{kpiOrdersGrowth}%
             </span>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '8px', whiteSpace: 'nowrap' }}>
-            1,428 orders
+            {Number(kpiOrders).toLocaleString()} orders
           </div>
         </div>
 
@@ -304,7 +354,7 @@ export const VendorReportsPage: React.FC = () => {
             AVG ORDER VALUE
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '8px', whiteSpace: 'nowrap' }}>
-            NPR 1,290
+            NPR {Number(kpiAov).toLocaleString()}
           </div>
         </div>
 
@@ -314,7 +364,7 @@ export const VendorReportsPage: React.FC = () => {
             GROSS PROFIT
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '8px', whiteSpace: 'nowrap' }}>
-            NPR 468,200
+            NPR {Number(kpiGrossProfit).toLocaleString()}
           </div>
         </div>
 
@@ -329,7 +379,7 @@ export const VendorReportsPage: React.FC = () => {
             </span>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginTop: '8px', whiteSpace: 'nowrap' }}>
-            NPR 392,150
+            NPR {Number(kpiNetPayout).toLocaleString()}
           </div>
         </div>
 
@@ -342,7 +392,7 @@ export const VendorReportsPage: React.FC = () => {
             <span>📈</span>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#16A34A', marginTop: '8px', whiteSpace: 'nowrap' }}>
-            +14.8%
+            +{kpiVelocity}%
           </div>
         </div>
       </div>
@@ -424,11 +474,11 @@ export const VendorReportsPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#1A56DB' }}></span>
               <span style={{ fontWeight: 700, color: '#0F172A' }}>Current Period:</span>
-              <span style={{ color: '#0F172A' }}>NPR 1,842,650</span>
+              <span style={{ color: '#0F172A' }}>NPR {Number(overviewData?.salesPerformance?.currentPeriodTotal ?? kpiSales).toLocaleString()}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94A3B8' }}>
               <span style={{ width: '16px', height: '2px', backgroundColor: '#94A3B8', borderTop: '2px dashed #94A3B8' }}></span>
-              <span>Previous Period: NPR 1,556,120</span>
+              <span>Previous Period: NPR {Number(overviewData?.salesPerformance?.previousPeriodTotal ?? 1556120).toLocaleString()}</span>
             </div>
           </div>
 
@@ -986,19 +1036,19 @@ export const VendorReportsPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '18px' }}>
             <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #E2E8F0' }}>
               <div style={{ fontSize: '9.5px', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>TOTAL BUYERS</div>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>984</div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>{overviewData?.customerInsights?.totalBuyers ?? 984}</div>
             </div>
             <div style={{ backgroundColor: '#EFF6FF', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #DBEAFE' }}>
               <div style={{ fontSize: '9.5px', color: '#1E40AF', fontWeight: 700, textTransform: 'uppercase' }}>NEW BUYERS</div>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#1D4ED8', marginTop: '2px' }}>612 (62.2%)</div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#1D4ED8', marginTop: '2px' }}>{overviewData?.customerInsights?.newBuyers ?? 612} ({overviewData?.customerInsights?.newBuyersPct ?? 62.2}%)</div>
             </div>
             <div style={{ backgroundColor: '#ECFDF5', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #D1FAE5' }}>
               <div style={{ fontSize: '9.5px', color: '#065F46', fontWeight: 700, textTransform: 'uppercase' }}>RETURNING</div>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#047857', marginTop: '2px' }}>372 (37.8%)</div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#047857', marginTop: '2px' }}>{overviewData?.customerInsights?.returningBuyers ?? 372} ({overviewData?.customerInsights?.returningBuyersPct ?? 37.8}%)</div>
             </div>
             <div style={{ backgroundColor: '#F3E8FF', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #E9D5FF' }}>
               <div style={{ fontSize: '9.5px', color: '#6B21A8', fontWeight: 700, textTransform: 'uppercase' }}>REPEAT RATE</div>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#7E22CE', marginTop: '2px' }}>37.8%</div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#7E22CE', marginTop: '2px' }}>{overviewData?.customerInsights?.repeatRatePct ?? 37.8}%</div>
             </div>
           </div>
 
@@ -1051,19 +1101,19 @@ export const VendorReportsPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '18px' }}>
             <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #E2E8F0' }}>
               <div style={{ fontSize: '9.5px', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>TOTAL VALUATION</div>
-              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>NPR 4.12M</div>
+              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>NPR {Number(overviewData?.inventoryPerformance?.totalValue ?? 4120000).toLocaleString()}</div>
             </div>
             <div style={{ backgroundColor: '#ECFDF5', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #D1FAE5' }}>
               <div style={{ fontSize: '9.5px', color: '#065F46', fontWeight: 700, textTransform: 'uppercase' }}>TOTAL SKUs</div>
-              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#047857', marginTop: '2px' }}>124 SKUs</div>
+              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#047857', marginTop: '2px' }}>{overviewData?.inventoryPerformance?.inStockSkus ?? 124} SKUs</div>
             </div>
             <div style={{ backgroundColor: '#FEF3C7', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #FDE68A' }}>
               <div style={{ fontSize: '9.5px', color: '#92400E', fontWeight: 700, textTransform: 'uppercase' }}>LOW STOCK</div>
-              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#B45309', marginTop: '2px' }}>4 SKUs</div>
+              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#B45309', marginTop: '2px' }}>{overviewData?.inventoryPerformance?.lowStockSkus ?? 4} SKUs</div>
             </div>
             <div style={{ backgroundColor: '#FEE2E2', borderRadius: '8px', padding: '10px 8px', textAlign: 'center', border: '1px solid #FECACA' }}>
               <div style={{ fontSize: '9.5px', color: '#991B1B', fontWeight: 700, textTransform: 'uppercase' }}>OUT OF STOCK</div>
-              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#DC2626', marginTop: '2px' }}>1 SKU</div>
+              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#DC2626', marginTop: '2px' }}>{overviewData?.inventoryPerformance?.outOfStockSkus ?? 1} SKU</div>
             </div>
           </div>
 

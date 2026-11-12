@@ -119,89 +119,55 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
 
   const fmtNPR = (num: number) => `NPR ${num.toLocaleString()}`;
 
-  // Default / Mock values matching the exact uploaded image
+  // Dynamic values from backend API (preserving 0 values with ?? instead of ||)
   const kpis = {
-    todayRevenue: data?.kpis?.todayRevenue?.value || 84500,
-    todayRevenueTrend: data?.kpis?.todayRevenue?.trendPercentage || 12.5,
-    totalOrders: data?.kpis?.totalOrders?.value || 128,
-    totalOrdersTrend: data?.kpis?.totalOrders?.trendPercentage || 0.2,
-    pendingOrders: data?.kpis?.pendingOrders?.value || 18,
-    productsSold: data?.kpis?.productsSold?.value || 342,
-    productsSoldTrend: data?.kpis?.productsSold?.trendPercentage || 14.8,
-    rating: data?.kpis?.storeRating?.rating || 4.8,
-    reviewsCount: data?.kpis?.storeRating?.reviewsCount || 126,
+    todayRevenue: data ? (data.kpis?.todayRevenue?.value ?? 0) : 0,
+    todayRevenueTrend: data ? (data.kpis?.todayRevenue?.trendPercentage ?? 0) : 0,
+    totalOrders: data ? (data.kpis?.totalOrders?.value ?? 0) : 0,
+    totalOrdersTrend: data ? (data.kpis?.totalOrders?.trendPercentage ?? 0) : 0,
+    pendingOrders: data ? (data.kpis?.pendingOrders?.value ?? 0) : 0,
+    productsSold: data ? (data.kpis?.productsSold?.value ?? 0) : 0,
+    productsSoldTrend: data ? (data.kpis?.productsSold?.trendPercentage ?? 0) : 0,
+    rating: data ? (data.kpis?.storeRating?.rating ?? 4.8) : 4.8,
+    reviewsCount: data ? (data.kpis?.storeRating?.reviewsCount ?? 0) : 0,
   };
 
-  const orderOverview = data?.orderOverview || {
-    newOrders: 12,
-    processing: 24,
-    readyToShip: 18,
-    completed: 86,
-    cancelled: 4,
-    total: 144,
+  const orderOverview = data?.orderOverview ?? {
+    newOrders: 0,
+    processing: 0,
+    readyToShip: 0,
+    completed: 0,
+    cancelled: 0,
+    total: 0,
   };
 
-  const needsAttentionList = data?.needsAttention?.length
-    ? data.needsAttention
-    : [
-        { id: '1', text: '8 products are low in stock', actionLabel: '[Restock]', actionUrl: '/vendor/inventory' },
-        { id: '2', text: '2 orders are overdue for processing', actionLabel: '[View orders]', actionUrl: '/vendor/orders' },
-        { id: '3', text: '2 products are awaiting approval', actionLabel: '[Review]', actionUrl: '/vendor/products' },
-        { id: '4', text: '1 promotion is ending today', actionLabel: '[Extend]', actionUrl: '/vendor/promotions' },
-      ];
+  const needsAttentionList =
+    data?.needsAttention && data.needsAttention.length > 0
+      ? data.needsAttention
+      : [
+          {
+            id: 'all-clear',
+            text: 'All store operations are up to date',
+            actionLabel: '[View Products]',
+            actionUrl: '/vendor/products',
+            type: 'info',
+          },
+        ];
 
-  const recentOrdersList = data?.recentOrders?.length
-    ? data.recentOrders
-    : [
-        { id: '1', order_no: 'EP-1048', customer_name: 'Suman Thapa', items_count: 3, total_amount: 4250, status: 'Processing', created_at: 'Sep 16, 2026' },
-        { id: '2', order_no: 'EP-1047', customer_name: 'Anisha Rai', items_count: 2, total_amount: 2800, status: 'Ready to ship', created_at: 'Sep 15, 2026' },
-        { id: '3', order_no: 'EP-1046', customer_name: 'Bikash Gurung', items_count: 5, total_amount: 8400, status: 'Completed', created_at: 'Sep 15, 2026' },
-        { id: '4', order_no: 'EP-1045', customer_name: 'Riya Sharma', items_count: 1, total_amount: 1200, status: 'Pending', created_at: 'Sep 15, 2026' },
-        { id: '5', order_no: 'EP-1044', customer_name: 'Prakash KC', items_count: 2, total_amount: 3600, status: 'Processing', created_at: 'Sep 14, 2026' },
-      ];
+  const recentOrdersList = data?.recentOrders ?? [];
 
-  const topProductsList = [
-    {
-      rank: 1,
-      name: 'Premium Basmati Rice',
-      category: 'Grocery',
-      unitsSold: 124,
-      revenue: 62000,
-      image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&auto=format&fit=crop&q=80',
-    },
-    {
-      rank: 2,
-      name: 'Organic Mustard Oil',
-      category: 'Grocery',
-      unitsSold: 98,
-      revenue: 34300,
-      image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=100&auto=format&fit=crop&q=80',
-    },
-    {
-      rank: 3,
-      name: 'Himalayan Tea',
-      category: 'Beverages',
-      unitsSold: 76,
-      revenue: 22800,
-      image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=100&auto=format&fit=crop&q=80',
-    },
-    {
-      rank: 4,
-      name: 'Wireless Earbuds',
-      category: 'Electronics',
-      unitsSold: 54,
-      revenue: 81000,
-      image: '/images/cat_earbuds.jpg',
-    },
-    {
-      rank: 5,
-      name: 'Cotton Kurta',
-      category: 'Clothing',
-      unitsSold: 42,
-      revenue: 29400,
-      image: '/images/cat_fashion.jpg',
-    },
-  ];
+  const topProductsList = data?.topSellingProducts ?? [];
+
+  const perf = {
+    storeViews: data?.storePerformance?.storeViews?.value ?? 0,
+    storeViewsTrend: data?.storePerformance?.storeViews?.trend ?? '↑ 0% this week',
+    productViews: data?.storePerformance?.productViews?.value ?? 0,
+    productViewsTrend: data?.storePerformance?.productViews?.trend ?? '↑ 0% this week',
+    conversionRate: data?.storePerformance?.conversionRate?.value ?? '0.0%',
+    conversionRateTrend: data?.storePerformance?.conversionRate?.trend ?? '0.0% vs last week',
+    customerInquiries: data?.storePerformance?.customerInquiries?.value ?? 0,
+    unreadInquiries: data?.storePerformance?.customerInquiries?.unread ?? 0,
+  };
 
   const renderStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -736,31 +702,39 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
                 </tr>
               </thead>
               <tbody>
-                {recentOrdersList.map((o) => (
-                  <tr key={o.id || o.order_no} style={{ borderBottom: '1px solid #F8FAFC' }}>
-                    <td style={{ padding: '10px 8px 10px 0', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }} onClick={() => handleNav(`/vendor/orders?id=${o.id}`)}>
-                      #{o.order_no}
-                    </td>
-                    <td style={{ padding: '10px 8px 10px 0', fontWeight: 500, color: '#1E293B' }}>
-                      {o.customer_name}
-                    </td>
-                    <td style={{ padding: '10px 8px 10px 0', color: '#64748B' }}>
-                      {o.items_count} item{o.items_count > 1 ? 's' : ''}
-                    </td>
-                    <td style={{ padding: '10px 8px 10px 0', fontWeight: 600, color: '#0F172A' }}>
-                      {fmtNPR(Number(o.total_amount))}
-                    </td>
-                    <td style={{ padding: '10px 8px 10px 0' }}>
-                      {renderStatusBadge(o.status)}
-                    </td>
-                    <td style={{ padding: '10px 8px 10px 0', color: '#64748B', fontSize: '11px' }}>
-                      {o.created_at}
-                    </td>
-                    <td style={{ padding: '10px 0 10px 0', textAlign: 'right', color: '#94A3B8', cursor: 'pointer', fontSize: '14px' }}>
-                      ⋮
+                {recentOrdersList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '24px 0', textAlign: 'center', color: '#64748B', fontSize: '12px' }}>
+                      No orders received for this store yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  recentOrdersList.map((o) => (
+                    <tr key={o.id || o.order_no} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                      <td style={{ padding: '10px 8px 10px 0', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }} onClick={() => handleNav(`/vendor/orders?id=${o.id}`)}>
+                        #{o.order_no}
+                      </td>
+                      <td style={{ padding: '10px 8px 10px 0', fontWeight: 500, color: '#1E293B' }}>
+                        {o.customer_name}
+                      </td>
+                      <td style={{ padding: '10px 8px 10px 0', color: '#64748B' }}>
+                        {o.items_count} item{o.items_count > 1 ? 's' : ''}
+                      </td>
+                      <td style={{ padding: '10px 8px 10px 0', fontWeight: 600, color: '#0F172A' }}>
+                        {fmtNPR(Number(o.total_amount))}
+                      </td>
+                      <td style={{ padding: '10px 8px 10px 0' }}>
+                        {renderStatusBadge(o.status)}
+                      </td>
+                      <td style={{ padding: '10px 8px 10px 0', color: '#64748B', fontSize: '11px' }}>
+                        {o.created_at}
+                      </td>
+                      <td style={{ padding: '10px 0 10px 0', textAlign: 'right', color: '#94A3B8', cursor: 'pointer', fontSize: '14px' }}>
+                        ⋮
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -776,43 +750,49 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {topProductsList.map((p) => (
-              <div key={p.rank} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B', width: '10px' }}>{p.rank}</span>
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '4px',
-                      backgroundColor: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e: any) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', lineHeight: '1.2' }}>{p.name}</div>
-                    <div style={{ fontSize: '10.5px', color: '#64748B' }}>{p.category} • {p.unitsSold} sold</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>
-                  {fmtNPR(p.revenue)}
-                </div>
+            {topProductsList.length === 0 ? (
+              <div style={{ padding: '20px 0', textAlign: 'center', color: '#64748B', fontSize: '12px' }}>
+                No products sold yet. Add products to your store catalog.
               </div>
-            ))}
+            ) : (
+              topProductsList.map((p) => (
+                <div key={p.rank} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B', width: '10px' }}>{p.rank}</span>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '4px',
+                        backgroundColor: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e: any) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', lineHeight: '1.2' }}>{p.name}</div>
+                      <div style={{ fontSize: '10.5px', color: '#64748B' }}>{p.category} • {p.unitsSold} sold</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>
+                    {fmtNPR(p.revenue)}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -830,8 +810,8 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>STORE VIEWS</div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '6px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>2,480</div>
-              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#16A34A' }}>↑ 18% this week</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>{perf.storeViews.toLocaleString()}</div>
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#16A34A' }}>{perf.storeViewsTrend}</div>
             </div>
           </div>
 
@@ -839,8 +819,8 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>PRODUCT VIEWS</div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '6px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>8,920</div>
-              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#16A34A' }}>↑ 12% this week</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>{perf.productViews.toLocaleString()}</div>
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#16A34A' }}>{perf.productViewsTrend}</div>
             </div>
           </div>
 
@@ -848,8 +828,8 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1px solid #ECECEC' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.4px' }}>CONVERSION RATE</div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '6px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>4.8%</div>
-              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#DC2626' }}>↓ 0.3% vs last week</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>{perf.conversionRate}</div>
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#16A34A' }}>{perf.conversionRateTrend}</div>
             </div>
           </div>
 
@@ -857,8 +837,8 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px 16px', border: '1.5px solid #FCA5A5' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#0F172A', letterSpacing: '0.4px' }}>CUSTOMER INQUIRIES</div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '6px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>36</div>
-              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#DC2626' }}>4 unread</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>{perf.customerInquiries}</div>
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#DC2626' }}>{perf.unreadInquiries} unread</div>
             </div>
           </div>
         </div>

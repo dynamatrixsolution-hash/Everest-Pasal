@@ -29,42 +29,59 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const { path, navigate } = useRouter();
   const [storeData, setStoreData] = useState<any>({
-    name: 'Manish Electronics',
+    name: user?.fullName ? `${user.fullName.split(' ')[0]}'s Store` : 'Vendor Store',
     isLive: true,
+    pendingOrders: 0,
+    totalOrders: 0,
+    productsListed: 0,
   });
 
-  const userName = user?.fullName || 'Manish';
-  const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Manish';
+  const userName = user?.fullName || 'Vendor';
+  const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Vendor';
+
+  const storeInitials =
+    (storeData.name || 'VS')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w: string) => w[0].toUpperCase())
+      .join('') || 'VS';
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   useEffect(() => {
     let isMounted = true;
     const fetchVendorProfile = async () => {
       try {
-        const storeRes = await ApiClient.get<any>('/api/v1/vendor/store');
-        if (isMounted && storeRes && storeRes.profile?.storeName) {
-          setStoreData({
-            name: storeRes.profile.storeName,
-            isLive: true,
-          });
-          return;
-        }
+        const [storeRes, dashRes] = await Promise.all([
+          ApiClient.get<any>('/api/v1/vendor/store').catch(() => null),
+          ApiClient.get<any>('/api/v1/vendor/dashboard/summary').catch(() => null),
+        ]);
 
-        const res = await ApiClient.get<any>('/api/v1/vendor/me');
-        if (isMounted && res?.vendor) {
-          setStoreData({
-            name: res.vendor.trade_name || res.vendor.merchant_name || 'Manish Electronics',
-            isLive: res.vendor.active !== false,
-          });
-        }
+        if (!isMounted) return;
+
+        const resolvedName =
+          storeRes?.profile?.storeName ||
+          dashRes?.store?.name ||
+          (user?.fullName ? `${user.fullName.split(' ')[0]}'s Store` : 'Vendor Store');
+
+        setStoreData({
+          name: resolvedName,
+          isLive: storeRes?.isOpen ?? dashRes?.store?.isLive ?? true,
+          pendingOrders: Number(dashRes?.kpis?.pendingOrders?.value ?? 0),
+          totalOrders: Number(dashRes?.kpis?.totalOrders?.value ?? storeRes?.performance?.totalOrders ?? 0),
+          productsListed: Number(storeRes?.performance?.productsListed ?? 0),
+        });
       } catch (e) {
-        // Fallback default is Manish Electronics
+        // Keep current state
       }
     };
     fetchVendorProfile();
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, path]);
 
   const navGroups: NavGroup[] = [
     {
@@ -73,7 +90,7 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
         {
           to: '/vendor/orders',
           label: 'Orders',
-          badge: 18,
+          badge: storeData.pendingOrders > 0 ? storeData.pendingOrders : undefined,
           badgeColor: '#EF4444',
           icon: (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -358,7 +375,7 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                   flexShrink: 0,
                 }}
               >
-                ME
+                {storeInitials}
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div
@@ -521,10 +538,10 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
         >
           <div>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#E11D48', margin: 0, letterSpacing: '-0.2px' }}>
-              Good morning, {firstName}
+              {greeting}, {firstName}
             </h1>
             <p style={{ fontSize: '11.5px', color: '#64748B', margin: '3px 0 0 0' }}>
-              Review 150 stores detail / Check new 25 orders
+              {storeData.name} • {storeData.productsListed} product(s) listed / Check {storeData.pendingOrders} pending order(s)
             </p>
           </div>
 

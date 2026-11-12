@@ -399,9 +399,9 @@ export const VendorInquiriesPage: React.FC = () => {
   useEffect(() => {
     ApiClient.get('/api/v1/vendor/inquiries')
       .then((res: any) => {
-        if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-          // Merge with initial detail messages so the full conversation tree stays interactive
-          const merged = res.data.map((item: any, idx: number) => {
+        const rawList = res?.inquiries ?? res?.data?.inquiries ?? (Array.isArray(res?.data) ? res.data : null);
+        if (Array.isArray(rawList)) {
+          const merged: InquiryItem[] = rawList.map((item: any, idx: number) => {
             const fallback = INITIAL_INQUIRIES[idx] || INITIAL_INQUIRIES[0];
             return {
               ...fallback,
@@ -410,12 +410,23 @@ export const VendorInquiriesPage: React.FC = () => {
             };
           });
           setInquiries(merged);
+          if (merged.length > 0) {
+            setSelectedInquiry(merged[0]);
+          }
         }
       })
       .catch((err) => {
         console.warn('[Inquiries] Using initial baseline state:', err.message);
       });
   }, []);
+
+  const dynamicInquiryCounts = {
+    total: inquiries.length,
+    open: inquiries.filter((i) => i.status === 'Open').length,
+    awaiting: inquiries.filter((i) => i.status === 'Awaiting Reply').length,
+    inProgress: inquiries.filter((i) => i.status === 'In Progress').length,
+    resolved: inquiries.filter((i) => i.status === 'Resolved' || i.status === 'Closed').length,
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -745,10 +756,10 @@ export const VendorInquiriesPage: React.FC = () => {
                 <span>💬</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-                156
+                {dynamicInquiryCounts.total}
               </div>
               <div style={{ fontSize: '11px', color: '#16A34A', fontWeight: 600, marginTop: '4px' }}>
-                +12 this week
+                +{dynamicInquiryCounts.open} open queue
               </div>
             </div>
 
@@ -759,7 +770,7 @@ export const VendorInquiriesPage: React.FC = () => {
                 <span>Open</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-                42
+                {dynamicInquiryCounts.open}
               </div>
               <div style={{ marginTop: '4px' }}>
                 <span style={{ backgroundColor: '#E0F2FE', color: '#0369A1', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
@@ -775,7 +786,7 @@ export const VendorInquiriesPage: React.FC = () => {
                 <span>Awaiting Reply</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-                8
+                {dynamicInquiryCounts.awaiting}
               </div>
               <div style={{ marginTop: '4px' }}>
                 <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
@@ -791,7 +802,7 @@ export const VendorInquiriesPage: React.FC = () => {
                 <span>In Progress</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-                14
+                {dynamicInquiryCounts.inProgress}
               </div>
               <div style={{ marginTop: '4px' }}>
                 <span style={{ backgroundColor: '#EFF6FF', color: '#1D4ED8', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
@@ -807,7 +818,7 @@ export const VendorInquiriesPage: React.FC = () => {
                 <span>Resolved</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-                92
+                {dynamicInquiryCounts.resolved}
               </div>
               <div style={{ marginTop: '4px' }}>
                 <span style={{ backgroundColor: '#ECFDF5', color: '#047857', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
@@ -830,7 +841,7 @@ export const VendorInquiriesPage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                All Inquiries <span style={{ color: '#94A3B8', fontWeight: 500 }}>156</span>
+                All Inquiries <span style={{ color: '#94A3B8', fontWeight: 500 }}>{dynamicInquiryCounts.total}</span>
               </span>
 
               <span
@@ -842,7 +853,7 @@ export const VendorInquiriesPage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                Open <span style={{ color: '#94A3B8', fontWeight: 500 }}>42</span>
+                Open <span style={{ color: '#94A3B8', fontWeight: 500 }}>{dynamicInquiryCounts.open}</span>
               </span>
 
               <span
@@ -858,7 +869,7 @@ export const VendorInquiriesPage: React.FC = () => {
                 }}
               >
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#F59E0B' }}></span>
-                Awaiting Reply <span style={{ color: '#94A3B8', fontWeight: 500 }}>8</span>
+                Awaiting Reply <span style={{ color: '#94A3B8', fontWeight: 500 }}>{dynamicInquiryCounts.awaiting}</span>
               </span>
 
               <span
@@ -870,7 +881,7 @@ export const VendorInquiriesPage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                In Progress <span style={{ color: '#94A3B8', fontWeight: 500 }}>14</span>
+                In Progress <span style={{ color: '#94A3B8', fontWeight: 500 }}>{dynamicInquiryCounts.inProgress}</span>
               </span>
 
               <span
@@ -882,7 +893,7 @@ export const VendorInquiriesPage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                Resolved <span style={{ color: '#94A3B8', fontWeight: 500 }}>92</span>
+                Resolved <span style={{ color: '#94A3B8', fontWeight: 500 }}>{dynamicInquiryCounts.resolved}</span>
               </span>
             </div>
 

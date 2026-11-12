@@ -185,6 +185,7 @@ export const VendorFinancePage: React.FC = () => {
   const [selectedReceipt, setSelectedReceipt] = useState<PayoutHistoryItem | null>(null);
   const [showBankModal, setShowBankModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [financeOverview, setFinanceOverview] = useState<any>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -195,25 +196,58 @@ export const VendorFinancePage: React.FC = () => {
   useEffect(() => {
     ApiClient.get(`/api/v1/vendor/finance/overview?timeframe=${dateRange}`)
       .then((res: any) => {
-        if (res && res.payoutHistory && Array.isArray(res.payoutHistory)) {
-          const mapped = res.payoutHistory.map((p: any, idx: number) => ({
-            id: `po-${idx}`,
-            payoutId: p.payoutId,
-            requestDate: p.requestDate,
-            settlementPeriod: p.settlementPeriod,
-            amount: p.amount,
-            paymentMethod: p.paymentMethod,
-            bankRef: p.bankRefUtr,
-            status: p.status,
-            disbursedDate: p.disbursedDate,
-          }));
-          setPayouts(mapped);
+        const data = res?.reconciliationEquation ? res : res?.data;
+        if (data) {
+          setFinanceOverview(data);
+          if (data.availableForPayout?.balance !== undefined) {
+            setPayoutAmountInput(String(data.availableForPayout.balance));
+          }
+          if (Array.isArray(data.payoutHistory)) {
+            const mapped = data.payoutHistory.map((p: any, idx: number) => ({
+              id: `po-${idx}`,
+              payoutId: p.payoutId,
+              requestDate: p.requestDate,
+              settlementPeriod: p.settlementPeriod,
+              amount: Number(p.amount ?? 0),
+              paymentMethod: p.paymentMethod,
+              bankRef: p.bankRefUtr || p.bankRef || '',
+              status: p.status,
+              disbursedDate: p.disbursedDate,
+            }));
+            setPayouts(mapped);
+          }
+          if (Array.isArray(data.adjustmentLedger)) {
+            const mappedLedger: LedgerTransactionItem[] = data.adjustmentLedger.map((t: any, idx: number) => ({
+              id: `txn-${idx}`,
+              dateTime: t.dateTime || 'Today',
+              txnId: t.txnId || `#TXN-${idx + 1}`,
+              relatedOrder: t.relatedOrder || '#EP-1000',
+              transactionType: t.transactionType || '● Order Credit',
+              gross: t.gross !== undefined ? t.gross : null,
+              feesComm: {
+                amount: Number(t.feesOrComm ?? 0),
+                label: t.feeRebateLabel,
+                isRebate: Number(t.feesOrComm ?? 0) > 0,
+              },
+              netPayout: Number(t.netPayout ?? 0),
+              status: (t.status || 'Settled') as any,
+            }));
+            setLedger(mappedLedger);
+          }
         }
       })
       .catch((err) => {
         console.warn('[Finance] Using initial baseline financial state:', err.message);
       });
   }, [dateRange]);
+
+  const grossSalesVal = financeOverview?.reconciliationEquation?.grossSales ?? 1842650;
+  const discountsReturnsVal = Math.abs(financeOverview?.reconciliationEquation?.discountsAndReturns ?? 81000);
+  const platformFeeVal = Math.abs(financeOverview?.reconciliationEquation?.platformFee ?? 81190);
+  const tdsVal = Math.abs(financeOverview?.reconciliationEquation?.withholdingTds ?? 27640);
+  const netVendorPoolVal = financeOverview?.reconciliationEquation?.netVendorPool ?? 1652820;
+  const availablePayoutVal = financeOverview?.availableForPayout?.balance ?? 284500;
+  const totalDisbursedVal = payouts.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
   // Filtered Payouts
   const filteredPayouts = useMemo(() => {
@@ -402,7 +436,7 @@ export const VendorFinancePage: React.FC = () => {
             GROSS MARKETPLACE SALES
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : 'NPR 1,842,650'}
+            {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(grossSalesVal).toLocaleString()}`}
           </div>
           <div style={{ fontSize: '11.5px', color: '#16A34A', fontWeight: 600, marginTop: '4px' }}>
             +18.4% vs last cycle
@@ -415,7 +449,7 @@ export const VendorFinancePage: React.FC = () => {
             NET SETTLED EARNINGS
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#1A56DB', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : 'NPR 1,652,820'}
+            {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(netVendorPoolVal).toLocaleString()}`}
           </div>
           <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '4px' }}>
             After fees & discounts
@@ -428,10 +462,10 @@ export const VendorFinancePage: React.FC = () => {
             TOTAL PAYOUTS DISBURSED
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : 'NPR 1,463,570'}
+            {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(totalDisbursedVal).toLocaleString()}`}
           </div>
           <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '4px' }}>
-            38 completed transfers
+            {payouts.length} completed transfers
           </div>
         </div>
 
@@ -441,7 +475,7 @@ export const VendorFinancePage: React.FC = () => {
             WITHHOLDING TDS (1.5%)
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#DC2626', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : '- NPR 27,640'}
+            {isMasked ? 'XXXXXXXXXX' : `- NPR ${Number(tdsVal).toLocaleString()}`}
           </div>
           <div style={{ fontSize: '11.5px', color: '#16A34A', fontWeight: 600, marginTop: '4px' }}>
             IRD e-TDS Tax Certified
@@ -614,7 +648,7 @@ export const VendorFinancePage: React.FC = () => {
             </div>
 
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.5px' }}>
-              {isMasked ? 'XXXXXXXXXX' : 'NPR 284,500.00'}
+              {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(availablePayoutVal).toLocaleString()}.00`}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px', padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '11px', color: '#64748B' }}>
@@ -688,16 +722,16 @@ export const VendorFinancePage: React.FC = () => {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '13.5px' }}>
-                  Nabil Bank Limited
+                  {financeOverview?.primaryPayoutAccount?.bankName || 'Nabil Bank Limited'}
                 </div>
                 <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '1px' }}>
-                  Kathmandu Main Branch (Teendhara)
+                  {financeOverview?.primaryPayoutAccount?.branch || 'Kathmandu Main Branch (Teendhara)'}
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginTop: '6px', letterSpacing: '1px' }}>
-                  **** **** 4892
+                  {financeOverview?.primaryPayoutAccount?.accountNumberMasked || '**** **** 4892'}
                 </div>
                 <div style={{ fontSize: '10.5px', color: '#94A3B8', marginTop: '2px' }}>
-                  Account Name: Manish Electronics Pvt. Ltd.
+                  Account Name: {financeOverview?.primaryPayoutAccount?.accountHolderName || 'Manish Electronics Pvt. Ltd.'}
                 </div>
               </div>
             </div>
@@ -739,7 +773,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Gross Sales</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : 'NPR 1,842,650'}
+              {isMasked ? 'XXXXXX' : `NPR ${Number(grossSalesVal).toLocaleString()}`}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
               Total customer checkout value
@@ -753,10 +787,10 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Discounts & Returns</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : '− NPR 81,000'}
+              {isMasked ? 'XXXXXX' : `− NPR ${Number(discountsReturnsVal).toLocaleString()}`}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
-              Promo (32.8k) · Returns (48.2k)
+              Promo & Customer Returns
             </div>
           </div>
 
@@ -767,7 +801,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Platform Fee (4.5%)</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : '− NPR 81,190'}
+              {isMasked ? 'XXXXXX' : `− NPR ${Number(platformFeeVal).toLocaleString()}`}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
               Everest Pasal tech & catalog fee
@@ -781,7 +815,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Withholding TDS (1.5%)</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : '− NPR 27,640'}
+              {isMasked ? 'XXXXXX' : `− NPR ${Number(tdsVal).toLocaleString()}`}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
               Deposited to IRD Nepal on your PAN
@@ -795,7 +829,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#EFF6FF', borderRadius: '10px', padding: '14px', border: '1.5px solid #93C5FD' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#1E40AF', textTransform: 'uppercase' }}>Net Vendor Pool</div>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#1A56DB', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : 'NPR 1,652,820'}
+              {isMasked ? 'XXXXXX' : `NPR ${Number(netVendorPoolVal).toLocaleString()}`}
             </div>
             <div style={{ fontSize: '10px', color: '#1E40AF', marginTop: '4px', fontWeight: 600 }}>
               Total net vendor entitled amount

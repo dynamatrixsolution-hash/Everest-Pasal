@@ -465,29 +465,57 @@ export const VendorCustomersPage: React.FC = () => {
   useEffect(() => {
     ApiClient.get('/api/v1/vendor/customers')
       .then((res: any) => {
-        if (res && res.customers && Array.isArray(res.customers)) {
-          // Merge with initial data
-          const merged = res.customers.map((c: any, idx: number) => {
+        const rawCustomers = res?.customers ?? res?.data?.customers;
+        if (Array.isArray(rawCustomers)) {
+          const merged: VendorCustomer[] = rawCustomers.map((c: any, idx: number) => {
             const fallback = INITIAL_CUSTOMERS[idx] || INITIAL_CUSTOMERS[0];
+            const nameStr = c.name || fallback.name || 'Customer';
+            const parts = nameStr.split(' ');
+            const ordersCount = c.ordersCount !== undefined ? Number(c.ordersCount) : fallback.ordersCount;
             return {
               ...fallback,
               id: c.id || fallback.id,
-              name: c.name || fallback.name,
+              firstName: c.firstName || parts[0] || 'Customer',
+              lastName: c.lastName || parts.slice(1).join(' ') || '',
+              name: nameStr,
+              initials: c.initials || parts.map((p: string) => p[0]).join('').slice(0, 2).toUpperCase() || 'CU',
               email: c.email || fallback.email,
               phone: c.phone || fallback.phone,
-              ordersCount: c.ordersCount !== undefined ? c.ordersCount : fallback.ordersCount,
-              totalSpend: c.totalSpend !== undefined ? c.totalSpend : fallback.totalSpend,
+              ordersCount,
+              totalSpend: c.totalSpend !== undefined ? Number(c.totalSpend) : fallback.totalSpend,
               lastOrder: c.lastOrder || fallback.lastOrder,
               segment: c.segment || fallback.segment,
               status: c.status || fallback.status,
+              hasPlacedOrderWithStore: c.hasPlacedOrderWithStore !== undefined ? Boolean(c.hasPlacedOrderWithStore) : ordersCount > 0,
             };
           });
           setCustomers(merged);
+          if (merged.length > 0) {
+            setSelectedCustomer(merged[0]);
+          }
         }
       })
       .catch((err) => {
         console.warn('[Customers] Using baseline customer directory:', err.message);
       });
+
+    ApiClient.get('/api/v1/vendor/customers/segments')
+      .then((res: any) => {
+        const rawSegments = res?.segments ?? res?.data?.segments;
+        if (Array.isArray(rawSegments) && rawSegments.length > 0) {
+          setSegments(
+            rawSegments.map((s: any, idx: number) => ({
+              id: s.id || `seg-${idx + 1}`,
+              name: s.name || 'Segment',
+              subtitle: s.subtitle || s.criteria || 'Store segment',
+              definition: s.definition || s.criteria || 'Store segment rule',
+              count: Number(s.count ?? s.membersCount ?? 0),
+              iconType: (idx === 0 ? 'repeat' : idx === 1 ? 'clock' : idx === 2 ? 'new' : 'vip') as any,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Open Details view (with privacy protection enforcement)
@@ -792,7 +820,7 @@ export const VendorCustomersPage: React.FC = () => {
                 TOTAL CUSTOMERS
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                1,284
+                {customers.length.toLocaleString()}
               </div>
             </div>
 
@@ -801,7 +829,7 @@ export const VendorCustomersPage: React.FC = () => {
                 ACTIVE CUSTOMERS
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                1,142
+                {customers.filter((c) => c.status === 'Active' && c.ordersCount > 0).length.toLocaleString()}
               </div>
             </div>
 
@@ -810,7 +838,7 @@ export const VendorCustomersPage: React.FC = () => {
                 ORDERS THIS MONTH
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                248
+                {customers.reduce((sum, c) => sum + Number(c.ordersCount || 0), 0).toLocaleString()}
               </div>
             </div>
 
@@ -819,7 +847,7 @@ export const VendorCustomersPage: React.FC = () => {
                 TOTAL SPEND (NPR)
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '10px' }}>
-                NPR 1.84M
+                NPR {customers.reduce((sum, c) => sum + Number(c.totalSpend || 0), 0).toLocaleString()}
               </div>
             </div>
           </div>
@@ -849,7 +877,7 @@ export const VendorCustomersPage: React.FC = () => {
                     borderRadius: '16px',
                   }}
                 >
-                  1,284 total
+                  {customers.length} total
                 </div>
               </div>
 
@@ -1064,7 +1092,7 @@ export const VendorCustomersPage: React.FC = () => {
 
               {/* Table Pagination Footer */}
               <div style={{ padding: '14px 20px', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px', color: '#64748B' }}>
-                <div>Showing 1–{filteredCustomers.length} of 1,284 customers</div>
+                <div>Showing {filteredCustomers.length > 0 ? `1–${filteredCustomers.length}` : '0'} of {customers.length} customers</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button style={{ width: '30px', height: '30px', borderRadius: '6px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
                     ←
