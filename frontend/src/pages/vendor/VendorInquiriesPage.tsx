@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 export type InquiryStatus = 'Open' | 'Awaiting Reply' | 'In Progress' | 'Resolved' | 'Closed';
 export type InquiryPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
@@ -351,7 +352,8 @@ const INITIAL_INQUIRIES: InquiryItem[] = [
 export const VendorInquiriesPage: React.FC = () => {
   // Navigation View State: 'list' | 'conversation' | 'create'
   const [viewMode, setViewMode] = useState<'list' | 'conversation' | 'create'>('list');
-  const [inquiries, setInquiries] = useState<InquiryItem[]>(INITIAL_INQUIRIES);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [inquiries, setInquiries] = useState<InquiryItem[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryItem>(INITIAL_INQUIRIES[0]);
 
   // Filters State for Main List
@@ -416,7 +418,11 @@ export const VendorInquiriesPage: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.warn('[Inquiries] Using initial baseline state:', err.message);
+        setInquiries(INITIAL_INQUIRIES);
+        console.warn('[Inquiries] Using initial baseline state:', err?.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -650,6 +656,25 @@ export const VendorInquiriesPage: React.FC = () => {
       assignedAgent,
     }).catch(() => {});
   };
+
+  if (isLoading && viewMode === 'list') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="180px" height="28px" />
+            <Skeleton width="320px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="120px" height="38px" borderRadius="6px" />
+            <Skeleton width="140px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={5} columns={5} />
+        <SkeletonTable rows={6} columns={8} />
+      </div>
+    );
+  }
 
   return (
     <div

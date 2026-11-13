@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useRouter } from '../../router/index.js';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 interface PromotionItem {
   id: string;
@@ -182,6 +183,27 @@ export const VendorPromotionsPage: React.FC = () => {
   // Helper calculations for wizard preview
   const calculatedDiscountAmount = (wizardMinOrder * wizardDiscountValue) / 100;
   const finalPrice = Math.max(0, wizardMinOrder - Math.min(calculatedDiscountAmount, wizardDiscountCap));
+
+  if (loading && subView === 'OVERVIEW') {
+    return (
+      <div style={{ padding: '0 0 60px 0', minHeight: '100vh', backgroundColor: '#FAF7F2' }}>
+        <div style={{ padding: '24px', fontFamily: "'Poppins', sans-serif", color: '#0F172A', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <Skeleton width="180px" height="28px" />
+              <Skeleton width="300px" height="14px" style={{ marginTop: '6px' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <Skeleton width="120px" height="38px" borderRadius="6px" />
+              <Skeleton width="140px" height="38px" borderRadius="6px" />
+            </div>
+          </div>
+          <SkeletonStatCards count={5} columns={5} />
+          <SkeletonTable rows={5} columns={7} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '0 0 60px 0', minHeight: '100vh', backgroundColor: '#FAF7F2' }}>

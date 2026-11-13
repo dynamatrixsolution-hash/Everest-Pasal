@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useRouter } from '../../router/index.js';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 export interface InventoryItem {
   id: string;
@@ -270,16 +271,18 @@ const INITIAL_NEEDS_ATTENTION: NeedsAttentionItem[] = [
 export const VendorInventoryPage: React.FC = () => {
   const { navigate } = useRouter();
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // State Management
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(INITIAL_INVENTORY_ITEMS);
-  const [recentMovements, setRecentMovements] = useState<StockMovement[]>(INITIAL_RECENT_MOVEMENTS);
-  const [needsAttention, setNeedsAttention] = useState<NeedsAttentionItem[]>(INITIAL_NEEDS_ATTENTION);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [recentMovements, setRecentMovements] = useState<StockMovement[]>([]);
+  const [needsAttention, setNeedsAttention] = useState<NeedsAttentionItem[]>([]);
   const [metrics, setMetrics] = useState({
-    totalProducts: 248,
-    totalStockUnits: 4862,
-    lowStock: 18,
-    outOfStock: 7,
-    inventoryValue: 'NPR 12,40,500',
+    totalProducts: 0,
+    totalStockUnits: 0,
+    lowStock: 0,
+    outOfStock: 0,
+    inventoryValue: 'NPR 0',
   });
 
   // View States
@@ -341,7 +344,11 @@ export const VendorInventoryPage: React.FC = () => {
           });
         }
       } catch {
-        // Fallback to initial mock data when offline
+        setInventoryItems(INITIAL_INVENTORY_ITEMS);
+        setRecentMovements(INITIAL_RECENT_MOVEMENTS);
+        setNeedsAttention(INITIAL_NEEDS_ATTENTION);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchDynamic();
@@ -467,6 +474,25 @@ export const VendorInventoryPage: React.FC = () => {
     setSelectedDrawerItem(item);
     setDrawerSelectedThumbIdx(0);
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="180px" height="28px" />
+            <Skeleton width="280px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="120px" height="38px" borderRadius="6px" />
+            <Skeleton width="140px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={5} columns={5} />
+        <SkeletonTable rows={8} columns={7} />
+      </div>
+    );
+  }
 
   return (
     <div

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useRouter } from '../../router/index.js';
+import { Skeleton, SkeletonStatCards } from '../../components/Common/Skeleton.js';
 
 export const VendorStorePage: React.FC = () => {
   const { navigate } = useRouter();
@@ -154,6 +155,27 @@ export const VendorStorePage: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  if (loading && currentTab === 'OVERVIEW') {
+    return (
+      <div style={{ padding: '0 0 60px 0', minHeight: '100vh', backgroundColor: '#FAF7F2' }}>
+        <div style={{ padding: '24px', fontFamily: "'Poppins', sans-serif", color: '#0F172A', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <Skeleton width="180px" height="28px" />
+              <Skeleton width="300px" height="14px" style={{ marginTop: '6px' }} />
+            </div>
+            <Skeleton width="130px" height="38px" borderRadius="6px" />
+          </div>
+          <SkeletonStatCards count={4} columns={4} />
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '24px', border: '1px solid #ECE7DE', height: '300px' }}>
+            <Skeleton width="30%" height="24px" />
+            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '0 0 60px 0', minHeight: '100vh', backgroundColor: '#FAF7F2' }}>

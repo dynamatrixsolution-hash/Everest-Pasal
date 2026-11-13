@@ -18,6 +18,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { ApiClient } from '../../api/client';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 export interface PayoutHistoryItem {
   id: string;
@@ -170,13 +171,15 @@ export const VendorFinancePage: React.FC = () => {
   const [earningsTab, setEarningsTab] = useState<'net' | 'gross' | 'deductions'>('net');
   const [earningsFrequency, setEarningsFrequency] = useState<'daily' | 'weekly'>('daily');
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // Payouts state & filters
-  const [payouts, setPayouts] = useState<PayoutHistoryItem[]>(INITIAL_PAYOUTS);
+  const [payouts, setPayouts] = useState<PayoutHistoryItem[]>([]);
   const [payoutSearch, setPayoutSearch] = useState('');
   const [payoutStatusFilter, setPayoutStatusFilter] = useState('ALL');
 
   // Ledger state & filters
-  const [ledger, setLedger] = useState<LedgerTransactionItem[]>(INITIAL_LEDGER);
+  const [ledger, setLedger] = useState<LedgerTransactionItem[]>([]);
   const [ledgerTab, setLedgerTab] = useState<'all' | 'credits' | 'commissions' | 'refunds' | 'logistics'>('all');
 
   // Modals state
@@ -237,7 +240,12 @@ export const VendorFinancePage: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.warn('[Finance] Using initial baseline financial state:', err.message);
+        setPayouts(INITIAL_PAYOUTS);
+        setLedger(INITIAL_LEDGER);
+        console.warn('[Finance] Using initial baseline financial state:', err?.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [dateRange]);
 
@@ -307,6 +315,35 @@ export const VendorFinancePage: React.FC = () => {
     ApiClient.post('/api/v1/vendor/finance/payout-request', { amount: amt })
       .catch(() => {});
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="220px" height="28px" />
+            <Skeleton width="340px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="160px" height="38px" borderRadius="6px" />
+            <Skeleton width="160px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={4} columns={4} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '16px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '20px', border: '1px solid #ECECEC', height: '280px' }}>
+            <Skeleton width="30%" height="20px" />
+            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '20px', border: '1px solid #ECECEC', height: '280px' }}>
+            <Skeleton width="50%" height="20px" />
+            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+          </div>
+        </div>
+        <SkeletonTable rows={5} columns={8} />
+      </div>
+    );
+  }
 
   return (
     <div

@@ -17,6 +17,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { ApiClient } from '../../api/client';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 export interface ProductPerformanceItem {
   id: string;
@@ -126,7 +127,8 @@ export const VendorReportsPage: React.FC = () => {
   const [productSearch, setProductSearch] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [overviewData, setOverviewData] = useState<any>(null);
-  const [topProductsList, setTopProductsList] = useState<ProductPerformanceItem[]>(TOP_PRODUCTS);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [topProductsList, setTopProductsList] = useState<ProductPerformanceItem[]>([]);
 
   // Load analytics overview from backend
   useEffect(() => {
@@ -174,7 +176,11 @@ export const VendorReportsPage: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.warn('[Analytics] Using baseline analytics metrics:', err.message);
+        setTopProductsList(TOP_PRODUCTS);
+        console.warn('[Analytics] Using baseline analytics metrics:', err?.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [dateRange]);
 
@@ -214,6 +220,35 @@ export const VendorReportsPage: React.FC = () => {
   const kpiGrossProfit = overviewData?.kpis?.grossProfit?.value ?? 468200;
   const kpiNetPayout = overviewData?.kpis?.netMargin?.value ?? 392150;
   const kpiVelocity = overviewData?.kpis?.salesGrowth?.valuePct ?? 14.8;
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="220px" height="28px" />
+            <Skeleton width="340px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="160px" height="38px" borderRadius="6px" />
+            <Skeleton width="140px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={6} columns={6} />
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '20px', border: '1px solid #ECECEC', height: '280px' }}>
+            <Skeleton width="30%" height="20px" />
+            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '20px', border: '1px solid #ECECEC', height: '280px' }}>
+            <Skeleton width="50%" height="20px" />
+            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+          </div>
+        </div>
+        <SkeletonTable rows={5} columns={6} />
+      </div>
+    );
+  }
 
   return (
     <div

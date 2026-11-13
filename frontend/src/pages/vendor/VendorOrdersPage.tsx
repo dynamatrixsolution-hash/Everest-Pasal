@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/index.js';
 import { ApiClient } from '../../api/client.js';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 interface OrderItem {
   id: string;
@@ -40,38 +41,12 @@ interface OrderRecord {
   isRMA?: boolean;
 }
 
-export const VendorOrdersPage: React.FC = () => {
-  const { navigate } = useRouter();
-
-  // Active status tab
-  const [activeTab, setActiveTab] = useState<string>('ALL');
-
-  // Multi-selection states (3 selected by default matching Image 3)
-  const [selectedIds, setSelectedIds] = useState<string[]>(['EP-1048', 'EP-1047', 'EP-1046']);
-
-  // Modals & Slide-over Drawer States
-  const [activeOrderDrawer, setActiveOrderDrawer] = useState<OrderRecord | null>(null);
-  const [activeRMADrawer, setActiveRMADrawer] = useState<boolean>(false);
-
-  // Pick & Pack verification state
-  const [pickedItems, setPickedItems] = useState<{ [key: string]: boolean }>({});
-
-  // Courier partner selection
-  const [selectedCourier, setSelectedCourier] = useState<'NCM' | 'PATHAO'>('NCM');
-
-  // Filters
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
-  const [fulfillmentFilter, setFulfillmentFilter] = useState<string>('ALL');
-  const [sortBy, setSortBy] = useState<string>('newest');
-
-  // Initial fallback orders list matching Image 3
-  const [orders, setOrders] = useState<OrderRecord[]>([
-    {
-      id: 'EP-1048',
-      order_no: 'EP-1048',
-      items_count: 3,
-      customer_name: 'Suman Thapa',
+const FALLBACK_ORDERS: OrderRecord[] = [
+  {
+    id: 'EP-1048',
+    order_no: 'EP-1048',
+    items_count: 3,
+    customer_name: 'Suman Thapa',
       customer_location: 'Kathmandu',
       customer_phone: '+977 9841234567',
       customer_address: '123 Durbar Marg, Kathmandu, Nepal',
@@ -338,17 +313,43 @@ export const VendorOrdersPage: React.FC = () => {
         },
       ],
     },
-  ]);
+  ];
+
+export const VendorOrdersPage: React.FC = () => {
+  const { navigate } = useRouter();
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<string>('ALL');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Modals & Slide-over Drawer States
+  const [activeOrderDrawer, setActiveOrderDrawer] = useState<OrderRecord | null>(null);
+  const [activeRMADrawer, setActiveRMADrawer] = useState<boolean>(false);
+
+  // Pick & Pack verification state
+  const [pickedItems, setPickedItems] = useState<{ [key: string]: boolean }>({});
+
+  // Courier partner selection
+  const [selectedCourier, setSelectedCourier] = useState<'NCM' | 'PATHAO'>('NCM');
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
+  const [fulfillmentFilter, setFulfillmentFilter] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<string>('newest');
+
+  // Dynamic orders list
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
 
   const [orderMetrics, setOrderMetrics] = useState({
-    totalOrders: 8,
-    newOrders: 1,
-    processing: 1,
-    readyToShip: 1,
-    completed: 2,
-    shipped: 1,
-    cancelled: 1,
-    returns: 1,
+    totalOrders: 0,
+    newOrders: 0,
+    processing: 0,
+    readyToShip: 0,
+    completed: 0,
+    shipped: 0,
+    cancelled: 0,
+    returns: 0,
   });
 
   useEffect(() => {
@@ -412,7 +413,9 @@ export const VendorOrdersPage: React.FC = () => {
           });
         }
       } catch {
-        // Keep fallback
+        setOrders(FALLBACK_ORDERS);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchOrders();
@@ -552,6 +555,37 @@ export const VendorOrdersPage: React.FC = () => {
         );
     }
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        {/* Header skeleton */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="160px" height="28px" />
+            <Skeleton width="260px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="110px" height="38px" borderRadius="6px" />
+            <Skeleton width="130px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+
+        {/* Stat Cards Skeleton (5 cards) */}
+        <SkeletonStatCards count={5} columns={5} />
+
+        {/* Tab Bar Skeleton */}
+        <div style={{ display: 'flex', gap: '8px', padding: '4px', backgroundColor: '#F8FAFC', borderRadius: '8px' }}>
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} width="100px" height="36px" borderRadius="6px" />
+          ))}
+        </div>
+
+        {/* Orders Table Skeleton */}
+        <SkeletonTable rows={7} columns={8} />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>

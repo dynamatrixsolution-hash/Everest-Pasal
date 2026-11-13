@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 interface CategoryItem {
   id: string;
@@ -199,8 +200,10 @@ export const VendorCategoryUnitPage: React.FC = () => {
   const [categoryFormMode, setCategoryFormMode] = useState<'add' | 'edit'>('edit');
   const [attributeFormMode, setAttributeFormMode] = useState<'add' | 'edit'>('edit');
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // Categories State
-  const [categories, setCategories] = useState<CategoryItem[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem>(INITIAL_CATEGORIES[0]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterActiveOnly, setFilterActiveOnly] = useState<boolean>(false);
@@ -277,7 +280,11 @@ export const VendorCategoryUnitPage: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.warn('[Categories] Using baseline categories state:', err.message);
+        setCategories(INITIAL_CATEGORIES);
+        console.warn('[Categories] Using baseline categories state:', err?.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -479,6 +486,25 @@ export const VendorCategoryUnitPage: React.FC = () => {
       attributeOptions.map((opt) => (opt.id === id ? { ...opt, [field]: val } : opt))
     );
   };
+
+  if (isLoading && viewMode === 'main') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="220px" height="28px" />
+            <Skeleton width="320px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="120px" height="38px" borderRadius="6px" />
+            <Skeleton width="140px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={4} columns={4} />
+        <SkeletonTable rows={6} columns={6} />
+      </div>
+    );
+  }
 
   return (
     <div

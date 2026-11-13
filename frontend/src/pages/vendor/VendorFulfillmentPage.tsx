@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/index.js';
 import { ApiClient } from '../../api/client.js';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 interface ShipmentRecord {
   id: string;
@@ -23,46 +24,10 @@ interface ShipmentRecord {
   image: string;
 }
 
-export const VendorFulfillmentPage: React.FC = () => {
-  const { navigate } = useRouter();
-
-  // Selected Shipments (3 selected by default matching Image 3)
-  const [selectedIds, setSelectedIds] = useState<string[]>(['ORD-10482', 'ORD-10471', 'ORD-10456']);
-
-  // Context Menu Dropdown State (Image 1)
-  const [activeMenuShipment, setActiveMenuShipment] = useState<ShipmentRecord | null>(null);
-  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
-
-  // Create Dispatch Modal State (Image 2)
-  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState<boolean>(false);
-
-  // Filter States
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [courierFilter, setCourierFilter] = useState<string>('ALL');
-  const [destinationFilter, setDestinationFilter] = useState<string>('ALL');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-
-  // Dispatch Form States (Image 2)
-  const [dispatchForm, setDispatchForm] = useState({
-    orderId: '#ORD-10482',
-    courier: 'Nepal Post',
-    serviceType: 'standard',
-    warehouse: 'Main warehouse - Kathmandu',
-    pickupTime: 'Today · 2:00 PM - 4:00 PM',
-    packages: '1',
-    weight: '5.20',
-    length: '32',
-    width: '24',
-    height: '18',
-    notes: 'Keep dry. Food item — handle with care.',
-  });
-
-  // Shipments state initialized with fallback list matching Image 3
-  const [shipments, setShipments] = useState<ShipmentRecord[]>([
-    {
-      id: 'ORD-10482',
-      title: 'Premium Basmati Rice',
+const FALLBACK_SHIPMENTS: ShipmentRecord[] = [
+  {
+    id: 'ORD-10482',
+    title: 'Premium Basmati Rice',
       order_no: '#ORD-10482',
       courier: 'Nepal Post',
       courier_full: 'Nepal Post',
@@ -156,14 +121,47 @@ export const VendorFulfillmentPage: React.FC = () => {
       updated_at: 'Sep 10, 2026',
       image: '/images/product_dhaka_topi.jpg',
     },
-  ]);
+  ];
+
+export const VendorFulfillmentPage: React.FC = () => {
+  const { navigate } = useRouter();
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeMenuShipment, setActiveMenuShipment] = useState<ShipmentRecord | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState<boolean>(false);
+
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [courierFilter, setCourierFilter] = useState<string>('ALL');
+  const [destinationFilter, setDestinationFilter] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+  // Dispatch Form States
+  const [dispatchForm, setDispatchForm] = useState({
+    orderId: '#ORD-10482',
+    courier: 'Nepal Post',
+    serviceType: 'standard',
+    warehouse: 'Main warehouse - Kathmandu',
+    pickupTime: 'Today · 2:00 PM - 4:00 PM',
+    packages: '1',
+    weight: '5.20',
+    length: '32',
+    width: '24',
+    height: '18',
+    notes: 'Keep dry. Food item — handle with care.',
+  });
+
+  const [shipments, setShipments] = useState<ShipmentRecord[]>([]);
 
   const [fulfillmentMetrics, setFulfillmentMetrics] = useState({
-    readyToShip: 2,
-    inTransit: 2,
-    deliveredToday: 4,
-    avgDeliveryTime: '2.4 days',
-    courierCoverage: '3 active',
+    readyToShip: 0,
+    inTransit: 0,
+    deliveredToday: 0,
+    avgDeliveryTime: '0 days',
+    courierCoverage: '0 active',
   });
 
   useEffect(() => {
@@ -186,7 +184,9 @@ export const VendorFulfillmentPage: React.FC = () => {
           });
         }
       } catch {
-        // Keep fallback
+        setShipments(FALLBACK_SHIPMENTS);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchFulfillment();
@@ -266,6 +266,25 @@ export const VendorFulfillmentPage: React.FC = () => {
         );
     }
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="220px" height="28px" />
+            <Skeleton width="320px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="130px" height="38px" borderRadius="6px" />
+            <Skeleton width="130px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={5} columns={5} />
+        <SkeletonTable rows={6} columns={8} />
+      </div>
+    );
+  }
 
   return (
     <div

@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/index.js';
 import { ApiClient } from '../../api/client.js';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 interface ReturnRecord {
   id: string;
@@ -19,39 +20,10 @@ interface ReturnRecord {
   image: string;
 }
 
-export const VendorReturnsPage: React.FC = () => {
-  const { navigate } = useRouter();
-
-  // Multi-selection state (3 selected by default matching design)
-  const [selectedIds, setSelectedIds] = useState<string[]>(['ORD-10482', 'ORD-10471', 'ORD-10456']);
-
-  // Modals & Drawer States
-  const [activeRMADrawer, setActiveRMADrawer] = useState<ReturnRecord | null>(null);
-  const [isProcessRefundModalOpen, setIsProcessRefundModalOpen] = useState<boolean>(false);
-  const [activeMenuRecord, setActiveMenuRecord] = useState<ReturnRecord | null>(null);
-  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
-
-  // Filter States
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [reasonFilter, setReasonFilter] = useState<string>('ALL');
-  const [channelFilter, setChannelFilter] = useState<string>('ALL');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-
-  // Refund Form State
-  const [refundForm, setRefundForm] = useState({
-    orderId: '#ORD-10482',
-    amount: '500',
-    reason: 'Wrong item shipped',
-    refundMethod: 'Original Payment Method (eSewa)',
-    restockItem: true,
-  });
-
-  // Return records state initialized with fallback list matching design
-  const [returnRecords, setReturnRecords] = useState<ReturnRecord[]>([
-    {
-      id: 'ORD-10482',
-      title: 'Premium Basmati Rice',
+const FALLBACK_RETURNS: ReturnRecord[] = [
+  {
+    id: 'ORD-10482',
+    title: 'Premium Basmati Rice',
       order_no: '#ORD-10482',
       category: 'Groceries',
       reason: 'Wrong item',
@@ -137,7 +109,35 @@ export const VendorReturnsPage: React.FC = () => {
       updated_at: 'Sep 10, 2026',
       image: '/images/product_dhaka_topi.jpg',
     },
-  ]);
+  ];
+
+export const VendorReturnsPage: React.FC = () => {
+  const { navigate } = useRouter();
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeRMADrawer, setActiveRMADrawer] = useState<ReturnRecord | null>(null);
+  const [isProcessRefundModalOpen, setIsProcessRefundModalOpen] = useState<boolean>(false);
+  const [activeMenuRecord, setActiveMenuRecord] = useState<ReturnRecord | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [reasonFilter, setReasonFilter] = useState<string>('ALL');
+  const [channelFilter, setChannelFilter] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+  // Refund Form State
+  const [refundForm, setRefundForm] = useState({
+    orderId: '#ORD-10482',
+    amount: '500',
+    reason: 'Wrong item shipped',
+    refundMethod: 'Original Payment Method (eSewa)',
+    restockItem: true,
+  });
+
+  const [returnRecords, setReturnRecords] = useState<ReturnRecord[]>([]);
 
   useEffect(() => {
     const fetchReturns = async () => {
@@ -149,7 +149,9 @@ export const VendorReturnsPage: React.FC = () => {
           setSelectedIds(rawReturns.slice(0, 3).map((r: any) => r.id));
         }
       } catch {
-        // Keep fallback
+        setReturnRecords(FALLBACK_RETURNS);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchReturns();
@@ -225,6 +227,25 @@ export const VendorReturnsPage: React.FC = () => {
         );
     }
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="180px" height="28px" />
+            <Skeleton width="280px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="120px" height="38px" borderRadius="6px" />
+            <Skeleton width="140px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={4} columns={4} />
+        <SkeletonTable rows={6} columns={7} />
+      </div>
+    );
+  }
 
   return (
     <div

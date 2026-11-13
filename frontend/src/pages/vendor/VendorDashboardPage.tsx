@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useRouter } from '../../router/index.js';
+import { Skeleton, SkeletonStatCards } from '../../components/Common/Skeleton.js';
 
 interface DashboardData {
   store?: {
@@ -89,6 +90,7 @@ interface DashboardData {
 export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void }> = ({ onNavigate }) => {
   const { navigate } = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | 'month'>('7d');
 
   const handleNav = (dest: string) => {
@@ -109,6 +111,10 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
         }
       } catch (err) {
         // Fallback gracefully to design mock data
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     fetchDashboard();
@@ -205,6 +211,74 @@ export const VendorDashboardPage: React.FC<{ onNavigate?: (dest: string) => void
       </span>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        {/* Row 1: Top 5 KPI Stat Cards */}
+        <SkeletonStatCards count={5} columns={5} />
+
+        {/* Row 2: Store Alert Banner */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '16px', border: '1px solid #ECECEC' }}>
+          <Skeleton width="40%" height="18px" />
+          <Skeleton width="70%" height="12px" style={{ marginTop: '8px' }} />
+        </div>
+
+        {/* Row 3: Order Overview & Needs Attention */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '14px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '18px', border: '1px solid #ECECEC', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Skeleton width="30%" height="16px" />
+            <Skeleton width="100%" height="80px" />
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '18px', border: '1px solid #ECECEC', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Skeleton width="40%" height="16px" />
+            <Skeleton width="100%" height="80px" />
+          </div>
+        </div>
+
+        {/* Row 4: Recent Orders & Top Selling Products */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '14px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '18px', border: '1px solid #ECECEC' }}>
+            <Skeleton width="30%" height="18px" style={{ marginBottom: '16px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Skeleton width="25%" height="14px" />
+                  <Skeleton width="30%" height="14px" />
+                  <Skeleton width="20%" height="14px" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '18px', border: '1px solid #ECECEC' }}>
+            <Skeleton width="40%" height="18px" style={{ marginBottom: '16px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <Skeleton width="40px" height="40px" borderRadius="6px" />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <Skeleton width="70%" height="14px" />
+                    <Skeleton width="40%" height="11px" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 5: Store Performance */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', padding: '14px', border: '1px solid #ECECEC', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Skeleton width="50%" height="12px" />
+              <Skeleton width="70%" height="22px" />
+              <Skeleton width="40%" height="10px" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>

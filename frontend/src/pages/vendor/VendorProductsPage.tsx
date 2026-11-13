@@ -12,6 +12,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useRouter } from '../../router/index.js';
+import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
 
 export interface VendorProduct {
   id: string;
@@ -252,14 +253,16 @@ const INITIAL_MOCK_PRODUCTS: VendorProduct[] = [
 export const VendorProductsPage: React.FC = () => {
   const { navigate } = useRouter();
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // Primary Data State
-  const [products, setProducts] = useState<VendorProduct[]>(INITIAL_MOCK_PRODUCTS);
+  const [products, setProducts] = useState<VendorProduct[]>([]);
   const [metrics, setMetrics] = useState<ProductMetrics>({
-    totalProducts: 248,
-    published: 186,
-    drafts: 24,
-    lowStock: 18,
-    pendingApproval: 20,
+    totalProducts: 0,
+    published: 0,
+    drafts: 0,
+    lowStock: 0,
+    pendingApproval: 0,
   });
 
   // View States
@@ -275,8 +278,8 @@ export const VendorProductsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
 
-  // Bulk Selection: Initially pre-selected with row 1, 2, 3 as depicted in design mockup
-  const [selectedIds, setSelectedIds] = useState<string[]>(['prd-001', 'prd-002', 'prd-003']);
+  // Bulk Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Modals & Drawers
   const [quickViewProduct, setQuickViewProduct] = useState<VendorProduct | null>(null);
@@ -325,7 +328,9 @@ export const VendorProductsPage: React.FC = () => {
           setMetrics(res.metrics);
         }
       } catch (err) {
-        // Retain initial mock products on network error or offline mode
+        setProducts(INITIAL_MOCK_PRODUCTS);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadProducts();
@@ -591,6 +596,25 @@ export const VendorProductsPage: React.FC = () => {
   });
 
   const isAllSelected = filteredProducts.length > 0 && selectedIds.length === filteredProducts.length;
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Skeleton width="180px" height="28px" />
+            <Skeleton width="280px" height="14px" style={{ marginTop: '6px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Skeleton width="120px" height="38px" borderRadius="6px" />
+            <Skeleton width="140px" height="38px" borderRadius="6px" />
+          </div>
+        </div>
+        <SkeletonStatCards count={5} columns={5} />
+        <SkeletonTable rows={8} columns={9} />
+      </div>
+    );
+  }
 
   return (
     <div
