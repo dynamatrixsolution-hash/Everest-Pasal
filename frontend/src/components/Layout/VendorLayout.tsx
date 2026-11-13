@@ -529,8 +529,9 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
         {/* Top Header matching exact screenshot */}
         <header
           style={{
-            backgroundColor: '#F8F9FA',
-            padding: '20px 28px 12px 28px',
+            backgroundColor: '#FFFFFF',
+            padding: '16px 28px 14px 28px',
+            borderBottom: '1px solid #ECECEC',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -662,7 +663,7 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
         </header>
 
         {/* Dynamic Page Content */}
-        <main style={{ flex: 1, padding: '10px 28px 36px 28px', overflowY: 'auto' }}>
+        <main style={{ flex: 1, padding: '20px 28px 36px 28px', overflowY: 'auto' }}>
           {children}
         </main>
       </div>
