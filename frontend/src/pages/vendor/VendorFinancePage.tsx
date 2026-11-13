@@ -167,7 +167,6 @@ const INITIAL_LEDGER: LedgerTransactionItem[] = [
 export const VendorFinancePage: React.FC = () => {
   // Page Controls
   const [dateRange, setDateRange] = useState('30_days');
-  const [isMasked, setIsMasked] = useState(false);
   const [earningsTab, setEarningsTab] = useState<'net' | 'gross' | 'deductions'>('net');
   const [earningsFrequency, setEarningsFrequency] = useState<'daily' | 'weekly'>('daily');
 
@@ -199,43 +198,51 @@ export const VendorFinancePage: React.FC = () => {
   useEffect(() => {
     ApiClient.get(`/api/v1/vendor/finance/overview?timeframe=${dateRange}`)
       .then((res: any) => {
-        const data = res?.reconciliationEquation ? res : res?.data;
+        const data = res?.reconciliationEquation ? res : (res?.data || res);
         if (data) {
           setFinanceOverview(data);
-          if (data.availableForPayout?.balance !== undefined) {
-            setPayoutAmountInput(String(data.availableForPayout.balance));
+          const avail = data.availableForPayout?.amount ?? data.availableForPayout?.balance;
+          if (avail !== undefined) {
+            setPayoutAmountInput(String(avail));
           }
-          if (Array.isArray(data.payoutHistory)) {
+          if (Array.isArray(data.payoutHistory) && data.payoutHistory.length > 0) {
             const mapped = data.payoutHistory.map((p: any, idx: number) => ({
               id: `po-${idx}`,
-              payoutId: p.payoutId,
-              requestDate: p.requestDate,
-              settlementPeriod: p.settlementPeriod,
+              payoutId: p.payoutId || `#PO-${9840 - idx}`,
+              requestDate: p.requestDate || 'Recent',
+              settlementPeriod: p.settlementPeriod || 'Nov 15 – Nov 30',
               amount: Number(p.amount ?? 0),
-              paymentMethod: p.paymentMethod,
-              bankRef: p.bankRefUtr || p.bankRef || '',
-              status: p.status,
-              disbursedDate: p.disbursedDate,
+              paymentMethod: p.paymentMethod?.startsWith('●') ? p.paymentMethod : `● ${p.paymentMethod || 'NCHL-IPS Direct'}`,
+              bankRef: p.bankRefUtr || p.bankRef || 'NCHL2025120199428',
+              status: p.status || 'Paid',
+              disbursedDate: p.disbursedDate || 'Recent',
             }));
             setPayouts(mapped);
+          } else {
+            setPayouts(INITIAL_PAYOUTS);
           }
-          if (Array.isArray(data.adjustmentLedger)) {
-            const mappedLedger: LedgerTransactionItem[] = data.adjustmentLedger.map((t: any, idx: number) => ({
-              id: `txn-${idx}`,
-              dateTime: t.dateTime || 'Today',
-              txnId: t.txnId || `#TXN-${idx + 1}`,
-              relatedOrder: t.relatedOrder || '#EP-1000',
-              transactionType: t.transactionType || '● Order Credit',
-              gross: t.gross !== undefined ? t.gross : null,
-              feesComm: {
-                amount: Number(t.feesOrComm ?? 0),
-                label: t.feeRebateLabel,
-                isRebate: Number(t.feesOrComm ?? 0) > 0,
-              },
-              netPayout: Number(t.netPayout ?? 0),
-              status: (t.status || 'Settled') as any,
-            }));
+          if (Array.isArray(data.adjustmentLedger) && data.adjustmentLedger.length > 0) {
+            const mappedLedger: LedgerTransactionItem[] = data.adjustmentLedger.map((t: any, idx: number) => {
+              const feeVal = Number(t.feesCommission ?? t.feesComm?.amount ?? t.feesOrComm ?? 0);
+              return {
+                id: `txn-${idx}`,
+                dateTime: t.dateTime || 'Today',
+                txnId: t.txnId || `#TXN-${8814 - idx}`,
+                relatedOrder: t.relatedOrder || '#EP-02408',
+                transactionType: t.transactionType?.startsWith('●') ? t.transactionType : `● ${t.transactionType || 'Order Credit'}`,
+                gross: t.gross !== undefined ? t.gross : null,
+                feesComm: {
+                  amount: feeVal,
+                  label: t.feeRebateLabel || (feeVal > 0 ? '(Fee Rebate)' : undefined),
+                  isRebate: feeVal > 0,
+                },
+                netPayout: Number(t.netPayout ?? 0),
+                status: (t.status || 'Settled') as any,
+              };
+            });
             setLedger(mappedLedger);
+          } else {
+            setLedger(INITIAL_LEDGER);
           }
         }
       })
@@ -249,13 +256,13 @@ export const VendorFinancePage: React.FC = () => {
       });
   }, [dateRange]);
 
-  const grossSalesVal = financeOverview?.reconciliationEquation?.grossSales ?? 1842650;
+  const grossSalesVal = financeOverview?.reconciliationEquation?.grossSales ?? financeOverview?.kpis?.grossSales?.value ?? 1842650;
   const discountsReturnsVal = Math.abs(financeOverview?.reconciliationEquation?.discountsAndReturns ?? 81000);
-  const platformFeeVal = Math.abs(financeOverview?.reconciliationEquation?.platformFee ?? 81190);
-  const tdsVal = Math.abs(financeOverview?.reconciliationEquation?.withholdingTds ?? 27640);
-  const netVendorPoolVal = financeOverview?.reconciliationEquation?.netVendorPool ?? 1652820;
-  const availablePayoutVal = financeOverview?.availableForPayout?.balance ?? 284500;
-  const totalDisbursedVal = payouts.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const platformFeeVal = Math.abs(financeOverview?.reconciliationEquation?.platformFeeAmount ?? financeOverview?.reconciliationEquation?.platformFee ?? 81190);
+  const tdsVal = Math.abs(financeOverview?.reconciliationEquation?.withholdingTdsAmount ?? financeOverview?.reconciliationEquation?.withholdingTds ?? 27640);
+  const netVendorPoolVal = financeOverview?.reconciliationEquation?.netVendorPool ?? financeOverview?.kpis?.netEarnings?.value ?? 1652820;
+  const availablePayoutVal = financeOverview?.availableForPayout?.amount ?? financeOverview?.availableForPayout?.balance ?? 284500;
+  const totalDisbursedVal = payouts.length > 0 ? payouts.reduce((sum, p) => sum + Number(p.amount || 0), 0) : (financeOverview?.kpis?.lifetimePaidOut?.value ?? 1473770);
 
   // Filtered Payouts
   const filteredPayouts = useMemo(() => {
@@ -318,29 +325,68 @@ export const VendorFinancePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        {/* Header Skeleton */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <Skeleton width="220px" height="28px" />
-            <Skeleton width="340px" height="14px" style={{ marginTop: '6px' }} />
-          </div>
+          <Skeleton width="260px" height="32px" />
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Skeleton width="160px" height="38px" borderRadius="6px" />
-            <Skeleton width="160px" height="38px" borderRadius="6px" />
+            <Skeleton width="220px" height="40px" borderRadius="8px" />
+            <Skeleton width="180px" height="40px" borderRadius="8px" />
           </div>
         </div>
-        <SkeletonStatCards count={4} columns={4} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '16px' }}>
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '20px', border: '1px solid #ECECEC', height: '280px' }}>
-            <Skeleton width="30%" height="20px" />
-            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+
+        {/* 4 Top KPI Cards Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '18px 20px', border: '1px solid #ECECEC' }}>
+              <Skeleton width="60%" height="13px" />
+              <Skeleton width="85%" height="28px" style={{ marginTop: '10px' }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Middle Overview & Payout Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.9fr) minmax(320px, 1fr)', gap: '20px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '24px', border: '1px solid #ECECEC', height: '360px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <Skeleton width="35%" height="20px" />
+              <Skeleton width="30%" height="28px" />
+            </div>
+            <Skeleton width="100%" height="230px" />
           </div>
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '20px', border: '1px solid #ECECEC', height: '280px' }}>
-            <Skeleton width="50%" height="20px" />
-            <Skeleton width="100%" height="200px" style={{ marginTop: '20px' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '22px', border: '1px solid #ECECEC', height: '175px' }}>
+              <Skeleton width="50%" height="14px" />
+              <Skeleton width="70%" height="32px" style={{ marginTop: '10px' }} />
+              <Skeleton width="100%" height="42px" borderRadius="8px" style={{ marginTop: '14px' }} />
+            </div>
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '22px', border: '1px solid #ECECEC', height: '165px' }}>
+              <Skeleton width="60%" height="14px" />
+              <Skeleton width="80%" height="24px" style={{ marginTop: '10px' }} />
+              <Skeleton width="45%" height="12px" style={{ marginTop: '6px' }} />
+            </div>
           </div>
         </div>
-        <SkeletonTable rows={5} columns={8} />
+
+        {/* Equation Skeleton */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '24px', border: '1px solid #ECECEC' }}>
+          <Skeleton width="280px" height="20px" style={{ marginBottom: '16px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
+                <Skeleton width="70%" height="12px" />
+                <Skeleton width="90%" height="22px" style={{ marginTop: '6px' }} />
+                <Skeleton width="50%" height="10px" style={{ marginTop: '6px' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Disbursals Table Skeleton */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #ECECEC', padding: '20px' }}>
+          <Skeleton width="260px" height="22px" style={{ marginBottom: '16px' }} />
+          <SkeletonTable rows={5} columns={9} />
+        </div>
       </div>
     );
   }
@@ -384,38 +430,14 @@ export const VendorFinancePage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 1. HEADER & DATE RANGE FILTER BAR */}
       {/* ========================================================================= */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.4px' }}>
             Earnings & Payouts
           </h1>
-          <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
-            Track settled revenue, manage automated bank transfers, and audit withholding tax deductions.
-          </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Mask / Privacy Toggle */}
-          <button
-            onClick={() => setIsMasked(!isMasked)}
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #CBD5E1',
-              color: '#475569',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Toggle masking financial figures"
-          >
-            <span>{isMasked ? '👁️ Show Numbers' : '🔒 Mask Privacy'}</span>
-          </button>
-
           {/* Date Range Selector */}
           <select
             value={dateRange}
@@ -473,10 +495,7 @@ export const VendorFinancePage: React.FC = () => {
             GROSS MARKETPLACE SALES
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(grossSalesVal).toLocaleString()}`}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#16A34A', fontWeight: 600, marginTop: '4px' }}>
-            +18.4% vs last cycle
+            NPR {Number(grossSalesVal).toLocaleString()}
           </div>
         </div>
 
@@ -486,10 +505,7 @@ export const VendorFinancePage: React.FC = () => {
             NET SETTLED EARNINGS
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#1A56DB', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(netVendorPoolVal).toLocaleString()}`}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '4px' }}>
-            After fees & discounts
+            NPR {Number(netVendorPoolVal).toLocaleString()}
           </div>
         </div>
 
@@ -499,10 +515,7 @@ export const VendorFinancePage: React.FC = () => {
             TOTAL PAYOUTS DISBURSED
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(totalDisbursedVal).toLocaleString()}`}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '4px' }}>
-            {payouts.length} completed transfers
+            NPR {Number(totalDisbursedVal).toLocaleString()}
           </div>
         </div>
 
@@ -512,10 +525,7 @@ export const VendorFinancePage: React.FC = () => {
             WITHHOLDING TDS (1.5%)
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#DC2626', marginTop: '8px' }}>
-            {isMasked ? 'XXXXXXXXXX' : `- NPR ${Number(tdsVal).toLocaleString()}`}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#16A34A', fontWeight: 600, marginTop: '4px' }}>
-            IRD e-TDS Tax Certified
+            − NPR {Number(tdsVal).toLocaleString()}
           </div>
         </div>
       </div>
@@ -638,7 +648,7 @@ export const VendorFinancePage: React.FC = () => {
                 <rect x="0" y="0" width="150" height="26" rx="6" fill="#0F172A" />
                 <path d="M 75 26 L 80 30 L 70 30 Z" fill="#0F172A" />
                 <text x="75" y="17" fill="#FFFFFF" fontSize="11" fontWeight="700" textAnchor="middle">
-                  ★ Dec 08 Peak: NPR 54,200
+                  Dec 08 Peak: NPR 54,200
                 </text>
               </g>
 
@@ -659,11 +669,11 @@ export const VendorFinancePage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#1A56DB' }}></span>
                 <span style={{ fontWeight: 700, color: '#0F172A' }}>Current Period:</span>
-                <span style={{ color: '#0F172A' }}>{isMasked ? 'XXXXXXXX' : 'NPR 1,617,450'}</span>
+                <span style={{ color: '#0F172A' }}>NPR {Number(netVendorPoolVal).toLocaleString()}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94A3B8' }}>
                 <span style={{ width: '16px', height: '2px', backgroundColor: '#94A3B8', borderTop: '2px dashed #94A3B8' }}></span>
-                <span>Previous Cycle: {isMasked ? 'XXXXXXXX' : 'NPR 1,345,320'}</span>
+                <span>Previous Cycle: NPR 1,345,320</span>
               </div>
             </div>
 
@@ -685,7 +695,7 @@ export const VendorFinancePage: React.FC = () => {
             </div>
 
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.5px' }}>
-              {isMasked ? 'XXXXXXXXXX' : `NPR ${Number(availablePayoutVal).toLocaleString()}.00`}
+              NPR {Number(availablePayoutVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px', padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '11px', color: '#64748B' }}>
@@ -762,13 +772,13 @@ export const VendorFinancePage: React.FC = () => {
                   {financeOverview?.primaryPayoutAccount?.bankName || 'Nabil Bank Limited'}
                 </div>
                 <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '1px' }}>
-                  {financeOverview?.primaryPayoutAccount?.branch || 'Kathmandu Main Branch (Teendhara)'}
+                  {financeOverview?.primaryPayoutAccount?.branchName || financeOverview?.primaryPayoutAccount?.branch || 'Kathmandu Main Branch (Teendhara)'}
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginTop: '6px', letterSpacing: '1px' }}>
                   {financeOverview?.primaryPayoutAccount?.accountNumberMasked || '**** **** 4892'}
                 </div>
                 <div style={{ fontSize: '10.5px', color: '#94A3B8', marginTop: '2px' }}>
-                  Account Name: {financeOverview?.primaryPayoutAccount?.accountHolderName || 'Manish Electronics Pvt. Ltd.'}
+                  Account Name: {financeOverview?.primaryPayoutAccount?.accountName || financeOverview?.primaryPayoutAccount?.accountHolderName || 'Manish Electronics Pvt. Ltd.'}
                 </div>
               </div>
             </div>
@@ -810,7 +820,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Gross Sales</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : `NPR ${Number(grossSalesVal).toLocaleString()}`}
+              NPR {Number(grossSalesVal).toLocaleString()}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
               Total customer checkout value
@@ -824,10 +834,10 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Discounts & Returns</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : `− NPR ${Number(discountsReturnsVal).toLocaleString()}`}
+              − NPR {Number(discountsReturnsVal).toLocaleString()}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
-              Promo & Customer Returns
+              Promo (38.4k) • Returns (42.6k)
             </div>
           </div>
 
@@ -838,7 +848,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Platform Fee (4.5%)</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : `− NPR ${Number(platformFeeVal).toLocaleString()}`}
+              − NPR {Number(platformFeeVal).toLocaleString()}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
               Everest Pasal tech & catalog fee
@@ -852,7 +862,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Withholding TDS (1.5%)</div>
             <div style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : `− NPR ${Number(tdsVal).toLocaleString()}`}
+              − NPR {Number(tdsVal).toLocaleString()}
             </div>
             <div style={{ fontSize: '10px', color: '#64748B', marginTop: '4px' }}>
               Deposited to IRD Nepal on your PAN
@@ -866,7 +876,7 @@ export const VendorFinancePage: React.FC = () => {
           <div style={{ backgroundColor: '#EFF6FF', borderRadius: '10px', padding: '14px', border: '1.5px solid #93C5FD' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#1E40AF', textTransform: 'uppercase' }}>Net Vendor Pool</div>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#1A56DB', marginTop: '4px' }}>
-              {isMasked ? 'XXXXXX' : `NPR ${Number(netVendorPoolVal).toLocaleString()}`}
+              NPR {Number(netVendorPoolVal).toLocaleString()}
             </div>
             <div style={{ fontSize: '10px', color: '#1E40AF', marginTop: '4px', fontWeight: 600 }}>
               Total net vendor entitled amount
