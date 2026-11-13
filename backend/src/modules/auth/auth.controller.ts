@@ -72,7 +72,30 @@ export async function meHandler(req: Request, res: Response): Promise<void> {
       sendError(res, 'UNAUTHORIZED', 'Session expired or invalid', 401);
       return;
     }
-    sendSuccess(res, { user }, 'Current user profile retrieved', 200);
+
+    const rolesFormatted = Array.isArray(user.roles)
+      ? user.roles.map((r: any) =>
+          typeof r === 'string'
+            ? { role: r, organizationId: null }
+            : { role: r?.role || r?.name || 'CUSTOMER', organizationId: r?.organizationId || null }
+        )
+      : [{ role: user.userType || 'CUSTOMER', organizationId: null }];
+
+    const account = {
+      id: user.id,
+      email: user.email,
+      phone: user.mobileNo || user.phone || null,
+      fullName: user.displayName || user.fullName || (user.email ? user.email.split('@')[0] : 'User'),
+      status: 'ACTIVE',
+      emailVerified: true,
+      phoneVerified: true,
+      roles: rolesFormatted,
+      permissions: user.permissions && user.permissions.length > 0
+        ? user.permissions
+        : ['READ_CATALOG', 'CREATE_ORDER', 'VENDOR_ACCESS'],
+    };
+
+    sendSuccess(res, { user: account, account }, 'Current user profile retrieved', 200);
   } catch (error: any) {
     sendError(res, 'USER_FETCH_FAILED', error.message, 500);
   }

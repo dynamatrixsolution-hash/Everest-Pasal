@@ -37,30 +37,87 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const USER_STORAGE_KEY = 'ep_user_profile';
+
+function normalizeUser(rawUser: any): UserProfile {
+  if (!rawUser) {
+    return {
+      id: 'usr-default',
+      email: null,
+      phone: null,
+      fullName: 'User',
+      status: 'ACTIVE',
+      roles: [{ role: 'CUSTOMER', organizationId: null }],
+      permissions: ['READ_CATALOG'],
+    };
+  }
+
+  return {
+    id: rawUser.id || 'usr-default',
+    email: rawUser.email || null,
+    phone: rawUser.phone || rawUser.mobileNo || rawUser.mobile_no || null,
+    fullName: rawUser.fullName || rawUser.displayName || rawUser.display_name || (rawUser.email ? rawUser.email.split('@')[0] : 'User'),
+    status: rawUser.status || 'ACTIVE',
+    emailVerified: rawUser.emailVerified ?? true,
+    phoneVerified: rawUser.phoneVerified ?? true,
+    roles: Array.isArray(rawUser.roles)
+      ? rawUser.roles.map((r: any) =>
+          typeof r === 'string'
+            ? { role: r, organizationId: null }
+            : { role: r?.role || r?.name || 'CUSTOMER', organizationId: r?.organizationId || null }
+        )
+      : [{ role: 'CUSTOMER', organizationId: null }],
+    permissions: Array.isArray(rawUser.permissions) ? rawUser.permissions : ['READ_CATALOG'],
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem(USER_STORAGE_KEY);
+      return saved ? normalizeUser(JSON.parse(saved)) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const persistUser = (u: UserProfile | null) => {
+    setUser(u);
+    try {
+      if (u) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u));
+      } else {
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
+    } catch {}
+  };
 
   const refreshUser = async () => {
     const token = ApiClient.getToken();
     if (!token) {
-      setUser(null);
+      persistUser(null);
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await ApiClient.get<{ user: UserProfile }>('/auth/me');
-      if (response && response.user) {
-        setUser(response.user);
-      } else {
-        setUser(null);
-        ApiClient.clearToken();
+      const response = await ApiClient.get<any>('/auth/me');
+      const rawUser = response?.user || response?.account || response?.data?.user || response?.data?.account || response;
+      if (rawUser && (rawUser.id || rawUser.email || rawUser.fullName || rawUser.displayName || rawUser.display_name)) {
+        persistUser(normalizeUser(rawUser));
       }
-    } catch (err) {
-      console.warn('[AUTH] Session verification failed, clearing token.');
-      setUser(null);
-      ApiClient.clearToken();
+    } catch (err: any) {
+      // ONLY clear token if the server explicitly responded with 401 Unauthorized
+      // If it's a network error (server offline, connection refused, 500, timeout), preserve the existing cached session!
+      const is401 = err?.message?.includes('401') || err?.status === 401;
+      if (is401) {
+        console.warn('[AUTH] Session verification returned 401 Unauthorized, clearing token.');
+        ApiClient.clearToken();
+        persistUser(null);
+      } else {
+        console.warn('[AUTH] Server unreachable or network error during refreshUser; keeping cached session:', err?.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -74,15 +131,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const res = await ApiClient.post<{
-        account: UserProfile;
+        account: any;
         session: { token: string };
       }>('/auth/login', { identifier, password });
 
-      if (res.session && res.session.token) {
+      const normalized = normalizeUser(res?.account);
+      if (res?.session && res.session.token) {
         ApiClient.setToken(res.session.token);
-        setUser(res.account);
+        persistUser(normalized);
       }
-      return res.account;
+      return normalized;
     } finally {
       setIsLoading(false);
     }
@@ -98,15 +156,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const res = await ApiClient.post<{
-        account: UserProfile;
+        account: any;
         session: { token: string };
       }>('/auth/google', data);
 
-      if (res.session && res.session.token) {
+      const normalized = normalizeUser(res?.account);
+      if (res?.session && res.session.token) {
         ApiClient.setToken(res.session.token);
-        setUser(res.account);
+        persistUser(normalized);
       }
-      return res.account;
+      return normalized;
     } finally {
       setIsLoading(false);
     }
@@ -116,15 +175,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const res = await ApiClient.post<{
-        account: UserProfile;
+        account: any;
         session: { token: string };
       }>('/auth/register', data);
 
-      if (res.session && res.session.token) {
+      const normalized = normalizeUser(res?.account);
+      if (res?.session && res.session.token) {
         ApiClient.setToken(res.session.token);
-        setUser(res.account);
+        persistUser(normalized);
       }
-      return res.account;
+      return normalized;
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore network failure on logout
     } finally {
       ApiClient.clearToken();
-      setUser(null);
+      persistUser(null);
     }
   };
 

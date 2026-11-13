@@ -50,12 +50,14 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isVendor = user?.roles?.some((r) => {
-    const code = (r.role || '').toUpperCase();
+  const isVendor = user?.roles?.some((r: any) => {
+    const roleStr = typeof r === 'string' ? r : (r?.role || '');
+    const code = roleStr.toUpperCase();
     return code.includes('VENDOR') || code.includes('SELLER');
   });
-  const isAdmin = user?.roles?.some((r) => {
-    const code = (r.role || '').toUpperCase();
+  const isAdmin = user?.roles?.some((r: any) => {
+    const roleStr = typeof r === 'string' ? r : (r?.role || '');
+    const code = roleStr.toUpperCase();
     return code.includes('ADMIN') || code.includes('OPERATOR');
   });
 
@@ -427,7 +429,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                             margin: '0 0 2px 0',
                           }}
                         >
-                          {user?.fullName || 'Nirmal GC'}
+                          {user?.fullName || (user?.email ? user.email.split('@')[0] : 'User')}
                         </h4>
                         <p
                           style={{
@@ -436,9 +438,57 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                             margin: 0,
                           }}
                         >
-                          Customer Account
+                          {isAdmin ? 'Platform Administrator' : isVendor ? 'Merchant Seller' : 'Customer Account'}
                         </p>
                       </div>
+
+                      {/* Vendor / Admin Quick Portal Links in Dropdown */}
+                      {isVendor && (
+                        <div style={{ paddingTop: '8px', paddingBottom: '4px' }}>
+                          <Link
+                            to="/vendor"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: '#eff6ff',
+                              color: '#1d4ed8',
+                              textDecoration: 'none',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <span>🏪</span>
+                            <span>Vendor Dashboard</span>
+                          </Link>
+                        </div>
+                      )}
+                      {isAdmin && (
+                        <div style={{ paddingTop: '8px', paddingBottom: '4px' }}>
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: '#f5f3ff',
+                              color: '#6d28d9',
+                              textDecoration: 'none',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <span>⚙️</span>
+                            <span>Admin Center</span>
+                          </Link>
+                        </div>
+                      )}
 
                       {/* My Profile Link */}
                       <div style={{ paddingTop: '10px', paddingBottom: '4px' }}>

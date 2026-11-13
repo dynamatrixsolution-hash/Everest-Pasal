@@ -38,17 +38,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
       } else if (redirectTarget) {
         navigate(redirectTarget);
       } else {
-        const hasAdmin = loggedUser?.roles?.some((r) => {
-          const roleUpper = (r.role || '').toUpperCase();
+        const hasAdmin = loggedUser?.roles?.some((r: any) => {
+          const roleStr = typeof r === 'string' ? r : (r?.role || '');
+          const roleUpper = roleStr.toUpperCase();
           return (
             ['ADMIN', 'SUPER_ADMIN', 'OPERATOR', 'PLATFORM_ADMIN', 'FINANCE_ADMIN', 'SUPPORT_AGENT'].includes(roleUpper) ||
             roleUpper.startsWith('ADMIN')
           );
         });
-        const hasVendor = loggedUser?.roles?.some((r) => {
-          const roleUpper = (r.role || '').toUpperCase();
+        const hasVendor = loggedUser?.roles?.some((r: any) => {
+          const roleStr = typeof r === 'string' ? r : (r?.role || '');
+          const roleUpper = roleStr.toUpperCase();
           return (
-            ['VENDOR', 'SELLER', 'VENDOR_SELLER', 'VENDOR_ADMIN', 'VENDOR_STAFF'].includes(roleUpper) ||
+            ['VENDOR', 'SELLER', 'VENDOR_SELLER', 'VENDOR_ADMIN', 'VENDOR_STAFF', 'PLATFORM_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(roleUpper) ||
             roleUpper.startsWith('VENDOR') ||
             roleUpper.startsWith('SELLER')
           );

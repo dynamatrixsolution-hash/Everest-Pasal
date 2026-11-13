@@ -115,8 +115,9 @@ export const VendorGuard: React.FC<GuardProps> = ({ children }) => {
     );
   }
 
-  const hasVendorRole = user?.roles?.some((r) => {
-    const roleUpper = (r.role || '').toUpperCase();
+  const hasVendorRole = user?.roles?.some((r: any) => {
+    const roleStr = typeof r === 'string' ? r : (r?.role || '');
+    const roleUpper = roleStr.toUpperCase();
     return (
       ['VENDOR', 'SELLER', 'VENDOR_SELLER', 'VENDOR_ADMIN', 'VENDOR_STAFF', 'PLATFORM_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(roleUpper) ||
       roleUpper.startsWith('VENDOR') ||
@@ -219,8 +220,9 @@ export const AdminGuard: React.FC<GuardProps> = ({ children }) => {
     );
   }
 
-  const hasAdminRole = user?.roles?.some((r) => {
-    const roleUpper = (r.role || '').toUpperCase();
+  const hasAdminRole = user?.roles?.some((r: any) => {
+    const roleStr = typeof r === 'string' ? r : (r?.role || '');
+    const roleUpper = roleStr.toUpperCase();
     return (
       ['ADMIN', 'SUPER_ADMIN', 'OPERATOR', 'PLATFORM_ADMIN', 'FINANCE_ADMIN', 'SUPPORT_AGENT'].includes(roleUpper) ||
       roleUpper.startsWith('ADMIN') ||
