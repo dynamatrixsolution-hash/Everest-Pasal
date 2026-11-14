@@ -78,8 +78,19 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
       }
     };
     fetchVendorProfile();
+
+    const handleStoreUpdate = () => {
+      fetchVendorProfile();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('vendor-store-updated', handleStoreUpdate);
+    }
+
     return () => {
       isMounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('vendor-store-updated', handleStoreUpdate);
+      }
     };
   }, [user?.id, path]);
 
@@ -244,7 +255,7 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
           ),
         },
         {
-          to: '/vendor/payments',
+          to: '/vendor/transactions',
           label: 'Transactions',
           icon: (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -463,7 +474,8 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {group.items.map((item) => {
-                  const isActive = path === item.to || path.startsWith(`${item.to}/`);
+                  const isTransactions = (item.to === '/vendor/transactions' || item.to === '/vendor/payments') && (path.startsWith('/vendor/transactions') || path.startsWith('/vendor/payments'));
+                  const isActive = isTransactions || path === item.to || path.startsWith(`${item.to}/`);
                   return (
                     <Link
                       key={item.label}
@@ -542,7 +554,7 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
               {greeting}, {firstName}
             </h1>
             <p style={{ fontSize: '11.5px', color: '#64748B', margin: '3px 0 0 0' }}>
-              {storeData.name} • {storeData.productsListed} product(s) listed / Check {storeData.pendingOrders} pending order(s)
+              Review {storeData.productsListed} listed products / Check {storeData.pendingOrders} pending orders
             </p>
           </div>
 
@@ -602,40 +614,42 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
               Help
             </button>
 
-            {/* Notification Bell with Red Badge */}
+            {/* Notification Bell with Dynamic Badge */}
             <div
               style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              onClick={() => navigate('/vendor/notifications')}
+              onClick={() => navigate('/vendor/orders')}
             >
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  backgroundColor: '#EF4444',
-                  color: '#FFFFFF',
-                  borderRadius: '50%',
-                  width: '14px',
-                  height: '14px',
-                  fontSize: '9.5px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                }}
-              >
-                1
-              </span>
+              {storeData.pendingOrders > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    backgroundColor: '#EF4444',
+                    color: '#FFFFFF',
+                    borderRadius: '50%',
+                    width: '14px',
+                    height: '14px',
+                    fontSize: '9.5px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                  }}
+                >
+                  {storeData.pendingOrders}
+                </span>
+              )}
             </div>
 
-            {/* Profile Avatar */}
+            {/* Profile Avatar & Info */}
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
               onClick={() => logout()}
               title="Click to logout"
             >
@@ -645,19 +659,30 @@ export const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                   height: '32px',
                   borderRadius: '50%',
                   overflow: 'hidden',
-                  backgroundColor: '#CBD5E1',
+                  backgroundColor: '#0B4EA2',
+                  color: '#FFFFFF',
                   border: '1px solid #E2E8F0',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 700,
                 }}
               >
-                <img
-                  src="/images/vendor_avatar.jpg"
-                  alt={userName}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e: any) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80';
-                  }}
-                />
+                {storeInitials}
               </div>
+              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', minWidth: '80px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', lineHeight: '1.2' }}>
+                  {userName}
+                </span>
+                <span style={{ fontSize: '10.5px', color: '#64748B', lineHeight: '1.2' }}>
+                  Store Admin
+                </span>
+              </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
             </div>
           </div>
         </header>

@@ -4,8 +4,10 @@
 // background colors, images, CTA targets, sort order, and active status
 // ==============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ApiClient } from '../../api/client.js';
+import { uploadImageFile } from '../../utils/documentExport.js';
+import { ImagePlus, UploadCloud } from 'lucide-react';
 
 export interface BannerItem {
   id: string;
@@ -66,6 +68,26 @@ export const AdminBannersPage: React.FC = () => {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      const res = await uploadImageFile(file);
+      if (res.url) {
+        setImageUrl(res.url);
+        showToast('Banner image uploaded successfully!');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to upload banner image');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const fetchBanners = async () => {
@@ -669,9 +691,38 @@ export const AdminBannersPage: React.FC = () => {
 
               {/* Image URL & Presets */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>
-                  Image URL / Asset Path *
-                </label>
+                <input
+                  type="file"
+                  ref={bannerFileInputRef}
+                  onChange={handleBannerFileUpload}
+                  accept="image/png,image/jpeg,image/webp"
+                  style={{ display: 'none' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>
+                    Image URL / Asset Path *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => bannerFileInputRef.current?.click()}
+                    disabled={isUploading}
+                    style={{
+                      backgroundColor: '#EFF6FF',
+                      color: '#1D4ED8',
+                      border: '1px solid #BFDBFE',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <ImagePlus size={13} /> {isUploading ? 'Uploading...' : 'Browse Image File'}
+                  </button>
+                </div>
                 <input
                   type="text"
                   required

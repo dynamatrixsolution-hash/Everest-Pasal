@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../api/client.js';
 import { StatusBadge } from '../components/Common/StatusBadge.js';
+import { RefreshCw } from 'lucide-react';
 
 export const SystemHealthPage: React.FC = () => {
   const [appHealth, setAppHealth] = useState<any>(null);
@@ -54,8 +55,8 @@ export const SystemHealthPage: React.FC = () => {
             <h1 className="card-title">System Health & Diagnostic Center</h1>
             <p className="card-subtitle">Real-time status of Backend Services, Database & Disaster Recovery</p>
           </div>
-          <button className="btn btn-secondary" onClick={fetchDiagnostics} disabled={loading}>
-            🔄 Refresh Status
+          <button className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={fetchDiagnostics} disabled={loading}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh Status
           </button>
         </div>
       </div>

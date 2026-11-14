@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext.js';
 import { useRouter, Link } from '../router/index.js';
 import { BrandLogo } from '../components/Common/BrandLogo.js';
 import { GoogleAuthModal } from '../components/Auth/GoogleAuthModal.js';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface RegisterPageProps {
   onSwitchToLogin?: () => void;
@@ -330,7 +331,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
                     padding: 0,
                   }}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>

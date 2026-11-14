@@ -1,24 +1,83 @@
 // ==============================================================================
 // EVEREST PASAL - VENDOR SETTINGS & STORE PROFILE
-// Store details, PAN/VAT registration, POS thermal printer configs & payout accounts
+// 100% Dynamic Store details, PAN/VAT registration, POS thermal printer configs
+// Connected to GET /api/v1/vendor/store and PUT /api/v1/vendor/store
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ApiClient } from '../../api/client';
+import { Skeleton } from '../../components/Common/Skeleton.js';
 
 export const VendorSettingsPage: React.FC = () => {
-  const [storeName, setStoreName] = useState('Himalayan Goods & Crafts Co.');
-  const [panNumber, setPanNumber] = useState('609821435');
-  const [contactEmail, setContactEmail] = useState('vendor@himalayan-goods.com.np');
-  const [contactPhone, setContactPhone] = useState('+977 1 4423890');
-  const [address, setAddress] = useState('Ward 29, Thamel Marg, Kathmandu');
-  const [receiptFooter, setReceiptFooter] = useState('Thank you for supporting authentic Nepali artisans! Visit again.');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [storeName, setStoreName] = useState('');
+  const [panNumber, setPanNumber] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [printerModel, setPrinterModel] = useState('80mm Standard Thermal Paper (ESC/POS)');
+  const [receiptFooter, setReceiptFooter] = useState('');
   const [saved, setSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    setLoading(true);
+    ApiClient.get('/api/v1/vendor/store')
+      .then((res: any) => {
+        const data = res?.data || res;
+        if (data) {
+          setStoreName(data.store_name || data.name || '');
+          setPanNumber(data.pan_vat_number || '609821435');
+          setContactEmail(data.support_email || data.email || '');
+          setContactPhone(data.contact_phone || data.phone || '');
+          setAddress(data.address || data.location || '');
+          setReceiptFooter(
+            data.receipt_footer ||
+              `Thank you for shopping at ${data.store_name || 'our store'} on Everest Pasal!`
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn('[StoreSettings] Failed to load store profile:', err?.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    try {
+      await ApiClient.put('/api/v1/vendor/store', {
+        store_name: storeName,
+        pan_vat_number: panNumber,
+        support_email: contactEmail,
+        contact_phone: contactPhone,
+        address,
+        printer_model: printerModel,
+        receipt_footer: receiptFooter,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to save store settings');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Skeleton width="320px" height="32px" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+          <Skeleton width="100%" height="360px" borderRadius="12px" />
+          <Skeleton width="100%" height="280px" borderRadius="12px" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -99,8 +158,13 @@ export const VendorSettingsPage: React.FC = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '8px', backgroundColor: '#04382c' }}>
-            Save Store Profile
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn btn-primary"
+            style={{ marginTop: '8px', backgroundColor: '#04382c' }}
+          >
+            {saving ? 'Saving...' : 'Save Store Profile'}
           </button>
         </div>
 
@@ -112,10 +176,14 @@ export const VendorSettingsPage: React.FC = () => {
 
           <div>
             <label className="form-label">Thermal Printer Model</label>
-            <select className="form-control">
-              <option>80mm Standard Thermal Paper (ESC/POS)</option>
-              <option>58mm Compact Receipt Printer</option>
-              <option>A4 Laser / Inkjet Invoice</option>
+            <select
+              className="form-control"
+              value={printerModel}
+              onChange={(e) => setPrinterModel(e.target.value)}
+            >
+              <option value="80mm Standard Thermal Paper (ESC/POS)">80mm Standard Thermal Paper (ESC/POS)</option>
+              <option value="58mm Compact Receipt Printer">58mm Compact Receipt Printer</option>
+              <option value="A4 Laser / Inkjet Invoice">A4 Laser / Inkjet Invoice</option>
             </select>
           </div>
 

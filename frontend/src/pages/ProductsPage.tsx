@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../api/client.js';
 import { useCart } from '../context/CartContext.js';
 import { useRouter } from '../router/index.js';
+import { Mountain, Loader2 } from 'lucide-react';
 
 interface CatalogProduct {
   id: string;
@@ -757,7 +758,7 @@ export const ProductsPage: React.FC = () => {
           <div style={{ minWidth: 0 }}>
             {loading ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748B' }}>
-                <div style={{ fontSize: '32px', marginBottom: '8px' }}>🏔️</div>
+                <Mountain size={36} color="#0B4EA2" style={{ display: 'block', margin: '0 auto 8px' }} />
                 <div>Loading categories & products...</div>
               </div>
             ) : (

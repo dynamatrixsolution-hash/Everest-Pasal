@@ -4,8 +4,10 @@
 // Breadcrumbs: Home > My Orders > Order #EP-1048
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/index.js';
+import { ApiClient } from '../../api/client.js';
+import { Package, CheckCircle2, Truck, Clock, MapPin, Copy, Check } from 'lucide-react';
 
 interface TrackingEvent {
   title: string;
@@ -16,10 +18,12 @@ interface TrackingEvent {
 }
 
 export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'EP-1048' }) => {
-  const { navigate } = useRouter();
+  const { navigate, query } = useRouter();
+  const effectiveOrderId = query?.get('orderId') || query?.get('id') || orderId;
   const [copiedTracking, setCopiedTracking] = useState<boolean>(false);
+  const [trackingNumber, setTrackingNumber] = useState<string>('EP-TRK-9928374');
 
-  const trackingTimeline: TrackingEvent[] = [
+  const defaultTimeline: TrackingEvent[] = [
     {
       title: 'Order Placed',
       timestamp: '12 Oct 2026, 10:45 AM',
@@ -59,6 +63,8 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
     },
   ];
 
+  const [timeline, setTimeline] = useState<TrackingEvent[]>(defaultTimeline);
+
   const orderedItems = [
     {
       id: 'item-1',
@@ -66,7 +72,6 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
       qty: 1,
       price: 'Rs 499.00',
       image: '/images/cat_coffee.jpg',
-      fallbackEmoji: '☕',
     },
     {
       id: 'item-2',
@@ -74,7 +79,6 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
       qty: 2,
       price: 'Rs 1,299.00',
       image: '/images/cat_fashion.jpg',
-      fallbackEmoji: '👕',
     },
     {
       id: 'item-3',
@@ -82,12 +86,26 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
       qty: 1,
       price: 'Rs 2,501.00',
       image: '/images/cat_earbuds.jpg',
-      fallbackEmoji: '🎧',
     },
   ];
 
+  useEffect(() => {
+    if (!effectiveOrderId) return;
+    ApiClient.get<any>(`/api/v1/fulfillment/track/${effectiveOrderId}`)
+      .then((res: any) => {
+        const data = res?.data || res;
+        if (data?.trackingNumber) setTrackingNumber(data.trackingNumber);
+        if (data?.timeline && Array.isArray(data.timeline)) {
+          setTimeline(data.timeline);
+        }
+      })
+      .catch(() => {
+        // Fallback gracefully
+      });
+  }, [effectiveOrderId]);
+
   const handleCopyTracking = () => {
-    navigator.clipboard?.writeText('EP-TRK-9928374');
+    navigator.clipboard?.writeText(trackingNumber);
     setCopiedTracking(true);
     setTimeout(() => setCopiedTracking(false), 2000);
   };
@@ -115,7 +133,7 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
           </Link>
           <span>&gt;</span>
           <span style={{ color: '#0B4EA2', fontWeight: 700 }}>
-            Order #{orderId}
+            Order #{effectiveOrderId}
           </span>
         </div>
 
@@ -147,7 +165,7 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
                 ORDER ID
               </div>
               <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#111827', marginTop: '4px' }}>
-                {orderId}
+                {effectiveOrderId}
               </div>
             </div>
 
@@ -196,8 +214,8 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            {trackingTimeline.map((step, idx) => {
-              const isLast = idx === trackingTimeline.length - 1;
+            {timeline.map((step, idx) => {
+              const isLast = idx === timeline.length - 1;
               const isCompleted = step.completed;
               const isActive = step.active;
 
@@ -221,7 +239,7 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
                         top: '30px',
                         bottom: '0px',
                         width: '2px',
-                        backgroundColor: isCompleted && trackingTimeline[idx + 1].completed ? '#0B4EA2' : '#E2E8F0',
+                        backgroundColor: isCompleted && timeline[idx + 1]?.completed ? '#0B4EA2' : '#E2E8F0',
                       }}
                     />
                   )}
@@ -336,9 +354,15 @@ export const OrderTrackingPage: React.FC<{ orderId?: string }> = ({ orderId = 'E
                 }}
                 title="Click to copy tracking code"
               >
-                <span>EP-TRK-9928374</span>
-                <span style={{ fontSize: '11px', color: copiedTracking ? '#16A34A' : '#64748b' }}>
-                  {copiedTracking ? '✓ Copied' : '📋'}
+                <span>{trackingNumber}</span>
+                <span style={{ fontSize: '11px', color: copiedTracking ? '#16A34A' : '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  {copiedTracking ? (
+                    <>
+                      <Check size={12} /> Copied
+                    </>
+                  ) : (
+                    <Copy size={12} />
+                  )}
                 </span>
               </div>
             </div>

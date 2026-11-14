@@ -3,7 +3,10 @@
 // Real-time counter billing, barcode/SKU search, discounts, payment splits & receipts
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ApiClient } from '../../api/client.js';
+import { exportToPdf } from '../../utils/documentExport.js';
+import { Zap, Printer, Search, Plus, Minus, Trash2, CheckCircle2, ShoppingCart } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -27,7 +30,7 @@ export const VendorPOSBillingPage: React.FC = () => {
   ]);
   const [billSuccess, setBillSuccess] = useState<string | null>(null);
 
-  const inventoryItems = [
+  const defaultInventory = [
     { id: '1', name: 'Mustang Organic Black Tea (100g)', sku: 'TEA-MUST-01', category: 'Tea & Agro', price: 450, stock: 48 },
     { id: '2', name: 'Handwoven Himalayan Yak Shawl', sku: 'SHW-YAK-02', category: 'Handicrafts', price: 2800, stock: 15 },
     { id: '3', name: 'Ilam Golden Tips Green Tea (250g)', sku: 'TEA-ILM-03', category: 'Tea & Agro', price: 650, stock: 32 },
@@ -35,6 +38,27 @@ export const VendorPOSBillingPage: React.FC = () => {
     { id: '5', name: 'Authentic Jumla Organic Marshi Rice (5kg)', sku: 'RIC-JUM-05', category: 'Organic Grains', price: 1250, stock: 24 },
     { id: '6', name: 'Bhaktapur Natural Clay Pot Set', sku: 'POT-BHK-06', category: 'Handicrafts', price: 850, stock: 18 },
   ];
+
+  const [inventoryItems, setInventoryItems] = useState(defaultInventory);
+
+  useEffect(() => {
+    ApiClient.get<any>('/api/v1/vendor/products?pageSize=50')
+      .then((res: any) => {
+        const prodList = res?.products || res?.data?.products || (Array.isArray(res) ? res : []);
+        if (prodList && prodList.length > 0) {
+          const mapped = prodList.map((p: any) => ({
+            id: p.id,
+            name: p.title || p.name,
+            sku: p.sku || `SKU-${p.id.slice(0, 5)}`,
+            category: p.category || 'General',
+            price: Number(p.sale_price || p.price || 500),
+            stock: Number(p.stock_units || p.stock || 20),
+          }));
+          setInventoryItems(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const filteredItems = inventoryItems.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.sku.toLowerCase().includes(searchTerm.toLowerCase());
@@ -80,6 +104,47 @@ export const VendorPOSBillingPage: React.FC = () => {
     if (posCart.length === 0) return;
     const invoiceNo = `INV-POS-${Math.floor(100000 + Math.random() * 900000)}`;
     setBillSuccess(invoiceNo);
+
+    // Instant genuine PDF receipt generation
+    exportToPdf({
+      filename: `POS_Receipt_${invoiceNo}.pdf`,
+      title: 'EVEREST PASAL POS VAT INVOICE',
+      subtitle: `Official Counter Sales Receipt • Bill No: ${invoiceNo}`,
+      metadata: {
+        'Bill No': invoiceNo,
+        'Date & Time': new Date().toLocaleString(),
+        'Terminal': 'Kathmandu Flagship Store (Terminal #01)',
+        'Cashier': 'Sunita Koirala (#EMP-104)',
+        'Customer Name': customerName || 'Walk-in Customer',
+        'Customer Phone': customerPhone || 'N/A',
+        'Payment Method': paymentMethod,
+      },
+      headers: ['Item Name', 'SKU', 'Qty', 'Rate (NPR)', 'Amount (NPR)'],
+      rows: posCart.map((i) => [
+        i.name,
+        i.sku,
+        String(i.qty),
+        i.price.toLocaleString(),
+        (i.price * i.qty).toLocaleString(),
+      ]),
+      totals: [
+        { label: 'Subtotal', value: `NPR ${subtotal.toLocaleString()}` },
+        { label: `Discount (${discountPercent}%)`, value: `-NPR ${discountAmount.toLocaleString()}` },
+        { label: 'Taxable Base Amount', value: `NPR ${taxableAmount.toLocaleString()}` },
+        { label: '13% VAT', value: `NPR ${vatAmount.toLocaleString()}` },
+        { label: 'Grand Total', value: `NPR ${grandTotal.toLocaleString()}` },
+      ],
+      footerNotes: [
+        'Fiscal Printer Serial: EP-FP-990182 | IRD Approved POS Software',
+        'Goods once sold can be returned within 7 days with intact tags & receipt.',
+      ],
+      branding: {
+        storeName: 'Manish Electronics Pvt. Ltd.',
+        vatPan: '609821435',
+        address: 'New Road, Kathmandu, Nepal',
+      },
+    });
+
     setPosCart([]);
     setCustomerName('');
     setCustomerPhone('');
@@ -91,22 +156,26 @@ export const VendorPOSBillingPage: React.FC = () => {
       {/* POS Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#04382c' }}>⚡ POS Terminal & Fast Billing</h1>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#04382c', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Zap size={22} color="#0B4EA2" /> POS Terminal & Fast Billing
+          </h1>
           <p style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
             Instant barcode lookup, multi-tender settlement, VAT invoice printing
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <span style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}>
-            🟢 Counter: Kathmandu Flagship Store (Terminal #01)
+          <span style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+            Counter: Kathmandu Flagship Store (Terminal #01)
           </span>
         </div>
       </div>
 
       {billSuccess && (
         <div className="alert alert-success" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <strong>✅ Invoice Created Successfully!</strong> Invoice #{billSuccess} generated and sent to customer receipt printer.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircle2 size={18} color="#059669" />
+            <span><strong>Invoice Created Successfully!</strong> Invoice #{billSuccess} generated and printed.</span>
           </div>
           <button className="btn btn-sm btn-primary" onClick={() => setBillSuccess(null)}>
             New Order

@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, Link } from '../router/index.js';
 import { useAuth } from '../context/AuthContext.js';
 import { BrandLogo } from '../components/Common/BrandLogo.js';
+import { KeyRound } from 'lucide-react';
 
 export const VerifyEmailPage: React.FC = () => {
   const { navigate, query } = useRouter();
@@ -243,8 +244,8 @@ export const VerifyEmailPage: React.FC = () => {
           }}
         >
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🔑 Testing / Dev OTP
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <KeyRound size={13} /> Testing / Dev OTP
             </div>
             <div style={{ fontSize: '12px', color: '#3B82F6' }}>
               Code: <strong style={{ color: '#1E3A8A' }}>{devOtpHint || '123456'}</strong> (or master: 123456)

@@ -323,16 +323,29 @@ router.get('/payouts', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/finance/transactions', async (req: Request, res: Response) => {
+router.get(['/finance/transactions', '/finance/transactions-ledger', '/transactions'], async (req: Request, res: Response) => {
   try {
     const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
     const merchantId = (req as any).merchantId;
     const vendorRepo = new VendorRepository(companyCode);
 
-    const data = await vendorRepo.getVendorTransactions(merchantId, req.query);
-    sendSuccess(res, data, 'Vendor transactions retrieved', 200);
+    const data = await vendorRepo.getVendorTransactionsLedger(merchantId, req.query);
+    sendSuccess(res, data, 'Vendor transactions ledger retrieved', 200);
   } catch (error: any) {
     sendError(res, 'FETCH_TRANSACTIONS_FAILED', error.message, 500);
+  }
+});
+
+router.get(['/finance/transactions/:id', '/transactions/:id'], async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getTransactionDetail(merchantId, String(req.params.id));
+    sendSuccess(res, data.transaction, 'Transaction detail retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_TRANSACTION_DETAIL_FAILED', error.message, 500);
   }
 });
 
@@ -388,6 +401,19 @@ router.get('/promotions/coupons', async (req: Request, res: Response) => {
     sendSuccess(res, data, 'Vendor coupons retrieved', 200);
   } catch (error: any) {
     sendError(res, 'FETCH_COUPONS_FAILED', error.message, 500);
+  }
+});
+
+router.post('/promotions/coupons', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const created = await vendorRepo.createVendorCoupon(merchantId, req.body);
+    sendSuccess(res, created, 'Coupon created successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'CREATE_COUPON_FAILED', error.message, 400);
   }
 });
 
@@ -747,6 +773,62 @@ router.get('/finance/ledger', async (req: Request, res: Response) => {
   }
 });
 
+router.put('/finance/bank-account', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.updatePayoutBankAccount(merchantId, req.body);
+    sendSuccess(res, result, 'Primary payout bank account updated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'UPDATE_BANK_ACCOUNT_FAILED', error.message, 400);
+  }
+});
+
+// ==============================================================================
+// 3.3 PURCHASES & SUPPLIER PROCUREMENT ROUTES
+// ==============================================================================
+
+router.get('/purchases', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getVendorPurchases(merchantId, req.query);
+    sendSuccess(res, data, 'Vendor purchases retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_PURCHASES_FAILED', error.message, 500);
+  }
+});
+
+router.post('/purchases', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.createVendorPurchase(merchantId, req.body);
+    sendSuccess(res, result, 'Purchase order created successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'CREATE_PURCHASE_FAILED', error.message, 400);
+  }
+});
+
+router.patch('/purchases/:id', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const result = await vendorRepo.updateVendorPurchaseStatus(merchantId, String(req.params.id), req.body);
+    sendSuccess(res, result, 'Purchase order updated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'UPDATE_PURCHASE_FAILED', error.message, 400);
+  }
+});
+
 // ==============================================================================
 // 4. CUSTOMER MANAGEMENT & MULTI-TENANT PRIVACY PROTECTION
 // Strict rule: details shown ONLY after customer placed order from this store
@@ -762,6 +844,19 @@ router.get('/customers', async (req: Request, res: Response) => {
     sendSuccess(res, data, 'Vendor customers retrieved with privacy enforcement', 200);
   } catch (error: any) {
     sendError(res, 'FETCH_CUSTOMERS_FAILED', error.message, 500);
+  }
+});
+
+router.get('/customers/segments', async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getCustomerSegments(merchantId);
+    sendSuccess(res, data, 'Customer segments retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_SEGMENTS_FAILED', error.message, 500);
   }
 });
 
@@ -874,6 +969,63 @@ router.patch('/attributes/:id/toggle', async (req: Request, res: Response) => {
     sendSuccess(res, result, 'Attribute group toggle updated successfully', 200);
   } catch (error: any) {
     sendError(res, 'TOGGLE_ATTRIBUTE_FAILED', error.message, 400);
+  }
+});
+
+// ==============================================================================
+// 6. TEAM & PERMISSIONS ROUTES
+// Exact mapping to media_1794675968780_0d25a1ca.jpg & media_1794675968719_66f34599.png
+// ==============================================================================
+
+router.get(['/team', '/users-roles'], async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getVendorTeamAndPermissions(merchantId, req.query);
+    sendSuccess(res, data, 'Team & permissions directory retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_TEAM_FAILED', error.message, 500);
+  }
+});
+
+router.get(['/team/:id', '/users-roles/:id'], async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.getVendorTeamMemberDetail(merchantId, String(req.params.id));
+    sendSuccess(res, data, 'Team member profile and permissions retrieved', 200);
+  } catch (error: any) {
+    sendError(res, 'FETCH_TEAM_MEMBER_FAILED', error.message, 500);
+  }
+});
+
+router.post(['/team', '/users-roles'], async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.inviteVendorTeamMember(merchantId, req.body);
+    sendSuccess(res, data, 'Team member invited successfully', 201);
+  } catch (error: any) {
+    sendError(res, 'INVITE_TEAM_MEMBER_FAILED', error.message, 400);
+  }
+});
+
+router.patch(['/team/:id', '/users-roles/:id'], async (req: Request, res: Response) => {
+  try {
+    const companyCode = (req as any).context?.companyCode || 'EP_NEPAL';
+    const merchantId = (req as any).merchantId;
+    const vendorRepo = new VendorRepository(companyCode);
+
+    const data = await vendorRepo.updateVendorTeamMember(merchantId, String(req.params.id), req.body);
+    sendSuccess(res, data, 'Team member updated successfully', 200);
+  } catch (error: any) {
+    sendError(res, 'UPDATE_TEAM_MEMBER_FAILED', error.message, 400);
   }
 });
 

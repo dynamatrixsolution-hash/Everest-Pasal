@@ -5,6 +5,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { prisma } from './db.js';
 import { requestContextMiddleware } from './middleware/context.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
@@ -33,6 +34,7 @@ import integrationRoutes from './modules/integration/integration.routes.js';
 import supportRoutes from './modules/support/support.routes.js';
 import auditRoutes from './modules/audit/audit.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import uploadRoutes from './modules/upload/upload.routes.js';
 import { getBackupStatusHandler } from './modules/backup/backup.controller.js';
 
 dotenv.config();
@@ -65,8 +67,13 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '30mb' }));
+app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 app.use(requestContextMiddleware);
+
+// Persistent Static Uploads Directory
+const uploadsPath = path.resolve(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
 // Health & System Diagnostic Endpoints
 app.get(['/health', '/api/v1/health'], (req: express.Request, res: express.Response) => {
@@ -131,6 +138,7 @@ app.use('/api/v1/integration', integrationRoutes);
 app.use('/api/v1/support', supportRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/upload', uploadRoutes);
 
 // Direct shortcuts
 app.use('/api/v1', catalogRoutes);
@@ -138,6 +146,7 @@ app.use('/api/v1', catalogRoutes);
 // Backward compatibility
 app.use('/auth', authRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api', catalogRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);

@@ -10,6 +10,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/index.js';
 import { ApiClient } from '../../api/client.js';
 import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
+import { exportToPdf, exportToCsv } from '../../utils/documentExport.js';
+import { Download, Printer, FileDown } from 'lucide-react';
 
 interface ShipmentRecord {
   id: string;
@@ -267,6 +269,48 @@ export const VendorFulfillmentPage: React.FC = () => {
     }
   };
 
+  const handleExportManifestCsv = () => {
+    if (!shipments.length) return;
+    exportToCsv({
+      filename: `Shipping_Manifest_${new Date().toISOString().slice(0, 10)}.csv`,
+      title: 'Everest Pasal - Merchant Shipping Manifest & Courier Dispatch',
+      headers: ['Order No', 'Product Description', 'Courier Partner', 'Tracking No', 'Destination', 'Status', 'Updated At'],
+      rows: shipments.map((s) => [
+        s.order_no,
+        s.title,
+        s.courier_full || s.courier,
+        s.tracking_no,
+        s.destination,
+        s.status,
+        s.updated_at,
+      ]),
+    });
+  };
+
+  const handlePrintShippingLabel = (shipment?: ShipmentRecord | null) => {
+    const target = shipment || shipments[0];
+    if (!target) return;
+    exportToPdf({
+      filename: `Shipping_Label_${target.tracking_no}.pdf`,
+      title: `COURIER SHIPPING DISPATCH LABEL - ${target.tracking_no}`,
+      subtitle: 'Everest Pasal National Logistics Network',
+      metadata: {
+        'Tracking No': target.tracking_no,
+        'Order No': target.order_no,
+        'Courier Service': target.courier_full || target.courier,
+        'Destination': target.destination,
+        'Date': new Date().toLocaleDateString(),
+      },
+      headers: ['Component', 'Detail'],
+      rows: [
+        ['Sender Merchant', 'Manish Electronics Pvt. Ltd., New Road, Kathmandu'],
+        ['Consignee Delivery Node', target.destination],
+        ['Declared Contents', target.title],
+        ['Fulfillment Status', target.status],
+      ],
+    });
+  };
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
@@ -312,7 +356,7 @@ export const VendorFulfillmentPage: React.FC = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
-            onClick={() => alert('Exporting shipping manifest')}
+            onClick={handleExportManifestCsv}
             style={{
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
@@ -322,9 +366,12 @@ export const VendorFulfillmentPage: React.FC = () => {
               fontSize: '12.5px',
               fontWeight: 600,
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
-            Export manifest
+            <Download size={14} /> Export manifest
           </button>
           <button
             onClick={() => setIsDispatchModalOpen(true)}
@@ -583,31 +630,37 @@ export const VendorFulfillmentPage: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
-              onClick={() => alert('Marking as packed')}
+              onClick={() => {
+                setShipments((prev) => prev.map((s) => (selectedIds.includes(s.id) ? { ...s, status: 'Packed' } : s)));
+                setSelectedIds([]);
+              }}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Mark as packed
             </button>
             <button
-              onClick={() => alert('Printing labels')}
+              onClick={() => handlePrintShippingLabel(shipments.find((s) => selectedIds.includes(s.id)))}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Print labels
             </button>
             <button
-              onClick={() => alert('Assigning courier')}
+              onClick={() => {
+                setShipments((prev) => prev.map((s) => (selectedIds.includes(s.id) ? { ...s, courier: 'Pathao', courier_full: 'Pathao Express Logistics' } : s)));
+                setSelectedIds([]);
+              }}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Assign courier
             </button>
             <button
-              onClick={() => alert('Requesting pickup')}
+              onClick={() => setSelectedIds([])}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Request pickup
             </button>
             <button
-              onClick={() => alert('Exporting manifest')}
+              onClick={handleExportManifestCsv}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Export manifest
@@ -869,7 +922,7 @@ export const VendorFulfillmentPage: React.FC = () => {
             {/* Print shipping label */}
             <div
               onClick={() => {
-                alert(`Printing shipping label for ${activeMenuShipment.tracking_no}`);
+                handlePrintShippingLabel(activeMenuShipment);
                 setActiveMenuShipment(null);
               }}
               style={{
@@ -897,7 +950,7 @@ export const VendorFulfillmentPage: React.FC = () => {
             {/* Download manifest */}
             <div
               onClick={() => {
-                alert(`Downloading manifest for ${activeMenuShipment.tracking_no}`);
+                handlePrintShippingLabel(activeMenuShipment);
                 setActiveMenuShipment(null);
               }}
               style={{

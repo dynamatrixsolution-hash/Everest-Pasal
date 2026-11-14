@@ -17,6 +17,8 @@
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from '../../api/client';
 import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
+import { exportToCsv } from '../../utils/documentExport.js';
+import { Download } from 'lucide-react';
 
 export interface CustomerOrder {
   id: string;
@@ -89,320 +91,33 @@ export interface CustomerSegment {
   iconType: 'repeat' | 'clock' | 'new' | 'vip';
 }
 
-const INITIAL_CUSTOMERS: VendorCustomer[] = [
-  {
-    id: 'cust-1',
-    firstName: 'Aaradhya',
-    lastName: 'Shrestha',
-    name: 'Aaradhya Shrestha',
-    initials: 'AS',
-    email: 'aaradhya@example.com',
-    phone: '9841 234 567',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    ordersCount: 12,
-    totalSpend: 48200,
-    lastOrder: 'Today, 10:32 AM',
-    lastOrderDetails: '#EP-10542 · Processing',
-    segment: 'VIP',
-    status: 'Active',
-    customerSince: 'Jan 2026',
-    hasPlacedOrderWithStore: true,
-    address: {
-      street: 'Boudha',
-      city: 'Kathmandu',
-      postalCode: '44600',
-      province: 'Bagmati Province',
-      country: 'Nepal',
-    },
-    marketingConsent: {
-      email: false,
-      sms: false,
-      recorded: false,
-    },
-    orders: [
-      {
-        id: 'ord-1',
-        orderNumber: '#EP-10542',
-        date: 'Today, 10:32 AM',
-        itemTitle: 'Bluetooth speaker',
-        itemCount: 1,
-        amount: 5800,
-        status: 'Processing',
-        image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=300&auto=format&fit=crop&q=80',
-      },
-      {
-        id: 'ord-2',
-        orderNumber: '#EP-10498',
-        date: 'Sep 14, 2026',
-        itemTitle: 'Wireless earbuds',
-        itemCount: 1,
-        amount: 4200,
-        status: 'Delivered',
-        image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&auto=format&fit=crop&q=80',
-      },
-      {
-        id: 'ord-3',
-        orderNumber: '#EP-10216',
-        date: 'Sep 02, 2026',
-        itemTitle: 'Keyboard + mouse',
-        itemCount: 2,
-        amount: 6900,
-        status: 'Delivered',
-        image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop&q=80',
-      },
-    ],
-    timeline: [
-      {
-        id: 'tl-1',
-        type: 'order_placed',
-        title: 'Order #EP-10542 placed',
-        timestamp: 'Today, 10:32 AM',
-        amount: 5800,
-      },
-      {
-        id: 'tl-2',
-        type: 'order_delivered',
-        title: 'Order #EP-10498 delivered',
-        timestamp: 'Sep 14, 2026',
-        amount: 4200,
-      },
-      {
-        id: 'tl-3',
-        type: 'note',
-        title: 'Internal note added by Manish',
-        timestamp: 'Aug 28, 2026 · Visible to your team only',
-      },
-    ],
-    notes: [
-      {
-        id: 'nt-1',
-        text: 'Returning electronics customer. Check product compatibility before recommending accessories.',
-        author: 'Manish',
-        date: 'Aug 28, 2026',
-      },
-    ],
+const EMPTY_CUSTOMER: VendorCustomer = {
+  id: 'cust-0',
+  firstName: 'Store',
+  lastName: 'Customer',
+  name: 'Store Customer',
+  initials: 'SC',
+  email: '',
+  phone: '',
+  ordersCount: 0,
+  totalSpend: 0,
+  lastOrder: '—',
+  segment: 'New',
+  status: 'Active',
+  customerSince: '—',
+  hasPlacedOrderWithStore: false,
+  address: {
+    street: '—',
+    city: 'Kathmandu',
+    postalCode: '44600',
+    province: 'Bagmati Province',
+    country: 'Nepal',
   },
-  {
-    id: 'cust-2',
-    firstName: 'Keshav',
-    lastName: 'Thapa',
-    name: 'Keshav Thapa',
-    initials: 'KT',
-    email: 'keshav@example.com',
-    phone: '9867 890 123',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    ordersCount: 8,
-    totalSpend: 31400,
-    lastOrder: 'Yesterday',
-    lastOrderDetails: '#EP-10471 · Delivered',
-    segment: 'Repeat',
-    status: 'Active',
-    customerSince: 'Feb 2026',
-    hasPlacedOrderWithStore: true,
-    address: {
-      street: 'New Baneshwor',
-      city: 'Kathmandu',
-      postalCode: '44600',
-      province: 'Bagmati Province',
-      country: 'Nepal',
-    },
-    marketingConsent: { email: true, sms: false, recorded: true },
-    orders: [
-      {
-        id: 'ord-21',
-        orderNumber: '#EP-10471',
-        date: 'Yesterday',
-        itemTitle: 'Smart Fitness Band',
-        itemCount: 1,
-        amount: 4500,
-        status: 'Delivered',
-        image: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=300&auto=format&fit=crop&q=80',
-      },
-    ],
-    timeline: [
-      { id: 'tl-21', type: 'order_delivered', title: 'Order #EP-10471 delivered', timestamp: 'Yesterday', amount: 4500 },
-    ],
-    notes: [],
-  },
-  {
-    id: 'cust-3',
-    firstName: 'Srijana',
-    lastName: 'Poudel',
-    name: 'Srijana Poudel',
-    initials: 'SP',
-    email: 'srijana@example.com',
-    phone: '9856 112 334',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-    ordersCount: 5,
-    totalSpend: 18900,
-    lastOrder: 'Sep 14, 2026',
-    lastOrderDetails: '#EP-10456 · Processing',
-    segment: 'New',
-    status: 'Needs review',
-    customerSince: 'May 2026',
-    hasPlacedOrderWithStore: true,
-    address: {
-      street: 'Lakeside, Ward 6',
-      city: 'Pokhara',
-      postalCode: '33700',
-      province: 'Gandaki Province',
-      country: 'Nepal',
-    },
-    marketingConsent: { email: false, sms: false, recorded: false },
-    orders: [],
-    timeline: [],
-    notes: [],
-  },
-  {
-    id: 'cust-4',
-    firstName: 'Rohan',
-    lastName: 'Regmi',
-    name: 'Rohan Regmi',
-    initials: 'RR',
-    email: 'rohan@example.com',
-    phone: '9812 445 678',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    ordersCount: 3,
-    totalSpend: 12600,
-    lastOrder: 'Sep 13, 2026',
-    segment: 'Active',
-    status: 'Active',
-    customerSince: 'Jun 2026',
-    hasPlacedOrderWithStore: true,
-    address: {
-      street: 'Traffic Chowk',
-      city: 'Butwal',
-      postalCode: '32907',
-      province: 'Lumbini Province',
-      country: 'Nepal',
-    },
-    marketingConsent: { email: true, sms: true, recorded: true },
-    orders: [],
-    timeline: [],
-    notes: [],
-  },
-  {
-    id: 'cust-5',
-    firstName: 'Nisha',
-    lastName: 'Bajracharya',
-    name: 'Nisha Bajracharya',
-    initials: 'NB',
-    email: 'nisha@example.com',
-    phone: '9823 556 778',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-    ordersCount: 2,
-    totalSpend: 8450,
-    lastOrder: 'Sep 12, 2026',
-    segment: 'Needs review',
-    status: 'Needs review',
-    customerSince: 'Jul 2026',
-    hasPlacedOrderWithStore: true,
-    address: {
-      street: 'Patan Dhoka',
-      city: 'Lalitpur',
-      postalCode: '44700',
-      province: 'Bagmati Province',
-      country: 'Nepal',
-    },
-    marketingConsent: { email: false, sms: false, recorded: false },
-    orders: [],
-    timeline: [],
-    notes: [],
-  },
-  {
-    id: 'cust-6',
-    firstName: 'Aayush',
-    lastName: 'Rana',
-    name: 'Aayush Rana',
-    initials: 'AR',
-    email: 'aayush@example.com',
-    phone: '9876 223 901',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
-    ordersCount: 1,
-    totalSpend: 4200,
-    lastOrder: 'Sep 11, 2026',
-    segment: 'Active',
-    status: 'Active',
-    customerSince: 'Aug 2026',
-    hasPlacedOrderWithStore: true,
-    address: {
-      street: 'Main Road',
-      city: 'Dharan',
-      postalCode: '56700',
-      province: 'Koshi Province',
-      country: 'Nepal',
-    },
-    marketingConsent: { email: false, sms: false, recorded: false },
-    orders: [],
-    timeline: [],
-    notes: [],
-  },
-  // Demonstrating the Special Privacy Rule:
-  // This user has registered on Everest Pasal platform but NEVER placed an order from Manish Electronics store
-  {
-    id: 'cust-demo-zero',
-    firstName: 'Sunil',
-    lastName: 'Joshi',
-    name: 'Sunil Joshi',
-    initials: 'SJ',
-    email: 's***i@example.com',
-    phone: '+977 ••••••••••',
-    avatar: '',
-    ordersCount: 0,
-    totalSpend: 0,
-    lastOrder: 'Never ordered from store',
-    segment: 'Non-buyer',
-    status: 'Active',
-    customerSince: 'Oct 2026',
-    hasPlacedOrderWithStore: false,
-    address: {
-      street: 'Protected',
-      city: 'Protected',
-      postalCode: '00000',
-      province: 'Protected',
-      country: 'Nepal',
-    },
-    marketingConsent: { email: false, sms: false, recorded: false },
-    orders: [],
-    timeline: [],
-    notes: [],
-  },
-];
-
-const INITIAL_SEGMENTS: CustomerSegment[] = [
-  {
-    id: 'seg-1',
-    name: 'Repeat buyers',
-    subtitle: '2+ orders in the last 90 days',
-    definition: 'Order count ≥ 2 within a rolling 90-day window',
-    count: 412,
-    iconType: 'repeat',
-  },
-  {
-    id: 'seg-2',
-    name: 'Dormant',
-    subtitle: 'No orders in the last 120 days',
-    definition: 'Last order more than 120 days ago',
-    count: 186,
-    iconType: 'clock',
-  },
-  {
-    id: 'seg-3',
-    name: 'New',
-    subtitle: 'First-time customers',
-    definition: 'First-time customer classification',
-    count: 558,
-    iconType: 'new',
-  },
-  {
-    id: 'seg-4',
-    name: 'VIP High Spenders',
-    subtitle: 'High spend, repeat orders',
-    definition: 'Total spend ≥ NPR 30,000 with active status',
-    count: 128,
-    iconType: 'vip',
-  },
-];
+  marketingConsent: { email: false, sms: false, recorded: false },
+  orders: [],
+  timeline: [],
+  notes: [],
+};
 
 export const VendorCustomersPage: React.FC = () => {
   // Main Navigation Modes: 'list' | 'details' | 'edit' | 'segments'
@@ -419,8 +134,8 @@ export const VendorCustomersPage: React.FC = () => {
 
   // Data States
   const [customers, setCustomers] = useState<VendorCustomer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<VendorCustomer>(INITIAL_CUSTOMERS[0]);
-  const [segments, setSegments] = useState<CustomerSegment[]>(INITIAL_SEGMENTS);
+  const [selectedCustomer, setSelectedCustomer] = useState<VendorCustomer>(EMPTY_CUSTOMER);
+  const [segments, setSegments] = useState<CustomerSegment[]>([]);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -472,25 +187,41 @@ export const VendorCustomersPage: React.FC = () => {
           const rawCustomers = res?.customers ?? res?.data?.customers;
           if (Array.isArray(rawCustomers)) {
             const merged: VendorCustomer[] = rawCustomers.map((c: any, idx: number) => {
-              const fallback = INITIAL_CUSTOMERS[idx] || INITIAL_CUSTOMERS[0];
-              const nameStr = c.name || fallback.name || 'Customer';
+              const nameStr = c.name || 'Customer';
               const parts = nameStr.split(' ');
-              const ordersCount = c.ordersCount !== undefined ? Number(c.ordersCount) : fallback.ordersCount;
+              const ordersCount = Number(c.ordersCount || 0);
               return {
-                ...fallback,
-                id: c.id || fallback.id,
+                id: c.id || `cust-${idx + 1}`,
                 firstName: c.firstName || parts[0] || 'Customer',
                 lastName: c.lastName || parts.slice(1).join(' ') || '',
                 name: nameStr,
                 initials: c.initials || parts.map((p: string) => p[0]).join('').slice(0, 2).toUpperCase() || 'CU',
-                email: c.email || fallback.email,
-                phone: c.phone || fallback.phone,
+                email: c.email || '',
+                phone: c.phone || '',
+                avatar: c.avatar || '',
                 ordersCount,
-                totalSpend: c.totalSpend !== undefined ? Number(c.totalSpend) : fallback.totalSpend,
-                lastOrder: c.lastOrder || fallback.lastOrder,
-                segment: c.segment || fallback.segment,
-                status: c.status || fallback.status,
-                hasPlacedOrderWithStore: c.hasPlacedOrderWithStore !== undefined ? Boolean(c.hasPlacedOrderWithStore) : ordersCount > 0,
+                totalSpend: Number(c.totalSpend || 0),
+                lastOrder: c.lastOrder || 'Recent',
+                lastOrderDetails: c.lastOrderNumber ? `${c.lastOrderNumber} · ${c.lastOrderStatus || 'Completed'}` : undefined,
+                segment: c.segment || 'New',
+                status: (c.status === 'Needs review' || c.status === 'Inactive' ? c.status : 'Active') as any,
+                customerSince: c.customerSince || '2026',
+                hasPlacedOrderWithStore: c.hasPlacedOrderWithStore !== undefined ? Boolean(c.hasPlacedOrderWithStore) : Boolean(c.hasStoreOrders ?? ordersCount > 0),
+                address: {
+                  street: c.street || c.city || 'Kathmandu',
+                  city: c.city || 'Kathmandu',
+                  postalCode: c.postalCode || '44600',
+                  province: c.province || 'Bagmati Province',
+                  country: 'Nepal',
+                },
+                marketingConsent: {
+                  email: true,
+                  sms: false,
+                  recorded: true,
+                },
+                orders: [],
+                timeline: [],
+                notes: [],
               };
             });
             setCustomers(merged);
@@ -500,8 +231,8 @@ export const VendorCustomersPage: React.FC = () => {
           }
         })
         .catch((err) => {
-          setCustomers(INITIAL_CUSTOMERS);
-          console.warn('[Customers] Using baseline customer directory:', err?.message);
+          setCustomers([]);
+          console.warn('[Customers] Failed to load customers:', err?.message);
         }),
       ApiClient.get('/api/v1/vendor/customers/segments')
         .then((res: any) => {
@@ -533,16 +264,72 @@ export const VendorCustomersPage: React.FC = () => {
 
     ApiClient.get(`/api/v1/vendor/customers/${cust.id}`)
       .then((res: any) => {
-        if (res) {
+        const profile = res?.data || res;
+        if (profile) {
+          const mappedOrders: CustomerOrder[] = Array.isArray(profile.recentOrders)
+            ? profile.recentOrders.map((o: any, idx: number) => ({
+                id: o.id || `ord-${idx}`,
+                orderNumber: o.id?.startsWith('#') ? o.id : `#${o.id}`,
+                date: o.date || 'Recent',
+                itemTitle: o.items || 'Store Order',
+                itemCount: 1,
+                amount: Number(o.amount || 0),
+                status: (o.status === 'Delivered' ? 'Delivered' : 'Processing') as any,
+                image: o.image || 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=300&auto=format&fit=crop&q=80',
+              }))
+            : [];
+          const mappedTimeline: CustomerTimelineItem[] = Array.isArray(profile.timeline)
+            ? profile.timeline.map((t: any) => ({
+                id: t.id,
+                type: (t.type === 'order_placed' || t.type === 'order_delivered' ? t.type : 'note') as any,
+                title: t.title,
+                timestamp: t.date || t.timestamp || 'Recent',
+                amount: t.amount ? Number(String(t.amount).replace(/[^0-9.]/g, '')) : undefined,
+              }))
+            : [];
+          const mappedNotes: CustomerNote[] = Array.isArray(profile.internalNotes)
+            ? profile.internalNotes.map((n: any) => ({
+                id: n.id,
+                text: n.text,
+                author: n.author || 'Store Team',
+                date: n.date || 'Recent',
+              }))
+            : [];
+
           setSelectedCustomer((prev) => ({
             ...prev,
-            email: res.email || prev.email,
-            phone: res.phone || prev.phone,
-            ordersCount: res.metrics?.lifetimeOrders !== undefined ? res.metrics.lifetimeOrders : prev.ordersCount,
+            email: profile.email || prev.email,
+            phone: profile.phone || prev.phone,
+            ordersCount: profile.metrics?.lifetimeOrders !== undefined ? profile.metrics.lifetimeOrders : prev.ordersCount,
+            orders: mappedOrders.length > 0 ? mappedOrders : prev.orders,
+            timeline: mappedTimeline.length > 0 ? mappedTimeline : prev.timeline,
+            notes: mappedNotes.length > 0 ? mappedNotes : prev.notes,
           }));
         }
       })
       .catch(() => {});
+  };
+
+  const handleExportCustomersCsv = () => {
+    if (!customers.length) {
+      showToast('No customer records to export');
+      return;
+    }
+    exportToCsv({
+      filename: `Customers_${new Date().toISOString().slice(0, 10)}.csv`,
+      title: 'Everest Pasal - Merchant Customer Directory',
+      headers: ['Customer Name', 'Email', 'Phone', 'Location', 'Total Orders', 'Total Spend (NPR)', 'Status'],
+      rows: customers.map((c) => [
+        c.name,
+        c.email,
+        c.phone,
+        c.address?.city ? `${c.address.city}, Nepal` : 'Nepal',
+        String(c.ordersCount),
+        String(c.totalSpend),
+        c.status,
+      ]),
+    });
+    showToast(`Exported ${customers.length} customer records to CSV.`);
   };
 
   // Open Edit Customer Form
@@ -803,7 +590,7 @@ export const VendorCustomersPage: React.FC = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button
-                onClick={() => showToast('Exporting customer directory CSV...')}
+                onClick={handleExportCustomersCsv}
                 style={{
                   backgroundColor: '#FFFFFF',
                   color: '#0F172A',
@@ -814,9 +601,12 @@ export const VendorCustomersPage: React.FC = () => {
                   fontWeight: 600,
                   cursor: 'pointer',
                   fontFamily: "'Poppins', sans-serif",
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                Export CSV
+                <Download size={14} /> Export CSV
               </button>
 
               <button

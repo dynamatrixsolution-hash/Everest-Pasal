@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useRouter, Link } from '../../router/index.js';
+import { exportToPdf, exportToCsv } from '../../utils/documentExport.js';
 
 type AccountTab =
   | 'overview'
@@ -724,6 +725,39 @@ export const MyAccountPage: React.FC = () => {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleDownloadInvoice = (order: any) => {
+    if (!order) return;
+    const items = order.items || [];
+    exportToPdf({
+      filename: `Invoice_${order.orderNo || 'order'}.pdf`,
+      title: `NEPAL IRD TAX INVOICE - ${order.orderNo}`,
+      subtitle: 'Everest Pasal E-Commerce Marketplace • Buyer Tax Receipt',
+      metadata: {
+        'Order No': order.orderNo,
+        'Order Date': order.orderDate || new Date().toLocaleDateString(),
+        'Payment Method': order.paymentMethod || 'eSewa',
+        'Payment Status': order.paymentStatus || 'Paid',
+        'Customer Name': profileData?.fullName || 'Aaradhya Shrestha',
+        'Delivery Address': 'Kathmandu, Bagmati Province, Nepal',
+      },
+      headers: ['Item Description', 'Quantity', 'Price (NPR)', 'Amount (NPR)'],
+      rows: items.map((it: any) => [
+        it.title || it.name || 'Purchased Item',
+        String(it.quantity || it.qty || 1),
+        Number(it.price || 0).toLocaleString(),
+        Number((it.price || 0) * (it.quantity || it.qty || 1)).toLocaleString(),
+      ]),
+      totals: [
+        { label: 'Total Payable', value: `NPR ${Number(order.totalAmount || order.total || 0).toLocaleString()}` },
+      ],
+      footerNotes: [
+        'Official VAT Tax Invoice issued pursuant to Nepal Value Added Tax Act 2052.',
+        'Everest Pasal Nepal Private Limited • PAN: 609821435',
+      ],
+    });
+    showToast(`Invoice downloaded for ${order.orderNo}`);
   };
 
   useEffect(() => {
@@ -2973,7 +3007,7 @@ export const MyAccountPage: React.FC = () => {
                                 View Details
                               </button>
                               <button
-                                onClick={() => showToast('Downloading invoice PDF...')}
+                                onClick={() => handleDownloadInvoice(order)}
                                 style={{
                                   backgroundColor: '#FFFFFF',
                                   color: '#334155',
@@ -3068,7 +3102,7 @@ export const MyAccountPage: React.FC = () => {
                                 Write a Review
                               </button>
                               <button
-                                onClick={() => showToast('Downloading invoice PDF...')}
+                                onClick={() => handleDownloadInvoice(order)}
                                 style={{
                                   backgroundColor: '#FFFFFF',
                                   color: '#334155',
@@ -3166,7 +3200,7 @@ export const MyAccountPage: React.FC = () => {
                                 Write a Review
                               </button>
                               <button
-                                onClick={() => showToast('Downloading invoice PDF...')}
+                                onClick={() => handleDownloadInvoice(order)}
                                 style={{
                                   backgroundColor: '#FFFFFF',
                                   color: '#334155',
@@ -3353,7 +3387,24 @@ export const MyAccountPage: React.FC = () => {
                     <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Track, filter, and manage your recent transactions</p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => showToast('Exported CSV')} style={{ backgroundColor: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '7px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}>Export CSV</button>
+                    <button
+                      onClick={() => {
+                        exportToCsv({
+                          filename: `Payment_History_${new Date().toISOString().slice(0, 10)}.csv`,
+                          title: 'Everest Pasal - Customer Payment History',
+                          headers: ['Transaction Date', 'Order No', 'Payment Method', 'Amount (NPR)', 'Status'],
+                          rows: [
+                            ['Oct 12, 2026', 'EP-1048', 'eSewa Digital Wallet', '4,250', 'Completed'],
+                            ['Sep 28, 2026', 'EP-1039', 'Fonepay QR', '1,890', 'Completed'],
+                            ['Aug 15, 2026', 'EP-1022', 'Khalti Wallet', '3,450', 'Completed'],
+                          ],
+                        });
+                        showToast('Exported payment history CSV');
+                      }}
+                      style={{ backgroundColor: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '7px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Export CSV
+                    </button>
                     <button onClick={() => showToast('Add Card modal')} style={{ backgroundColor: '#FFFFFF', color: '#0B4EA2', border: 'none', padding: '7px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Add Card</button>
                   </div>
                 </div>

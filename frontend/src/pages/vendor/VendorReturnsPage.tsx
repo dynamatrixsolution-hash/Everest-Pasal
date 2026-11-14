@@ -7,6 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/index.js';
 import { ApiClient } from '../../api/client.js';
 import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
+import { exportToPdf, exportToCsv } from '../../utils/documentExport.js';
+import { Download, Printer, FileDown } from 'lucide-react';
 
 interface ReturnRecord {
   id: string;
@@ -228,6 +230,51 @@ export const VendorReturnsPage: React.FC = () => {
     }
   };
 
+  const handleExportReturnsCsv = () => {
+    if (!returnRecords.length) return;
+    exportToCsv({
+      filename: `Returns_${new Date().toISOString().slice(0, 10)}.csv`,
+      title: 'Everest Pasal - Merchant Customer Returns & Refunds',
+      headers: ['Order No', 'Product Title', 'Category', 'Return Reason', 'Amount (NPR)', 'Status', 'Updated At'],
+      rows: returnRecords.map((r: ReturnRecord) => [
+        r.order_no,
+        r.title,
+        r.category,
+        r.reason,
+        String(r.amount),
+        r.status,
+        r.updated_at,
+      ]),
+    });
+  };
+
+  const handlePrintRmaSlip = (record?: ReturnRecord | null) => {
+    const target = record || returnRecords[0];
+    if (!target) return;
+    exportToPdf({
+      filename: `RMA_Slip_${target.order_no}.pdf`,
+      title: `RETURN MERCHANDISE AUTHORIZATION (RMA) - ${target.order_no}`,
+      subtitle: 'Everest Pasal Merchant Return & Quality Triage Slip',
+      metadata: {
+        'Order No': target.order_no,
+        'Product': target.title,
+        'Category': target.category,
+        'Reason for Return': target.reason,
+        'Refund Amount': `NPR ${target.amount.toLocaleString()}`,
+        'Status': target.status,
+      },
+      headers: ['Component', 'Detail'],
+      rows: [
+        ['Product Inspected', target.title],
+        ['Return Eligibility', 'Within 7-day warranty window'],
+        ['Restocking Location', 'Kathmandu Return Hub (Bay #04)'],
+      ],
+      totals: [
+        { label: 'Refund Base Amount', value: `NPR ${target.amount.toLocaleString()}` },
+      ],
+    });
+  };
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
@@ -273,7 +320,7 @@ export const VendorReturnsPage: React.FC = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
-            onClick={() => alert('Exporting returns report')}
+            onClick={handleExportReturnsCsv}
             style={{
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
@@ -283,9 +330,12 @@ export const VendorReturnsPage: React.FC = () => {
               fontSize: '12.5px',
               fontWeight: 600,
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
-            Export report
+            <Download size={14} /> Export report
           </button>
           <button
             onClick={() => setIsProcessRefundModalOpen(true)}
@@ -544,13 +594,19 @@ export const VendorReturnsPage: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
-              onClick={() => alert('Approved selected returns')}
+              onClick={() => {
+                setReturnRecords((prev) => prev.map((r) => (selectedIds.includes(r.id) ? { ...r, status: 'Approved' } : r)));
+                setSelectedIds([]);
+              }}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Approve return
             </button>
             <button
-              onClick={() => alert('Rejected selected returns')}
+              onClick={() => {
+                setReturnRecords((prev) => prev.map((r) => (selectedIds.includes(r.id) ? { ...r, status: 'Refunded' } : r)));
+                setSelectedIds([]);
+              }}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Reject return
@@ -562,13 +618,13 @@ export const VendorReturnsPage: React.FC = () => {
               Issue refund
             </button>
             <button
-              onClick={() => alert('Requested return pickup')}
+              onClick={() => setSelectedIds([])}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Request pickup
             </button>
             <button
-              onClick={() => alert('Exported returns')}
+              onClick={handleExportReturnsCsv}
               style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 500, color: '#0F172A', cursor: 'pointer' }}
             >
               Export
@@ -883,7 +939,7 @@ export const VendorReturnsPage: React.FC = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
-                    onClick={() => alert('Printing RMA Slip')}
+                    onClick={() => handlePrintRmaSlip(activeMenuRecord)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1243,7 +1299,7 @@ export const VendorReturnsPage: React.FC = () => {
 
               <div style={{ textAlign: 'right', marginTop: '10px' }}>
                 <span
-                  onClick={() => alert('Downloading Audit PDF')}
+                  onClick={() => handlePrintRmaSlip(activeMenuRecord)}
                   style={{
                     fontSize: '11px',
                     color: '#0F172A',

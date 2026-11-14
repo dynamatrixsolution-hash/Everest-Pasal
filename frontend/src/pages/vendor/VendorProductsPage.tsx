@@ -9,10 +9,12 @@
 // Typography: Poppins font family
 // ==============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ApiClient } from '../../api/client.js';
 import { useRouter } from '../../router/index.js';
 import { Skeleton, SkeletonStatCards, SkeletonTable } from '../../components/Common/Skeleton.js';
+import { uploadImageFile, exportToCsv } from '../../utils/documentExport.js';
+import { UploadCloud, ImagePlus, Download } from 'lucide-react';
 
 export interface VendorProduct {
   id: string;
@@ -301,6 +303,44 @@ export const VendorProductsPage: React.FC = () => {
     imageUrl: '',
     publish: true,
   });
+
+  const productFileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+
+  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingImage(true);
+      const res = await uploadImageFile(file);
+      if (res.url) {
+        setFormData((prev) => ({ ...prev, imageUrl: res.url }));
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to upload product image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleExportProductsCsv = () => {
+    if (!products.length) return;
+    exportToCsv({
+      filename: `Products_${new Date().toISOString().slice(0, 10)}.csv`,
+      title: 'Everest Pasal - Merchant Product Catalog',
+      headers: ['SKU', 'Product Title', 'Category', 'Price (NPR)', 'Sale Price (NPR)', 'Stock Units', 'Status', 'Sales Count'],
+      rows: products.map((p) => [
+        p.sku,
+        p.title,
+        p.category,
+        String(p.price),
+        String(p.sale_price || ''),
+        String(p.stock_units),
+        p.status,
+        String(p.sales_count || 0),
+      ]),
+    });
+  };
 
   // Try fetching dynamic backend data if available, with graceful fallback
   useEffect(() => {
@@ -1142,7 +1182,7 @@ export const VendorProductsPage: React.FC = () => {
               Change category
             </button>
             <button
-              onClick={() => alert('Export selected products to CSV')}
+              onClick={handleExportProductsCsv}
               style={{
                 backgroundColor: '#FFFFFF',
                 border: '1px solid #E2E8F0',
@@ -1152,9 +1192,12 @@ export const VendorProductsPage: React.FC = () => {
                 fontWeight: 600,
                 color: '#0F172A',
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
               }}
             >
-              Export
+              <Download size={13} /> Export to CSV
             </button>
             <button
               onClick={() => {
@@ -2212,14 +2255,53 @@ export const VendorProductsPage: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>Image URL</label>
+                <input
+                  type="file"
+                  ref={productFileInputRef}
+                  onChange={handleProductImageUpload}
+                  accept="image/png,image/jpeg,image/webp"
+                  style={{ display: 'none' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>Product Image</label>
+                  <button
+                    type="button"
+                    onClick={() => productFileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    style={{
+                      backgroundColor: '#EFF6FF',
+                      color: '#1D4ED8',
+                      border: '1px solid #BFDBFE',
+                      borderRadius: '4px',
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <ImagePlus size={12} /> {isUploadingImage ? 'Uploading...' : 'Browse Image File'}
+                  </button>
+                </div>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="Paste URL or click Browse above"
                   value={formData.imageUrl}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                   style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '13px', outline: 'none' }}
                 />
+                {formData.imageUrl && (
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt="Product preview"
+                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E2E8F0' }}
+                    />
+                    <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 600 }}>Image ready</span>
+                  </div>
+                )}
               </div>
 
               <div>

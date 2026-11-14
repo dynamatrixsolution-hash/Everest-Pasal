@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext.js';
 import { useRouter, Link } from '../router/index.js';
 import { BrandLogo } from '../components/Common/BrandLogo.js';
 import { GoogleAuthModal } from '../components/Auth/GoogleAuthModal.js';
+import { Eye, EyeOff, Store, Mountain, Sprout, Sparkles, ShieldCheck, User } from 'lucide-react';
 
 interface LoginPageProps {
   onSwitchToRegister?: () => void;
@@ -323,7 +324,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                     padding: 0,
                   }}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
@@ -517,6 +518,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                 onClick={() => executeLogin('vendor@everestpasal.com', 'Password@123', '/vendor')}
                 title="Everest Official Store (4 products, 2 orders)"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '6px',
@@ -527,13 +531,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                   color: '#0d9488',
                 }}
               >
-                🏬 Everest Direct
+                <Store size={12} /> Everest Direct
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('sherpa@everestpasal.com', 'Password@123', '/vendor')}
                 title="Sherpa Adventure Outfitters (2 products, 5 orders)"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '6px',
@@ -544,13 +551,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                   color: '#2563eb',
                 }}
               >
-                🏔️ Sherpa Gear
+                <Mountain size={12} /> Sherpa Gear
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('himalaya@everestpasal.com', 'Password@123', '/vendor')}
                 title="Himalayan Organic Traders (2 products, 0 orders)"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '6px',
@@ -561,13 +571,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                   color: '#16a34a',
                 }}
               >
-                🌿 Himalayan Herbs
+                <Sprout size={12} /> Himalayan Herbs
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('crafts@everestpasal.com', 'Password@123', '/vendor')}
                 title="Patan Heritage Crafts (0 products, 0 orders)"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '6px',
@@ -578,12 +591,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                   color: '#d97706',
                 }}
               >
-                🏺 Patan Crafts
+                <Sparkles size={12} /> Patan Crafts
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('admin@everestpasal.com', 'Password@123', '/admin')}
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '6px',
@@ -594,12 +610,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                   color: '#7c3aed',
                 }}
               >
-                ⚙️ Admin
+                <ShieldCheck size={12} /> Admin
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('customer@everestpasal.com', 'Password@123', '/')}
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   backgroundColor: '#ffffff',
                   border: '1px solid #cbd5e1',
                   borderRadius: '6px',
@@ -610,7 +629,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
                   color: '#0B4EA2',
                 }}
               >
-                👤 Customer
+                <User size={12} /> Customer
               </button>
             </div>
           </div>

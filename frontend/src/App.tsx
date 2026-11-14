@@ -84,18 +84,19 @@ const AppRouterContent: React.FC = () => {
           {(path === '/vendor/products' || path.startsWith('/vendor/products')) && <VendorProductsPage />}
           {(path === '/vendor/orders' || path.startsWith('/vendor/orders')) && <VendorOrdersPage />}
           {(path === '/vendor/categories-units' || path.startsWith('/vendor/categories') || path.startsWith('/vendor/attributes')) && <VendorCategoryUnitPage />}
-          {path === '/vendor/purchases' && <VendorPurchasesPage />}
+          {(path === '/vendor/purchases' || path === '/vendor/purchase' || path.startsWith('/vendor/purchases')) && <VendorPurchasesPage />}
           {(path === '/vendor/inventory' || path.startsWith('/vendor/inventory')) && <VendorInventoryPage />}
           {(path === '/vendor/customers' || path.startsWith('/vendor/customers') || path.startsWith('/vendor/customer-segments')) && <VendorCustomersPage />}
           {path === '/vendor/suppliers' && <VendorSuppliersPage />}
-          {(path === '/vendor/payments' || path === '/vendor/finance' || path === '/vendor/earnings' || path === '/vendor/payouts' || path.startsWith('/vendor/finance') || path.startsWith('/vendor/earnings') || path.startsWith('/vendor/payouts')) && <VendorFinancePage />}
-          {(path === '/vendor/promotions' || path.startsWith('/vendor/promotions')) && <VendorPromotionsPage />}
+          {(path === '/vendor/finance' || path === '/vendor/earnings' || path === '/vendor/payouts' || path.startsWith('/vendor/finance') || path.startsWith('/vendor/earnings') || path.startsWith('/vendor/payouts')) && <VendorFinancePage />}
+          {(path === '/vendor/transactions' || path === '/vendor/payments' || path.startsWith('/vendor/transactions') || path.startsWith('/vendor/payments')) && <VendorPaymentsPage />}
+          {(path === '/vendor/promotions' || path === '/vendor/coupons' || path === '/vendor/campaigns' || path === '/vendor/sponsored' || path.startsWith('/vendor/promotions') || path.startsWith('/vendor/coupons') || path.startsWith('/vendor/campaigns') || path.startsWith('/vendor/sponsored')) && <VendorPromotionsPage />}
           {(path === '/vendor/store' || path.startsWith('/vendor/store')) && <VendorStorePage />}
           {path === '/vendor/reviews' && <VendorCustomersPage />}
           {(path === '/vendor/reports' || path === '/vendor/analytics' || path === '/vendor/export' || path.startsWith('/vendor/reports') || path.startsWith('/vendor/analytics')) && <VendorReportsPage />}
           {path === '/vendor/expenses' && <VendorExpensesPage />}
           {path === '/vendor/branches' && <VendorBranchesPage />}
-          {path === '/vendor/users-roles' && <VendorUsersRolesPage />}
+          {(path === '/vendor/users-roles' || path === '/vendor/team' || path === '/vendor/permissions' || path.startsWith('/vendor/users-roles') || path.startsWith('/vendor/team')) && <VendorUsersRolesPage />}
           {path === '/vendor/subscription' && <VendorSubscriptionPage />}
           {path === '/vendor/settings' && <VendorSettingsPage />}
           {path === '/vendor/fulfillment' && <VendorFulfillmentPage />}

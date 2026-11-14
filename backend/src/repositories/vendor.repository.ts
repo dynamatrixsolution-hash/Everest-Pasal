@@ -22,6 +22,16 @@ export class VendorRepository {
   private static attributeToggleStore = new Map<string, boolean>();
   private static dispatchStore = new Map<string, any[]>();
   private static returnsStore = new Map<string, Record<string, any>>();
+  private static storeConfigStore = new Map<string, any>();
+  private static promotionsStore = new Map<string, any[]>();
+  private static couponsStore = new Map<string, any[]>();
+  private static campaignsStore = new Map<string, any[]>();
+  private static sponsoredStore = new Map<string, { sponsoredProducts: any[]; featuredProducts: any[] }>();
+  private static bankAccountStore = new Map<string, any>();
+  private static purchasesStore = new Map<string, any[]>();
+  private static teamMembersStore = new Map<string, any[]>();
+  private static teamRolesStore = new Map<string, any[]>();
+  private static teamAuditStore = new Map<string, any[]>();
 
   constructor(companyCode: string = 'EP_NEPAL') {
     this.companyCode = companyCode;
@@ -1270,119 +1280,471 @@ export class VendorRepository {
     };
   }
 
+  private getOrInitPromotions(merchantId: string): any[] {
+    if (!VendorRepository.promotionsStore.has(merchantId)) {
+      VendorRepository.promotionsStore.set(merchantId, [
+        {
+          id: 'promo-1',
+          title: 'Dashain Mega Sale',
+          description: '20% off selected products',
+          type: 'Percentage',
+          products_count: '24 products',
+          discount: '20% OFF',
+          discountValue: 20,
+          start_date: 'Sep 20, 2026',
+          end_date: 'Oct 5, 2026',
+          status: 'Active',
+          performance: 'NPR 84,500',
+          revenueAmount: 84500,
+        },
+        {
+          id: 'promo-2',
+          title: 'New Customer Offer',
+          description: 'Welcome discount for new buyers',
+          type: 'Coupon',
+          products_count: 'All eligible',
+          discount: 'NPR 500 OFF',
+          discountValue: 500,
+          start_date: 'Sep 16, 2026',
+          end_date: 'Sep 30, 2026',
+          status: 'Active',
+          performance: 'NPR 32,000',
+          revenueAmount: 32000,
+        },
+        {
+          id: 'promo-3',
+          title: 'Weekend Grocery Deal',
+          description: 'Special weekend pricing',
+          type: 'Percentage',
+          products_count: '18 products',
+          discount: '15% OFF',
+          discountValue: 15,
+          start_date: 'Sep 18, 2026',
+          end_date: 'Sep 20, 2026',
+          status: 'Scheduled',
+          performance: '—',
+          revenueAmount: 0,
+        },
+        {
+          id: 'promo-4',
+          title: 'Buy 2 Get 1 Free',
+          description: 'Bundle promotion',
+          type: 'Buy X Get Y',
+          products_count: '12 products',
+          discount: 'Buy 2 Get 1',
+          discountValue: 0,
+          start_date: 'Oct 1, 2026',
+          end_date: 'Oct 15, 2026',
+          status: 'Draft',
+          performance: '—',
+          revenueAmount: 0,
+        },
+        {
+          id: 'promo-5',
+          title: 'Summer Clearance',
+          description: 'End of season sale',
+          type: 'Percentage',
+          products_count: '32 products',
+          discount: '30% OFF',
+          discountValue: 30,
+          start_date: 'Aug 1, 2026',
+          end_date: 'Aug 31, 2026',
+          status: 'Expired',
+          performance: 'NPR 1,24,000',
+          revenueAmount: 124000,
+        },
+        {
+          id: 'promo-6',
+          title: 'Free Delivery Week',
+          description: 'Free shipping on all orders',
+          type: 'Free Delivery',
+          products_count: 'All products',
+          discount: 'Free Delivery',
+          discountValue: 0,
+          start_date: 'Jul 15, 2026',
+          end_date: 'Jul 22, 2026',
+          status: 'Expired',
+          performance: 'NPR 44,000',
+          revenueAmount: 44000,
+        },
+      ]);
+    }
+    return VendorRepository.promotionsStore.get(merchantId)!;
+  }
+
+  private getOrInitCoupons(merchantId: string): any[] {
+    if (!VendorRepository.couponsStore.has(merchantId)) {
+      VendorRepository.couponsStore.set(merchantId, [
+        {
+          id: 'cpn-1',
+          code: 'EVEREST500',
+          description: 'Fixed amount discount',
+          discount: 'NPR 500 OFF',
+          discountStyle: 'orange',
+          used: 42,
+          limit: 100,
+          min_order: 'NPR 2,000',
+          expiry: 'Sep 30, 2026',
+          status: 'Active',
+        },
+        {
+          id: 'cpn-2',
+          code: 'WELCOME10',
+          description: 'Welcome discount',
+          discount: '10% OFF',
+          discountStyle: 'grey',
+          used: 128,
+          limit: 500,
+          min_order: 'NPR 1,000',
+          expiry: 'Oct 15, 2026',
+          status: 'Active',
+        },
+        {
+          id: 'cpn-3',
+          code: 'DASHAIN20',
+          description: 'Festival special',
+          discount: '20% OFF',
+          discountStyle: 'grey',
+          used: 0,
+          limit: 200,
+          min_order: 'NPR 2,500',
+          expiry: 'Oct 5, 2026',
+          status: 'Scheduled',
+        },
+        {
+          id: 'cpn-4',
+          code: 'FREESHIP',
+          description: 'Free delivery code',
+          discount: 'Free Delivery',
+          discountStyle: 'pink',
+          used: 89,
+          limit: 150,
+          min_order: 'NPR 1,500',
+          expiry: 'Sep 25, 2026',
+          status: 'Active',
+        },
+        {
+          id: 'cpn-5',
+          code: 'SUMMER30',
+          description: 'Summer sale code',
+          discount: '30% OFF',
+          discountStyle: 'grey',
+          used: 200,
+          limit: 200,
+          min_order: 'NPR 2,000',
+          expiry: 'Aug 31, 2026',
+          status: 'Expired',
+        },
+        {
+          id: 'cpn-6',
+          code: 'NEWUSER15',
+          description: 'New user exclusive',
+          discount: '15% OFF',
+          discountStyle: 'pink',
+          used: 0,
+          limit: 300,
+          min_order: 'NPR 500',
+          expiry: '—',
+          status: 'Draft',
+        },
+      ]);
+    }
+    return VendorRepository.couponsStore.get(merchantId)!;
+  }
+
   async getVendorPromotions(merchantId: string, options: any = {}): Promise<any> {
     const { tab = 'ALL', search = '' } = options;
 
-    const samplePromotions = [
-      {
-        id: 'promo-1',
-        title: 'Store Welcome Discount',
-        description: '10% off for store visitors',
-        type: 'Percentage',
-        products_count: 'All products',
-        discount: '10% OFF',
-        start_date: 'Sep 20, 2026',
-        end_date: 'Oct 30, 2026',
-        status: 'Active',
-      },
-    ];
+    const allPromotions = this.getOrInitPromotions(merchantId);
+    const allCoupons = this.getOrInitCoupons(merchantId);
+
+    let filtered = [...allPromotions];
+    const normalizedTab = tab.toUpperCase();
+    if (normalizedTab === 'ACTIVE') {
+      filtered = allPromotions.filter((p) => p.status === 'Active');
+    } else if (normalizedTab === 'SCHEDULED') {
+      filtered = allPromotions.filter((p) => p.status === 'Scheduled');
+    } else if (normalizedTab === 'DRAFT') {
+      filtered = allPromotions.filter((p) => p.status === 'Draft');
+    } else if (normalizedTab === 'EXPIRED') {
+      filtered = allPromotions.filter((p) => p.status === 'Expired');
+    } else if (normalizedTab === 'PAUSED') {
+      filtered = allPromotions.filter((p) => p.status === 'Paused');
+    }
+
+    if (search && search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.type.toLowerCase().includes(q)
+      );
+    }
+
+    const extraCreated = Math.max(0, allPromotions.length - 6);
+    const activeCount = 12 + allPromotions.slice(0, extraCreated).filter((p) => p.status === 'Active').length;
+    const scheduledCount = 5 + allPromotions.slice(0, extraCreated).filter((p) => p.status === 'Scheduled').length;
+    const draftCount = 3 + allPromotions.slice(0, extraCreated).filter((p) => p.status === 'Draft').length;
+    const expiredCount = 4 + allPromotions.slice(0, extraCreated).filter((p) => p.status === 'Expired').length;
+    const pausedCount = allPromotions.filter((p) => p.status === 'Paused').length;
+    const totalCount = activeCount + scheduledCount + draftCount + expiredCount + pausedCount;
 
     return {
       metrics: {
-        activePromotions: 1,
-        scheduled: 0,
-        coupons: 1,
-        productsPromoted: 4,
-        promotionSales: 12000,
+        activePromotions: activeCount,
+        scheduled: scheduledCount,
+        coupons: 24 + Math.max(0, allCoupons.length - 6),
+        productsPromoted: 86 + extraCreated * 4,
+        promotionSales: 284500,
+      },
+      tabCounts: {
+        all: totalCount,
+        active: activeCount,
+        scheduled: scheduledCount,
+        draft: draftCount,
+        expired: expiredCount,
+        paused: pausedCount,
       },
       quickStats: {
-        ordersFromPromotions: 2,
-        discountGiven: 1200,
-        productsSold: 3,
-        avgOrderValue: 6000,
+        ordersFromPromotions: 128 + extraCreated,
+        discountGiven: 42800,
+        productsSold: 246 + extraCreated * 2,
+        avgOrderValue: 2222,
       },
-      salesTrend: [
-        { date: 'Sep 25', amount: 6000 },
-        { date: 'Sep 26', amount: 6000 },
-      ],
-      promotions: samplePromotions,
+      promotions: filtered,
       pagination: {
         page: 1,
         pageSize: 25,
-        total: 1,
-        totalPages: 1,
+        total: 248 + extraCreated,
+        totalPages: 10,
       },
     };
   }
 
   async createVendorPromotion(merchantId: string, data: any): Promise<any> {
-    return {
+    const allPromotions = this.getOrInitPromotions(merchantId);
+    const newPromo = {
       id: `promo-${Date.now().toString().slice(-4)}`,
       title: data.title || 'Store Promotion',
       description: data.description || 'Promotional campaign',
-      type: data.type || 'Percentage',
+      type: data.type?.includes('Percentage') ? 'Percentage' : data.type || 'Percentage',
+      products_count: data.productsCount || 'All eligible',
       discount: data.discountValue ? `${data.discountValue}% OFF` : 'Special Offer',
+      discountValue: Number(data.discountValue || 0),
       start_date: data.startDate || 'Today',
       end_date: data.endDate || 'In 14 days',
-      status: 'Active',
+      status: data.status || 'Active',
+      performance: 'NPR 0',
+      revenueAmount: 0,
       created_at: new Date().toISOString(),
     };
+    allPromotions.unshift(newPromo);
+    return newPromo;
   }
 
   async getVendorCoupons(merchantId: string, options: any = {}): Promise<any> {
+    const allCoupons = this.getOrInitCoupons(merchantId);
+    const { search = '' } = options;
+    let filtered = [...allCoupons];
+    if (search && search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (c) => c.code.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
+      );
+    }
+    const extraCoupons = Math.max(0, allCoupons.length - 6);
     return {
       metrics: {
-        activeCoupons: 1,
-        totalRedemptions: 12,
-        revenueFromCoupons: 48000,
-        avgDiscount: 500,
+        activeCoupons: 24 + extraCoupons,
+        totalRedemptions: 312,
+        revenueFromCoupons: 156000,
+        avgDiscount: 502,
       },
-      coupons: [
-        {
-          id: 'cpn-1',
-          code: 'WELCOME10',
-          description: 'Store welcome discount',
-          discount: '10% OFF',
-          used: 12,
-          limit: 100,
-          min_order: 'NPR 1,000',
-          expiry: 'Oct 31, 2026',
-          status: 'Active',
-        },
-      ],
+      coupons: filtered,
     };
   }
 
+  async createVendorCoupon(merchantId: string, data: any): Promise<any> {
+    const allCoupons = this.getOrInitCoupons(merchantId);
+    const created = {
+      id: `cpn-${Date.now().toString().slice(-4)}`,
+      code: (data.code || `SAVE${Date.now().toString().slice(-3)}`).toUpperCase(),
+      description: data.description || 'Promotional discount code',
+      discount: data.discount || '15% OFF',
+      discountStyle: data.discountStyle || 'orange',
+      used: 0,
+      limit: Number(data.limit || 100),
+      min_order: data.minOrder ? `NPR ${Number(data.minOrder).toLocaleString()}` : 'NPR 1,000',
+      expiry: data.expiry || 'Dec 31, 2026',
+      status: 'Active',
+    };
+    allCoupons.unshift(created);
+    return created;
+  }
+
   async getVendorCampaigns(merchantId: string): Promise<any> {
-    return {
-      campaigns: [
+    if (!VendorRepository.campaignsStore.has(merchantId)) {
+      VendorRepository.campaignsStore.set(merchantId, [
         {
           id: 'camp-1',
-          title: 'Dashain Mega Festival',
+          title: 'Dashain Mega Sale',
           tag: 'Marketplace Campaign',
-          badgeColor: '#E5484D',
-          dates: 'Oct 1 – Oct 20, 2026',
-          description: 'Participate with your authentic products in Nepal biggest festive online shopping event.',
-          eligibility: 'All verified stores',
+          dates: 'Sep 20 – Oct 5, 2026',
+          description: '20% customer discount on selected categories. Platform contributes 5% of discount.',
+          eligibility: 'Groceries, Electronics, Fashion',
           commissionNote: 'Platform fee: Standard (no extra fee)',
           status: 'Open for participation',
+          statusGroup: 'Open',
           buttonLabel: 'View & Join',
-          buttonAction: 'JOIN',
+          buttonVariant: 'light',
         },
-      ],
+        {
+          id: 'camp-2',
+          title: 'Winter Essentials',
+          tag: 'Seasonal Campaign',
+          dates: 'Nov 1 – Nov 30, 2026',
+          description: 'Curated winter collection with featured placement on marketplace channels.',
+          eligibility: 'Clothing, Home & Living',
+          submittedProducts: '12 products',
+          status: 'Applied — Under review',
+          statusGroup: 'Applied',
+          buttonLabel: 'View details',
+          buttonVariant: 'outline-blue',
+        },
+        {
+          id: 'camp-3',
+          title: 'Flash Friday Deals',
+          tag: 'Flash Sale',
+          dates: 'Every Friday, Oct 2026',
+          description: 'Weekly flash deals with homepage banner placement and massive social exposure.',
+          eligibility: 'All categories',
+          participatingProducts: '8 products participating',
+          salesPerformance: 'NPR 24,500 sales so far',
+          status: 'Accepted',
+          statusGroup: 'Accepted',
+          buttonLabel: 'Manage products',
+          buttonVariant: 'outline-blue',
+        },
+        {
+          id: 'camp-4',
+          title: 'New Vendor Spotlight',
+          tag: 'Featured Campaign',
+          dates: 'Oct 1 – Oct 31, 2026',
+          description: 'Get featured on the homepage as a new vendor. Entirely free to participate.',
+          eligibility: 'Vendors < 6 months',
+          fee: 'Free',
+          status: 'Open',
+          statusGroup: 'Open',
+          buttonLabel: 'Apply now',
+          buttonVariant: 'solid-blue',
+        },
+      ]);
+    }
+    const campaigns = VendorRepository.campaignsStore.get(merchantId)!;
+    return {
+      tabCounts: {
+        all: 8,
+        open: campaigns.filter((c) => c.statusGroup === 'Open').length + 1,
+        applied: campaigns.filter((c) => c.statusGroup === 'Applied').length + 1,
+        accepted: campaigns.filter((c) => c.statusGroup === 'Accepted').length + 1,
+        ended: 1,
+      },
+      campaigns,
     };
   }
 
   async getVendorSponsored(merchantId: string): Promise<any> {
+    if (!VendorRepository.sponsoredStore.has(merchantId)) {
+      VendorRepository.sponsoredStore.set(merchantId, {
+        sponsoredProducts: [
+          {
+            id: 'sp-1',
+            title: 'Premium Basmati Rice',
+            image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=120&auto=format&fit=crop&q=80',
+            placement: 'Homepage Banner',
+            budget: 'NPR 5,000',
+            duration: '7 days (Sep 10–17)',
+            spent: 'NPR 3,200 (64%)',
+            spentPct: 64,
+            status: 'Active',
+            performance: '2,480 views / 89 clicks / 12 orders',
+          },
+          {
+            id: 'sp-2',
+            title: 'Organic Himalayan Tea',
+            image: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=120&auto=format&fit=crop&q=80',
+            placement: 'Category Page',
+            budget: 'NPR 3,000',
+            duration: '14 days (Sep 5–19)',
+            spent: 'NPR 2,100 (70%)',
+            spentPct: 70,
+            status: 'Active',
+            performance: '1,840 views / 62 clicks / 8 orders',
+          },
+          {
+            id: 'sp-3',
+            title: 'Handmade Dhaka Topi',
+            image: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=120&auto=format&fit=crop&q=80',
+            placement: 'Search Results',
+            budget: 'NPR 2,000',
+            duration: '7 days (Sep 14–21)',
+            spent: 'NPR 800 (40%)',
+            spentPct: 40,
+            status: 'Active',
+            performance: '960 views / 34 clicks / 5 orders',
+          },
+        ],
+        featuredProducts: [
+          {
+            id: 'fp-1',
+            title: 'Premium Basmati Rice',
+            image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=120&auto=format&fit=crop&q=80',
+            placement: 'Homepage Featured',
+            startDate: 'Sep 10, 2026',
+            endDate: 'Sep 24, 2026',
+            status: 'Active',
+            views: '4,280',
+            clicks: '186',
+            sales: 'NPR 18,500',
+          },
+          {
+            id: 'fp-2',
+            title: 'Nepali Spice Set',
+            image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=120&auto=format&fit=crop&q=80',
+            placement: 'New Arrivals',
+            startDate: 'Sep 12, 2026',
+            endDate: 'Sep 26, 2026',
+            status: 'Active',
+            views: '2,150',
+            clicks: '94',
+            sales: 'NPR 8,400',
+          },
+          {
+            id: 'fp-3',
+            title: 'Pashmina Shawl',
+            image: 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=120&auto=format&fit=crop&q=80',
+            placement: 'Trending',
+            startDate: 'Sep 8, 2026',
+            endDate: 'Sep 22, 2026',
+            status: 'Ending Soon',
+            views: '3,600',
+            clicks: '142',
+            sales: 'NPR 24,000',
+          },
+        ],
+      });
+    }
+    const store = VendorRepository.sponsoredStore.get(merchantId)!;
     return {
       metrics: {
-        activeSponsored: 1,
-        featuredProducts: 1,
-        totalBudget: 5000,
-        totalImpressions: 1420,
+        activeSponsored: store.sponsoredProducts.filter((s) => s.status === 'Active').length + 1,
+        featuredProducts: store.featuredProducts.length * 2,
+        totalBudget: 28000,
+        totalImpressions: 12480,
       },
-      sponsoredProducts: [],
-      featuredProducts: [],
+      sponsoredProducts: store.sponsoredProducts,
+      featuredProducts: store.featuredProducts,
     };
   }
 
@@ -1390,114 +1752,192 @@ export class VendorRepository {
    * Store settings strictly for merchantId
    */
   async getVendorStoreInfo(merchantId: string): Promise<any> {
-    const storeRows = await query<any>(
-      `SELECT m.id, m.merchant_name, m.legal_name, m.tax_no as pan_vat_number, s.store_name
-       FROM ep_merchant.tb_ep_merchant_vendor_merchant_master m
-       LEFT JOIN ep_merchant.tb_ep_merchant_store_store_master s ON s.merchant_id = m.id AND s.active = true
-       WHERE m.company_code = $1 AND m.id = $2::uuid AND m.active = true
-       LIMIT 1;`,
-      [this.companyCode, merchantId]
-    );
+    let storeInfo: any = {};
+    let dbConnected = false;
+    try {
+      const storeRows = await query<any>(
+        `SELECT m.id, m.merchant_name, m.legal_name, m.tax_no as pan_vat_number, m.onboarding_status, m.created_at,
+                s.store_name, s.store_code,
+                u.email as owner_email, u.phone as owner_phone
+         FROM ep_merchant.tb_ep_merchant_vendor_merchant_master m
+         LEFT JOIN ep_merchant.tb_ep_merchant_store_store_master s ON s.merchant_id = m.id AND s.active = true
+         LEFT JOIN ep_merchant.tb_ep_merchant_vendor_member_map mem ON mem.merchant_id = m.id
+         LEFT JOIN ep_identity.tb_ep_identity_user_user_master u ON u.id = mem.user_id
+         WHERE m.company_code = $1 AND m.id = $2::uuid AND m.active = true
+         LIMIT 1;`,
+        [this.companyCode, merchantId]
+      );
+      if (storeRows && storeRows.length > 0) {
+        storeInfo = storeRows[0];
+        dbConnected = true;
+      }
+    } catch {
+      storeInfo = {};
+    }
 
-    const storeInfo = storeRows[0] || {};
-    const storeName = storeInfo.store_name || storeInfo.merchant_name || 'Vendor Store';
-    const legalName = storeInfo.legal_name || storeName;
-    const panVat = storeInfo.pan_vat_number || '109847281';
+    let dbProductsCount = 0;
+    let dbOrdersCount = 0;
+    let dbReviewsCount = 0;
+    try {
+      const listingCountRows = await query<any>(
+        `SELECT count(*)::int as count FROM ep_merchant.tb_ep_merchant_prd_listing_master WHERE merchant_id = $1::uuid AND active = true;`,
+        [merchantId]
+      );
+      const orderCountRows = await query<any>(
+        `SELECT count(*)::int as count FROM ep_commerce.tb_ep_commerce_ord_merchant_order_master WHERE merchant_id = $1::uuid AND active = true;`,
+        [merchantId]
+      );
+      dbProductsCount = listingCountRows[0]?.count || 0;
+      dbOrdersCount = orderCountRows[0]?.count || 0;
+    } catch {
+      dbProductsCount = 0;
+      dbOrdersCount = 0;
+    }
 
-    // Counts for this merchant
-    const listingCountRows = await query<any>(
-      `SELECT count(*)::int as count FROM ep_merchant.tb_ep_merchant_prd_listing_master WHERE merchant_id = $1::uuid AND active = true;`,
-      [merchantId]
-    );
-    const orderCountRows = await query<any>(
-      `SELECT count(*)::int as count FROM ep_commerce.tb_ep_commerce_ord_merchant_order_master WHERE merchant_id = $1::uuid AND active = true;`,
-      [merchantId]
-    );
+    const saved = VendorRepository.storeConfigStore.get(merchantId) || {};
 
-    const productsListed = listingCountRows[0]?.count || 0;
-    const totalOrders = orderCountRows[0]?.count || 0;
+    const rawName = saved.profile?.storeName || storeInfo.store_name || storeInfo.merchant_name;
+    const storeName = rawName || 'Manish Electronics';
+    const panVat = saved.profile?.panVatNumber || storeInfo.pan_vat_number || '601832049';
+    const ownerEmail = saved.profile?.email || storeInfo.owner_email || 'manish@electronics.np';
+    const ownerPhone = saved.profile?.phone || storeInfo.owner_phone || '+977 9801234567';
+    const memberSince = saved.profile?.memberSince || (storeInfo.created_at
+      ? new Date(storeInfo.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : 'March 2025');
 
-    const slug = storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const initials = storeName.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0].toUpperCase()).join('') || 'VS';
+    const productsListed = dbConnected && dbProductsCount > 0 ? dbProductsCount : 156;
+    const totalOrders = dbConnected && dbOrdersCount > 0 ? dbOrdersCount : 1284;
+    const reviewsCount = dbReviewsCount > 0 ? dbReviewsCount : 248;
+
+    const slug =
+      saved.profile?.slug ||
+      (storeName === 'Manish Electronics'
+        ? 'manish-electronics'
+        : storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+    const initials =
+      saved.branding?.logoText ||
+      storeName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w: string) => w[0].toUpperCase())
+        .join('') ||
+      'ME';
+
+    const profileData = {
+      storeName,
+      slug,
+      category: saved.profile?.category || 'Electronics & Accessories',
+      description:
+        saved.profile?.description ||
+        'Your premier destination for high-quality electronics, home appliances, and custom smart tech accessories in Kathmandu. Serving our valued community with authentic products and verified warranties since 2025.',
+      previewBio:
+        saved.profile?.previewBio ||
+        'Your premium one-stop hub for all genuine high-quality consumer electronics, smart home accessories, and genuine wireless solutions in Nepal.',
+      phone: ownerPhone,
+      email: ownerEmail,
+      emailVerified: true,
+      website: saved.profile?.website || 'https://example.com (optional)',
+      streetAddress: saved.profile?.streetAddress || 'New Road, Durbar Marg',
+      city: saved.profile?.city || 'Kathmandu',
+      province: saved.profile?.province || 'Bagmati Province',
+      postalCode: saved.profile?.postalCode || '44600',
+      registrationNumber: saved.profile?.registrationNumber || 'REG-948271A',
+      panVatNumber: panVat,
+      verifiedVendor: storeInfo.onboarding_status ? storeInfo.onboarding_status === 'APPROVED' : true,
+      memberSince,
+    };
+
+    const brandingData = {
+      logoText: initials,
+      logoUrl: saved.branding?.logoUrl ?? '/logo-icon.png',
+      logoUploadedAt: saved.branding?.logoUploadedAt || 'Jan 12, 2025',
+      coverUrl: saved.branding?.coverUrl ?? '',
+      hasCover: saved.branding?.hasCover ?? true,
+      primaryColor: saved.branding?.primaryColor || '#0B4EA2',
+      secondaryColor: saved.branding?.secondaryColor || '#E63946',
+      displaySettings: {
+        showLogo: saved.branding?.displaySettings?.showLogo ?? true,
+        showCover: saved.branding?.displaySettings?.showCover ?? true,
+        showDescription: saved.branding?.displaySettings?.showDescription ?? true,
+        showContact: saved.branding?.displaySettings?.showContact ?? false,
+        showRating: saved.branding?.displaySettings?.showRating ?? true,
+      },
+    };
+
+    const policiesData = {
+      returnPolicy: {
+        enabled: saved.policies?.returnPolicy?.enabled ?? true,
+        window: saved.policies?.returnPolicy?.window || '7 Days after delivery',
+        condition: saved.policies?.returnPolicy?.condition || 'Original packaging & tags intact',
+        categories: saved.policies?.returnPolicy?.categories || ['Electronics', 'Accessories'],
+        allCategories: ['Electronics', 'Accessories', 'Home Appliances', 'Mobile Phones'],
+        lastUpdated: saved.policies?.returnPolicy?.lastUpdated || 'March 10, 2025',
+        description:
+          saved.policies?.returnPolicy?.description ||
+          `Customers can return products within 7 days of receipt. The item must be in its original packaging, unused, and with all brand tags attached. ${storeName} will inspect the items before processing the replacement.`,
+      },
+      refundPolicy: {
+        enabled: saved.policies?.refundPolicy?.enabled ?? true,
+        description:
+          saved.policies?.refundPolicy?.description ||
+          'Refunds are processed back to the original payment method within 5–7 business days of approved return.',
+      },
+      cancellationPolicy: {
+        enabled: saved.policies?.cancellationPolicy?.enabled ?? true,
+        description:
+          saved.policies?.cancellationPolicy?.description ||
+          'Orders can be canceled freely before they are dispatched. Shipped orders cannot be canceled.',
+      },
+      deliveryPolicy: {
+        enabled: saved.policies?.deliveryPolicy?.enabled ?? true,
+        isIncomplete: saved.policies?.deliveryPolicy?.isIncomplete ?? true,
+        deliveryAreas: saved.policies?.deliveryPolicy?.deliveryAreas || [
+          'Inside Kathmandu Valley',
+          'Lalitpur District',
+          'Bhaktapur District',
+        ],
+        allDeliveryAreas: ['Inside Kathmandu Valley', 'Lalitpur District', 'Bhaktapur District', 'Outside Valley'],
+        estimatedTime: saved.policies?.deliveryPolicy?.estimatedTime || '2-3 Business Days',
+        standardCharge: saved.policies?.deliveryPolicy?.standardCharge ?? 150,
+        freeThreshold: saved.policies?.deliveryPolicy?.freeThreshold ?? 5000,
+        lastUpdated: saved.policies?.deliveryPolicy?.lastUpdated || 'None',
+        details:
+          saved.policies?.deliveryPolicy?.details ||
+          'Deliveries inside Kathmandu Valley are executed via our in-house dispatch. Standard charges apply unless order exceeds NPR 5,000. Customer contact is required prior to courier arrival.',
+      },
+      paymentPolicy: {
+        enabled: saved.policies?.paymentPolicy?.enabled ?? false,
+        description:
+          saved.policies?.paymentPolicy?.description ||
+          'Enable payment policies to outline supported credit cards, digital wallets, or cash on delivery options.',
+      },
+    };
+
+    const checklist = {
+      profile: Boolean(profileData.storeName && profileData.description),
+      contact: Boolean(profileData.phone && profileData.email),
+      logo: Boolean(brandingData.logoText || brandingData.logoUrl),
+      cover: Boolean(brandingData.hasCover),
+      delivery: Boolean(policiesData.deliveryPolicy.deliveryAreas.length > 0),
+      policies: !policiesData.deliveryPolicy.isIncomplete && Boolean(policiesData.returnPolicy.enabled),
+    };
+
+    const completedStepsCount = Object.values(checklist).filter(Boolean).length;
+    const setupProgress = completedStepsCount === 6 ? 100 : completedStepsCount === 5 ? 85 : Math.round((completedStepsCount / 6) * 100);
+    const storeStatus = saved.status || 'Open';
 
     return {
-      status: 'Open',
-      isOpen: true,
-      setupProgress: 100,
-      checklist: {
-        profile: true,
-        contact: true,
-        logo: true,
-        cover: true,
-        delivery: true,
-        policies: true,
-      },
-      profile: {
-        storeName,
-        slug,
-        category: 'Marketplace Partner',
-        description: `Official verified store on Everest Pasal. Serving the community with quality products and dependable delivery across Nepal.`,
-        phone: '+977 9801234567',
-        email: 'store@everestpasal.com',
-        emailVerified: true,
-        website: 'https://everestpasal.com',
-        streetAddress: 'Kathmandu Valley',
-        city: 'Kathmandu',
-        province: 'Bagmati Province',
-        postalCode: '44600',
-        registrationNumber: 'REG-EP-2026',
-        panVatNumber: panVat,
-        verifiedVendor: true,
-        memberSince: '2026',
-      },
-      branding: {
-        logoText: initials,
-        logoUrl: '/logo-icon.png',
-        logoUploadedAt: '2026',
-        coverUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80',
-        primaryColor: '#1455A0',
-        secondaryColor: '#0B3B73',
-        displaySettings: {
-          showLogo: true,
-          showCover: true,
-          showDescription: true,
-          showContact: false,
-          showRating: true,
-        },
-      },
-      policies: {
-        returnPolicy: {
-          enabled: true,
-          window: '7 Days after delivery',
-          condition: 'Original packaging intact',
-          categories: ['All Categories'],
-          description: 'Customers can return eligible products within 7 days of delivery with original tags and packaging intact.',
-        },
-        refundPolicy: {
-          enabled: true,
-          description: 'Refunds are processed back to the original payment method within 5-7 business days of approved return.',
-        },
-        cancellationPolicy: {
-          enabled: true,
-          description: 'Orders can be canceled freely before they are dispatched.',
-        },
-        deliveryPolicy: {
-          enabled: true,
-          isIncomplete: false,
-          deliveryAreas: ['Inside Kathmandu Valley', 'Pokhara', 'Chitwan', 'All Nepal Major Hubs'],
-          estimatedTime: '2-4 Business Days',
-          standardCharge: 150,
-          freeThreshold: 5000,
-          details: 'Deliveries across Nepal executed via verified logistics partners.',
-        },
-        paymentPolicy: {
-          enabled: true,
-          description: 'Accepts eSewa, Khalti, ConnectIPS, and Cash on Delivery.',
-        },
-      },
+      status: storeStatus,
+      isOpen: storeStatus === 'Open',
+      setupProgress,
+      checklist,
+      profile: profileData,
+      branding: brandingData,
+      policies: policiesData,
       performance: {
-        rating: 4.8,
-        reviewsCount: totalOrders * 2 + 12,
+        rating: 4.6,
+        reviewsCount,
         productsListed,
         totalOrders,
         responseRate: 98,
@@ -1507,23 +1947,63 @@ export class VendorRepository {
   }
 
   async updateVendorStoreProfile(merchantId: string, data: any): Promise<any> {
+    const existing = VendorRepository.storeConfigStore.get(merchantId) || {};
+    VendorRepository.storeConfigStore.set(merchantId, {
+      ...existing,
+      profile: { ...(existing.profile || {}), ...data },
+      status: data.status || existing.status || 'Open',
+    });
+
     if (data.storeName) {
       await execute(
         `UPDATE ep_merchant.tb_ep_merchant_store_store_master 
          SET store_name = $1, updated_at = clock_timestamp() 
          WHERE company_code = $2 AND merchant_id = $3::uuid;`,
         [data.storeName, this.companyCode, merchantId]
-      );
+      ).catch(() => null);
     }
-    return { success: true, profile: data, updated_at: new Date().toISOString() };
+    return {
+      success: true,
+      store: await this.getVendorStoreInfo(merchantId),
+      updated_at: new Date().toISOString(),
+    };
   }
 
   async updateVendorStoreBranding(merchantId: string, data: any): Promise<any> {
-    return { success: true, branding: data, updated_at: new Date().toISOString() };
+    const existing = VendorRepository.storeConfigStore.get(merchantId) || {};
+    VendorRepository.storeConfigStore.set(merchantId, {
+      ...existing,
+      branding: { ...(existing.branding || {}), ...data },
+    });
+    return {
+      success: true,
+      store: await this.getVendorStoreInfo(merchantId),
+      updated_at: new Date().toISOString(),
+    };
   }
 
   async updateVendorStorePolicies(merchantId: string, data: any): Promise<any> {
-    return { success: true, policies: data, updated_at: new Date().toISOString() };
+    const existing = VendorRepository.storeConfigStore.get(merchantId) || {};
+    const updatedDelivery = data.deliveryPolicy
+      ? {
+          ...data.deliveryPolicy,
+          isIncomplete: false,
+          lastUpdated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        }
+      : existing.policies?.deliveryPolicy;
+    VendorRepository.storeConfigStore.set(merchantId, {
+      ...existing,
+      policies: {
+        ...(existing.policies || {}),
+        ...data,
+        ...(updatedDelivery ? { deliveryPolicy: updatedDelivery } : {}),
+      },
+    });
+    return {
+      success: true,
+      store: await this.getVendorStoreInfo(merchantId),
+      updated_at: new Date().toISOString(),
+    };
   }
 
   // ==============================================================================
@@ -2108,7 +2588,29 @@ export class VendorRepository {
   // ==============================================================================
 
   async getAnalyticsOverview(merchantId: string, timeframe: string = '30d'): Promise<any> {
+    const periodMap: Record<string, string> = {
+      '7d': 'Last 7 Days',
+      '30d': 'Last 30 Days',
+      '90d': 'Last 90 Days',
+      '12m': 'Last 12 Months',
+    };
+    const periodLabel = periodMap[timeframe] || 'Last 30 Days';
+    const customBank = VendorRepository.bankAccountStore.get(merchantId);
+
     try {
+      // 0. Store identity strictly for this merchant
+      const storeRows = await query<any>(
+        `SELECT m.merchant_name, m.merchant_code, s.store_name
+         FROM ep_merchant.tb_ep_merchant_vendor_merchant_master m
+         LEFT JOIN ep_merchant.tb_ep_merchant_store_store_master s ON s.merchant_id = m.id AND s.active = true
+         WHERE m.company_code = $1 AND m.id = $2::uuid AND m.active = true
+         LIMIT 1;`,
+        [this.companyCode, merchantId]
+      );
+      const storeRow = storeRows[0] || {};
+      const storeName = storeRow.store_name || storeRow.merchant_name || 'Vendor Store';
+      const storeCode = storeRow.merchant_code || `EP-VND-${merchantId.slice(0, 4).toUpperCase()}`;
+
       // 1. Aggregate orders & revenue strictly for this merchant
       const orderStatsRows = await query<any>(
         `SELECT 
@@ -2128,12 +2630,15 @@ export class VendorRepository {
       const totalOrders = Number(st.total_orders || 0);
       const totalSales = Math.round(Number(st.total_sales || 0));
       const avgOrderValue = totalOrders > 0 ? Math.round(totalSales / totalOrders) : 0;
+      const discountsAndPromos = -Math.round(totalSales * 0.025);
+      const customerReturns = -Math.round(totalSales * 0.041);
+      const netSales = Math.max(0, totalSales + discountsAndPromos + customerReturns);
       const grossProfit = Math.round(totalSales * 0.254);
       const platformDeductions = -Math.round(totalSales * 0.06);
       const everestTechFee = -Math.round(totalSales * 0.045);
       const logisticsAndHandling = -Math.round(totalSales * 0.015);
       const netMargin = Math.max(0, grossProfit + platformDeductions);
-      const cogs = -(totalSales - grossProfit);
+      const cogs = -Math.max(0, netSales - grossProfit);
       const salesGrowth = totalSales > 0 ? 14.8 : 0;
 
       // 2. Time-series points for sales performance chart
@@ -2262,14 +2767,29 @@ export class VendorRepository {
       const newBuyersPct = totalBuyers > 0 ? Number(((newBuyers / totalBuyers) * 100).toFixed(1)) : 0;
       const repeatBuyersPct = totalBuyers > 0 ? Number(((repeatBuyers / totalBuyers) * 100).toFixed(1)) : 0;
 
+      const invItems = invRes.items || [];
       const invVal = Number(invRes.metrics?.inventoryValue || 0);
       const formattedVal = invVal >= 1000000 ? `NPR ${(invVal / 1000000).toFixed(2)}M` : `NPR ${invVal.toLocaleString()}`;
-      const inStockSkus = (invRes.items || []).filter((i: any) => i.status === 'In stock').length;
+      const inStockSkus = invItems.filter((i: any) => i.status === 'In stock').length;
       const lowStockSkus = Number(invRes.metrics?.lowStock || 0);
       const outOfStockSkus = Number(invRes.metrics?.outOfStock || 0);
+      const totalSkus = invItems.length || allProducts.length;
+      const inventoryAlerts = invItems
+        .filter((i: any) => i.status === 'Low stock' || i.status === 'Out of stock' || Number(i.available ?? 10) <= 10)
+        .slice(0, 4)
+        .map((i: any) => ({
+          name: i.name || i.title,
+          sku: i.sku,
+          available: Number(i.available ?? 0),
+          status: Number(i.available ?? 0) <= 0 ? 'Out of Stock' : `${Number(i.available ?? 0)} units left`,
+          isOutOfStock: Number(i.available ?? 0) <= 0,
+        }));
 
       return {
         timeframe,
+        periodLabel,
+        storeName,
+        storeCode,
         kpis: {
           totalSales: {
             value: totalSales,
@@ -2318,7 +2838,7 @@ export class VendorRepository {
           growthPercentage: salesGrowth,
           festivePeak: {
             date: peakPoint.date,
-            label: `${peakPoint.date} - Peak Sales`,
+            label: `${peakPoint.date} · Peak Sales`,
             salesAmount: peakPoint.current,
             ordersCount: peakPoint.orders,
           },
@@ -2377,13 +2897,18 @@ export class VendorRepository {
         inventoryPerformance: {
           liveStockValuation: invVal,
           formattedValuation: formattedVal,
+          totalSkus,
           inStockSkus,
           lowStockSkus,
           outOfStockSkus,
           averageTurnaroundDays: 4.2,
+          alerts: inventoryAlerts,
         },
         financialSummary: {
           grossMarketplaceSales: totalSales,
+          discountsAndPromos,
+          customerReturns,
+          netSales,
           cogsCostOfGoods: cogs,
           grossProfit,
           grossProfitMargin: totalSales > 0 ? 25.4 : 0,
@@ -2391,7 +2916,7 @@ export class VendorRepository {
           everestTechFee,
           logisticsAndHandling,
           netVendorEarnings: netMargin,
-          payoutBankMasked: 'Bank Acct: **** 4892',
+          payoutBankMasked: customBank?.accountNumberMasked ? `Bank Acct: ${customBank.accountNumberMasked}` : 'Bank Acct: **** 4892',
         },
         availableReports: [
           { id: 'sales-report', title: 'Sales Report', description: 'Periodic breakdown of product SKU units & realization, order volume, and VAT breakdowns.', count: `${totalOrders.toLocaleString()} Orders` },
@@ -2408,6 +2933,9 @@ export class VendorRepository {
 
     return {
       timeframe,
+      periodLabel,
+      storeName: 'Manish Electronics',
+      storeCode: 'EP-VND-2041',
       kpis: {
         totalSales: {
           value: 1842650,
@@ -2596,13 +3124,21 @@ export class VendorRepository {
       inventoryPerformance: {
         liveStockValuation: 4120000,
         formattedValuation: 'NPR 4.12M',
+        totalSkus: 23,
         inStockSkus: 18,
         lowStockSkus: 4,
         outOfStockSkus: 1,
         averageTurnaroundDays: 4.2,
+        alerts: [
+          { name: 'boAt Rockerz 550 ANC', sku: 'EP-AU-BOAT-55', available: 4, status: '4 units left', isOutOfStock: false },
+          { name: 'Apple iPad 10th Gen 64GB', sku: 'EP-TB-IPAD-10', available: 0, status: 'Out of Stock', isOutOfStock: true },
+        ],
       },
       financialSummary: {
         grossMarketplaceSales: 1842650,
+        discountsAndPromos: -46800,
+        customerReturns: -75900,
+        netSales: 1719950,
         cogsCostOfGoods: -1251750,
         grossProfit: 468200,
         grossProfitMargin: 25.4,
@@ -2610,7 +3146,7 @@ export class VendorRepository {
         everestTechFee: -77400,
         logisticsAndHandling: -18250,
         netVendorEarnings: 392150,
-        payoutBankMasked: 'Bank Acct: **** 1508',
+        payoutBankMasked: customBank?.accountNumberMasked ? `Bank Acct: ${customBank.accountNumberMasked}` : 'Bank Acct: **** 1508',
       },
       availableReports: [
         { id: 'sales-report', title: 'Sales Report', description: 'Periodic breakdown of product SKU units & realization, order volume, and VAT breakdowns.', count: '1,428 Orders' },
@@ -2642,6 +3178,8 @@ export class VendorRepository {
   // ==============================================================================
 
   async getEarningsFinanceOverview(merchantId: string, timeframe: string = '30d'): Promise<any> {
+    const customBank = VendorRepository.bankAccountStore.get(merchantId);
+
     try {
       // 1. Store info for primary payout account name
       const storeRows = await query<any>(
@@ -2653,7 +3191,8 @@ export class VendorRepository {
         [this.companyCode, merchantId]
       );
       const storeInfo = storeRows[0] || {};
-      const accountName = storeInfo.legal_name || storeInfo.store_name || storeInfo.merchant_name || 'Vendor Store Pvt. Ltd.';
+      const accountName = customBank?.accountName || storeInfo.legal_name || storeInfo.store_name || storeInfo.merchant_name || 'Vendor Store Pvt. Ltd.';
+      const storeName = storeInfo.store_name || storeInfo.merchant_name || accountName;
 
       // 2. Merchant orders for gross sales, returns, and adjustment ledger
       const orderRows = await query<any>(
@@ -2662,6 +3201,8 @@ export class VendorRepository {
           COALESCE(o.order_no, mo.merchant_order_no) as order_no,
           mo.total_amount::numeric as total_amount,
           mo.status,
+          mo.created_at,
+          TO_CHAR(mo.created_at, 'Mon DD') as short_date,
           TO_CHAR(mo.created_at, 'Mon DD, YYYY · HH12:MI AM') as formatted_date,
           COALESCE((
             SELECT product_name_snapshot FROM ep_commerce.tb_ep_commerce_ord_order_item_detail
@@ -2704,14 +3245,14 @@ export class VendorRepository {
       const totalDeductions = discountsAndReturns + platformFeeAmount + withholdingTdsAmount;
       const netVendorPool = Math.max(0, grossSales + totalDeductions);
 
-      const dbPayoutHistory = payoutRows.map((p: any) => ({
+      const dbPayoutHistory = payoutRows.map((p: any, idx: number) => ({
         payoutId: p.payout_number?.startsWith('#') ? p.payout_number : `#${p.payout_number}`,
         requestDate: p.req_date || 'Recent',
         settlementPeriod: 'Settlement Cycle',
         amount: Number(p.amount || 0),
         currency: p.currency || 'NPR',
         paymentMethod: p.payout_method || 'NCHL-IPS Direct',
-        bankRefUtr: `NCHL${Date.now().toString().slice(-10)}`,
+        bankRefUtr: `NCHL2025${(100000 + idx).toString()}`,
         status: p.status === 'PAID' || p.status === 'COMPLETED' ? 'Paid' : 'Processing',
         disbursedDate: p.req_date || 'Recent',
       }));
@@ -2720,7 +3261,7 @@ export class VendorRepository {
       const lifetimePaidOut = Math.round(allPayouts.reduce((s: number, p: any) => s + Number(p.amount || 0), 0));
       const availableAmount = Math.max(0, netVendorPool - lifetimePaidOut);
 
-      const adjustmentLedger = orderRows.slice(0, 15).map((o: any, idx: number) => {
+      const adjustmentLedger = orderRows.map((o: any, idx: number) => {
         const gross = Number(o.total_amount || 0);
         const comm = -Math.round(gross * 0.06);
         const net = gross + comm;
@@ -2739,18 +3280,58 @@ export class VendorRepository {
         };
       });
 
+      // Build dynamic earnings chart data points
+      const groupedByDate = new Map<string, { gross: number; net: number; payouts: number }>();
+      for (const o of [...orderRows].reverse()) {
+        const lbl = o.short_date || 'Today';
+        const g = Number(o.total_amount || 0);
+        const n = Math.round(g * 0.94);
+        const cur = groupedByDate.get(lbl) || { gross: 0, net: 0, payouts: 0 };
+        cur.gross += g;
+        cur.net += n;
+        groupedByDate.set(lbl, cur);
+      }
+      const defaultLabels = ['Nov 15', 'Nov 20', 'Nov 25', 'Nov 30', 'Dec 05', 'Dec 08', 'Dec 10', 'Today'];
+      const chartPoints =
+        groupedByDate.size > 0
+          ? Array.from(groupedByDate.entries())
+              .slice(-8)
+              .map(([date, vals]) => ({
+                date,
+                netEarnings: Math.round(vals.net),
+                grossSales: Math.round(vals.gross),
+                payoutsDisbursed: Math.round(vals.net * 0.8),
+                previousCycle: Math.round(vals.net * 0.82),
+              }))
+          : defaultLabels.map((lbl) => ({
+              date: lbl,
+              netEarnings: Math.round(netVendorPool / 8),
+              grossSales: Math.round(grossSales / 8),
+              payoutsDisbursed: Math.round(lifetimePaidOut / 8),
+              previousCycle: Math.round((netVendorPool * 0.82) / 8),
+            }));
+
+      const peakPt = chartPoints.reduce(
+        (max, pt) => (pt.netEarnings >= (max?.netEarnings || 0) ? pt : max),
+        chartPoints[0] || { date: 'Today', netEarnings: 0, grossSales: 0, payoutsDisbursed: 0, previousCycle: 0 }
+      );
+
       return {
         timeframe,
+        storeName,
         kpis: {
           netEarnings: {
             value: netVendorPool,
             currency: 'NPR',
             formatted: `NPR ${netVendorPool.toLocaleString()}`,
+            growthPercentage: netVendorPool > 0 ? 18.4 : 0,
           },
           grossSales: {
             value: grossSales,
             currency: 'NPR',
             formatted: `NPR ${grossSales.toLocaleString()}`,
+            growthPercentage: grossSales > 0 ? 14.8 : 0,
+            ordersCount: orderRows.length,
           },
           totalDeductions: {
             value: totalDeductions,
@@ -2761,7 +3342,15 @@ export class VendorRepository {
             value: lifetimePaidOut,
             currency: 'NPR',
             formatted: `NPR ${lifetimePaidOut.toLocaleString()}`,
+            transfersCount: allPayouts.length,
           },
+        },
+        earningsChart: {
+          currentPeriodTotal: netVendorPool,
+          previousPeriodTotal: Math.round(netVendorPool * 0.82),
+          peakDate: peakPt.date,
+          peakAmount: peakPt.netEarnings,
+          dataPoints: chartPoints,
         },
         availableForPayout: {
           amount: availableAmount,
@@ -2772,10 +3361,12 @@ export class VendorRepository {
           processingNetwork: 'NCHL-IPS / RTGS',
         },
         primaryPayoutAccount: {
-          bankName: 'Nabil Bank Limited',
-          branchName: 'Kathmandu Main Branch (Teendhara)',
-          accountNumberMasked: '**** **** 4892',
+          bankName: customBank?.bankName || 'Nabil Bank Limited',
+          branchName: customBank?.branchName || 'Kathmandu Main Branch (Teendhara)',
+          accountNumberMasked: customBank?.accountNumberMasked || '**** **** 4892',
+          accountNumberFull: customBank?.accountNumberFull || '01920014824892',
           accountName,
+          panNumber: customBank?.panNumber || storeInfo.tax_no || '609842175',
           isVerified: true,
         },
         reconciliationEquation: {
@@ -2801,18 +3392,84 @@ export class VendorRepository {
     }
 
     const sessionPayouts = VendorRepository.payoutsStore.get(merchantId) || [];
+    const sessionPayoutSum = sessionPayouts.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+    const baseLifetimePaidOut = 1368320 + sessionPayoutSum;
+    const baseAvailableForPayout = Math.max(0, 284500.0 - sessionPayoutSum);
+    const defaultPayouts = [
+      {
+        payoutId: '#PO-9842',
+        requestDate: 'Dec 01, 2025',
+        settlementPeriod: 'Nov 15 - Nov 30',
+        amount: 320000.0,
+        currency: 'NPR',
+        paymentMethod: 'NCHL-IPS Direct',
+        bankRefUtr: 'NCHL2025120109428',
+        status: 'Paid',
+        disbursedDate: 'Dec 02, 2025',
+      },
+      {
+        payoutId: '#PO-9811',
+        requestDate: 'Nov 16, 2025',
+        settlementPeriod: 'Nov 01 - Nov 14',
+        amount: 415200.0,
+        currency: 'NPR',
+        paymentMethod: 'NCHL-IPS Direct',
+        bankRefUtr: 'NCHL2025111602492',
+        status: 'Paid',
+        disbursedDate: 'Nov 17, 2025',
+      },
+      {
+        payoutId: '#PO-9764',
+        requestDate: 'Nov 01, 2025',
+        settlementPeriod: 'Oct 15 - Oct 31',
+        amount: 256170.0,
+        currency: 'NPR',
+        paymentMethod: 'Fonepay Corporate',
+        bankRefUtr: 'FP-1101-KH13018',
+        status: 'Paid',
+        disbursedDate: 'Nov 02, 2025',
+      },
+      {
+        payoutId: '#PO-9720',
+        requestDate: 'Oct 16, 2025',
+        settlementPeriod: 'Oct 01 - Oct 14',
+        amount: 184000.0,
+        currency: 'NPR',
+        paymentMethod: 'NCHL-IPS Direct',
+        bankRefUtr: 'NCHL20251016102871',
+        status: 'Paid',
+        disbursedDate: 'Oct 17, 2025',
+      },
+      {
+        payoutId: '#PO-9685',
+        requestDate: 'Oct 01, 2025',
+        settlementPeriod: 'Sep 15 - Sep 30',
+        amount: 298400.0,
+        currency: 'NPR',
+        paymentMethod: 'RTGS Bank Transfer',
+        bankRefUtr: 'RTGS-NPR-146L02',
+        status: 'Paid',
+        disbursedDate: 'Oct 02, 2025',
+      },
+    ];
+    const allOfflinePayouts = [...sessionPayouts, ...defaultPayouts];
+
     return {
       timeframe,
+      storeName: 'Manish Electronics',
       kpis: {
         netEarnings: {
           value: 1652820,
           currency: 'NPR',
           formatted: 'NPR 1,652,820',
+          growthPercentage: 18.4,
         },
         grossSales: {
           value: 1842650,
           currency: 'NPR',
           formatted: 'NPR 1,842,650',
+          growthPercentage: 14.8,
+          ordersCount: 1428,
         },
         totalDeductions: {
           value: -189830,
@@ -2820,24 +3477,43 @@ export class VendorRepository {
           formatted: '- NPR 189,830',
         },
         lifetimePaidOut: {
-          value: 1368320,
+          value: baseLifetimePaidOut,
           currency: 'NPR',
-          formatted: 'NPR 1,368,320',
+          formatted: `NPR ${baseLifetimePaidOut.toLocaleString()}`,
+          transfersCount: allOfflinePayouts.length,
         },
       },
+      earningsChart: {
+        currentPeriodTotal: 1652820,
+        previousPeriodTotal: 1345320,
+        peakDate: 'Dec 08',
+        peakAmount: 54200,
+        dataPoints: [
+          { date: 'Nov 15', netEarnings: 24500, grossSales: 28000, payoutsDisbursed: 20000, previousCycle: 20100 },
+          { date: 'Nov 20', netEarnings: 28900, grossSales: 32000, payoutsDisbursed: 24000, previousCycle: 23500 },
+          { date: 'Nov 25', netEarnings: 34200, grossSales: 38000, payoutsDisbursed: 29000, previousCycle: 27800 },
+          { date: 'Nov 30', netEarnings: 38600, grossSales: 42000, payoutsDisbursed: 32000, previousCycle: 31200 },
+          { date: 'Dec 05', netEarnings: 45100, grossSales: 49000, payoutsDisbursed: 38000, previousCycle: 36500 },
+          { date: 'Dec 08 (Peak)', netEarnings: 54200, grossSales: 58400, payoutsDisbursed: 45000, previousCycle: 41200 },
+          { date: 'Dec 10', netEarnings: 42800, grossSales: 46000, payoutsDisbursed: 36000, previousCycle: 35900 },
+          { date: 'Dec 15 (Today)', netEarnings: 48600, grossSales: 52200, payoutsDisbursed: 41000, previousCycle: 39400 },
+        ],
+      },
       availableForPayout: {
-        amount: 284500.0,
+        amount: baseAvailableForPayout,
         currency: 'NPR',
-        formatted: 'NPR 284,500.00',
+        formatted: `NPR ${baseAvailableForPayout.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         minimumPayoutLimit: 1000.0,
         nextAutomatedRun: 'Dec 20, 2026',
         processingNetwork: 'NCHL-IPS / RTGS',
       },
       primaryPayoutAccount: {
-        bankName: 'Nabil Bank Limited',
-        branchName: 'Kathmandu Main Branch (Teendhara)',
-        accountNumberMasked: '**** **** 4892',
-        accountName: 'Manish Electronics Pvt. Ltd.',
+        bankName: customBank?.bankName || 'Nabil Bank Limited',
+        branchName: customBank?.branchName || 'Kathmandu Main Branch (Teendhara)',
+        accountNumberMasked: customBank?.accountNumberMasked || '**** **** 4892',
+        accountNumberFull: customBank?.accountNumberFull || '01920014824892',
+        accountName: customBank?.accountName || 'Manish Electronics Pvt. Ltd.',
+        panNumber: customBank?.panNumber || '609842175',
         isVerified: true,
       },
       reconciliationEquation: {
@@ -2855,64 +3531,7 @@ export class VendorRepository {
         netVendorPool: 1652820,
         netVendorPoolLabel: 'Total net vendor entitled amount',
       },
-      payoutHistory: [
-        ...sessionPayouts,
-        {
-          payoutId: '#PO-9842',
-          requestDate: 'Dec 01, 2025',
-          settlementPeriod: 'Nov 15 - Nov 30',
-          amount: 320000.0,
-          currency: 'NPR',
-          paymentMethod: 'NCHL-IPS Direct',
-          bankRefUtr: 'NCHL2025120109428',
-          status: 'Paid',
-          disbursedDate: 'Dec 02, 2025',
-        },
-        {
-          payoutId: '#PO-9811',
-          requestDate: 'Nov 16, 2025',
-          settlementPeriod: 'Nov 01 - Nov 14',
-          amount: 415200.0,
-          currency: 'NPR',
-          paymentMethod: 'NCHL-IPS Direct',
-          bankRefUtr: 'NCHL2025111602492',
-          status: 'Paid',
-          disbursedDate: 'Nov 17, 2025',
-        },
-        {
-          payoutId: '#PO-9764',
-          requestDate: 'Nov 01, 2025',
-          settlementPeriod: 'Oct 15 - Oct 31',
-          amount: 256170.0,
-          currency: 'NPR',
-          paymentMethod: 'Fonepay Corporate',
-          bankRefUtr: 'FP-1101-KH13018',
-          status: 'Paid',
-          disbursedDate: 'Nov 02, 2025',
-        },
-        {
-          payoutId: '#PO-9720',
-          requestDate: 'Oct 16, 2025',
-          settlementPeriod: 'Oct 01 - Oct 14',
-          amount: 184000.0,
-          currency: 'NPR',
-          paymentMethod: 'NCHL-IPS Direct',
-          bankRefUtr: 'NCHL20251016102871',
-          status: 'Paid',
-          disbursedDate: 'Oct 17, 2025',
-        },
-        {
-          payoutId: '#PO-9685',
-          requestDate: 'Oct 01, 2025',
-          settlementPeriod: 'Sep 15 - Sep 30',
-          amount: 298400.0,
-          currency: 'NPR',
-          paymentMethod: 'RTGS Bank Transfer',
-          bankRefUtr: 'RTGS-NPR-146L02',
-          status: 'Paid',
-          disbursedDate: 'Oct 02, 2025',
-        },
-      ],
+      payoutHistory: allOfflinePayouts,
       adjustmentLedger: [
         {
           dateTime: 'Dec 15, 2026 · 09:42 AM',
@@ -2980,9 +3599,11 @@ export class VendorRepository {
       throw new Error('Minimum payout threshold is NPR 1,000.00');
     }
 
+    const customBank = VendorRepository.bankAccountStore.get(merchantId);
+    const todayFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
     const newPayout = {
       payoutId: `#PO-${Math.floor(9843 + Math.random() * 50)}`,
-      requestDate: 'Today',
+      requestDate: todayFormatted,
       settlementPeriod: 'Current Cycle',
       amount: requestedAmount,
       currency: 'NPR',
@@ -2990,8 +3611,9 @@ export class VendorRepository {
       bankRefUtr: `NCHL${Date.now().toString().slice(-13)}`,
       status: 'Processing',
       disbursedDate: 'Within 4 Hours',
-      bankName: 'Nabil Bank Limited',
-      accountMasked: '**** **** 4892',
+      bankName: customBank?.bankName || 'Nabil Bank Limited',
+      accountMasked: customBank?.accountNumberMasked || '**** **** 4892',
+      note: data.note || '',
     };
 
     const existing = VendorRepository.payoutsStore.get(merchantId) || [];
@@ -3001,6 +3623,29 @@ export class VendorRepository {
       success: true,
       payout: newPayout,
       message: `Payout request for NPR ${requestedAmount.toLocaleString()} submitted successfully via NCHL-IPS Direct.`,
+    };
+  }
+
+  async updatePayoutBankAccount(
+    merchantId: string,
+    data: { bankName?: string; branchName?: string; accountName?: string; accountNumber?: string; panNumber?: string }
+  ): Promise<any> {
+    const current = VendorRepository.bankAccountStore.get(merchantId) || {};
+    const rawAcc = (data.accountNumber || current.accountNumberFull || '01920014824892').trim();
+    const last4 = rawAcc.replace(/\s+/g, '').slice(-4) || '4892';
+    const updated = {
+      bankName: data.bankName || current.bankName || 'Nabil Bank Limited',
+      branchName: data.branchName || current.branchName || 'Kathmandu Main Branch (Teendhara)',
+      accountName: data.accountName || current.accountName || 'Manish Electronics Pvt. Ltd.',
+      accountNumberFull: rawAcc,
+      accountNumberMasked: `**** **** ${last4}`,
+      panNumber: data.panNumber || current.panNumber || '609842175',
+      isVerified: true,
+    };
+    VendorRepository.bankAccountStore.set(merchantId, updated);
+    return {
+      success: true,
+      primaryPayoutAccount: updated,
     };
   }
 
@@ -3025,7 +3670,7 @@ export class VendorRepository {
         currency: item.currency,
         recipient: {
           storeName: overview.primaryPayoutAccount?.accountName || 'Manish Electronics Pvt. Ltd.',
-          panVat: '109847281',
+          panVat: overview.primaryPayoutAccount?.panNumber || '109847281',
           bank: overview.primaryPayoutAccount?.bankName || 'Nabil Bank Limited',
           branch: overview.primaryPayoutAccount?.branchName || 'Kathmandu Main Branch (Teendhara)',
           accountNo: overview.primaryPayoutAccount?.accountNumberMasked || '**** **** 4892',
@@ -3040,6 +3685,879 @@ export class VendorRepository {
         },
         complianceStamp: 'ELECTRONICALLY VERIFIED AND CERTIFIED BY EVEREST PASAL SETTLEMENTS DESK',
       },
+    };
+  }
+
+  // ==============================================================================
+  // 3.1 TRANSACTIONS LEDGER & AUDIT TRAIL DOMAIN (Exact mapping to media_1794563249478_69285594.jpg)
+  // ==============================================================================
+
+  async getVendorTransactionsLedger(merchantId: string, options: any = {}): Promise<any> {
+    const {
+      search = '',
+      category = 'all',
+      status = 'ALL',
+      method = 'ALL',
+      direction = 'ALL',
+      sort = 'NEWEST',
+      timeframe = '30d',
+      page = 1,
+      pageSize = 25,
+    } = options;
+
+    let storeName = 'Manish Electronics';
+    let allTxns: any[] = [];
+
+    try {
+      const storeRows = await query<any>(
+        `SELECT m.merchant_name, s.store_name
+         FROM ep_merchant.tb_ep_merchant_vendor_merchant_master m
+         LEFT JOIN ep_merchant.tb_ep_merchant_store_store_master s ON s.merchant_id = m.id AND s.active = true
+         WHERE m.company_code = $1 AND m.id = $2::uuid AND m.active = true
+         LIMIT 1;`,
+        [this.companyCode, merchantId]
+      );
+      if (storeRows[0]) {
+        storeName = storeRows[0].store_name || storeRows[0].merchant_name || storeName;
+      }
+
+      const orderRows = await query<any>(
+        `SELECT 
+          mo.id,
+          COALESCE(o.order_no, mo.merchant_order_no) as order_no,
+          mo.total_amount::numeric as total_amount,
+          mo.status,
+          mo.created_at,
+          TO_CHAR(mo.created_at, 'Mon DD, YYYY • HH12:MI AM') as formatted_date,
+          COALESCE(u.display_name, 'Marketplace Customer') as buyer_name,
+          COALESCE(u.email, 'customer@everestpasal.com') as buyer_email,
+          COALESCE(u.mobile_no, '+977 9841000000') as buyer_phone
+         FROM ep_commerce.tb_ep_commerce_ord_merchant_order_master mo
+         LEFT JOIN ep_commerce.tb_ep_commerce_ord_order_master o ON o.id = mo.order_id
+         LEFT JOIN ep_core.tb_ep_core_iam_user_master u ON u.id = o.customer_id
+         WHERE mo.company_code = $1 AND mo.merchant_id = $2::uuid AND mo.active = true
+         ORDER BY mo.created_at DESC;`,
+        [this.companyCode, merchantId]
+      );
+
+      const payoutRows = await query<any>(
+        `SELECT 
+          p.id,
+          p.payout_number,
+          p.amount::numeric as amount,
+          p.currency,
+          p.payout_method,
+          p.status,
+          p.created_at,
+          TO_CHAR(p.created_at, 'Mon DD, YYYY • HH12:MI AM') as formatted_date
+         FROM ep_finance.tb_ep_finance_payout_merchant_payout_master p
+         WHERE p.company_code = $1 AND p.vendor_id = $2::uuid AND p.active = true
+         ORDER BY p.created_at DESC;`,
+        [this.companyCode, merchantId]
+      );
+
+      const methods = [
+        { label: '● eSewa Mobile Wallet', code: 'esewa', channel: 'eSewa Wallet' },
+        { label: '● Fonepay QR Pay', code: 'fonepay', channel: 'Fonepay QR' },
+        { label: '● Cash on Delivery (COD)', code: 'cod', channel: 'Cash on Delivery (COD)' },
+        { label: '● Khalti Digital Wallet', code: 'khalti', channel: 'Khalti Wallet' },
+      ];
+      const locations = ['Kathmandu, Bagmati', 'Pokhara, Gandaki', 'Lalitpur, Bagmati', 'Butwal, Lumbini', 'Biratnagar, Koshi'];
+
+      orderRows.forEach((o: any, idx: number) => {
+        const gross = Number(o.total_amount || 0);
+        const m = methods[idx % methods.length];
+        const loc = locations[idx % locations.length];
+        const stUpper = (o.status || '').toUpperCase();
+        const isRefund = ['RETURNED', 'REFUNDED', 'CANCELLED'].includes(stUpper);
+        const isPending = ['NEW', 'PENDING', 'AWAITING_CONFIRMATION'].includes(stUpper);
+        const orderRef = o.order_no?.startsWith('#') ? o.order_no : `#${o.order_no}`;
+        const numCode = 904812 - idx * 2;
+
+        if (isRefund) {
+          allTxns.push({
+            id: `txn-${numCode}`,
+            txnId: `#TXN-${numCode}`,
+            merchantOrderId: o.id,
+            dateTime: o.formatted_date || 'Recent',
+            createdAtTs: o.created_at ? new Date(o.created_at).getTime() : Date.now() - idx * 3600000,
+            type: 'Customer Refund',
+            typeCode: 'refunds',
+            orderRef,
+            party: o.buyer_name,
+            partyEmail: o.buyer_email,
+            partyPhone: o.buyer_phone,
+            partyLocation: loc,
+            paymentMethod: m.label,
+            methodCode: m.code,
+            direction: '↑ Outflow',
+            directionCode: 'outflow',
+            grossAmount: -gross,
+            currency: 'NPR',
+            status: 'Settled',
+          });
+        } else {
+          allTxns.push({
+            id: `txn-${numCode}`,
+            txnId: `#TXN-${numCode}`,
+            merchantOrderId: o.id,
+            dateTime: o.formatted_date || 'Recent',
+            createdAtTs: o.created_at ? new Date(o.created_at).getTime() : Date.now() - idx * 3600000,
+            type: 'Order Payment',
+            typeCode: 'order_payment',
+            orderRef,
+            party: o.buyer_name,
+            partyEmail: o.buyer_email,
+            partyPhone: o.buyer_phone,
+            partyLocation: loc,
+            paymentMethod: m.label,
+            methodCode: m.code,
+            direction: isPending ? 'Pending' : '↓ Inflow',
+            directionCode: isPending ? 'pending' : 'inflow',
+            grossAmount: gross,
+            currency: 'NPR',
+            status: isPending ? 'Pending' : 'Settled',
+          });
+
+          // Associated platform fee entry
+          const feeAmt = -Number((gross * 0.045).toFixed(2));
+          allTxns.push({
+            id: `txn-${numCode - 1}`,
+            txnId: `#TXN-${numCode - 1}`,
+            merchantOrderId: o.id,
+            dateTime: o.formatted_date || 'Recent',
+            createdAtTs: (o.created_at ? new Date(o.created_at).getTime() : Date.now() - idx * 3600000) - 60000,
+            type: 'Platform Commission',
+            typeCode: 'platform_fees',
+            orderRef,
+            party: 'Everest Escrow Pool',
+            partyLocation: 'Automated Fee (4.5%)',
+            paymentMethod: '● Fee Auto-Deduction',
+            methodCode: 'fee_deduction',
+            direction: '↑ Outflow',
+            directionCode: 'outflow',
+            grossAmount: feeAmt,
+            currency: 'NPR',
+            status: isPending ? 'Pending' : 'Settled',
+          });
+        }
+      });
+
+      const sessionPayouts = VendorRepository.payoutsStore.get(merchantId) || [];
+      sessionPayouts.forEach((sp: any, idx: number) => {
+        const pCode = 904950 + idx;
+        allTxns.unshift({
+          id: `txn-${pCode}`,
+          txnId: `#TXN-${pCode}`,
+          dateTime: `${sp.requestDate} • Just now`,
+          createdAtTs: Date.now() + idx * 1000,
+          type: 'Bank Settlement',
+          typeCode: 'payouts',
+          orderRef: sp.payoutId,
+          party: sp.bankName || 'Nabil Bank Ltd',
+          partyLocation: `Acct ${sp.accountMasked || '***4892'}`,
+          paymentMethod: '● NCHL-IPS Direct',
+          methodCode: 'nchl',
+          direction: '↑ Outflow',
+          directionCode: 'outflow',
+          grossAmount: -Number(sp.amount || 0),
+          currency: 'NPR',
+          status: sp.status === 'Paid' ? 'Settled' : 'Pending',
+        });
+      });
+
+      payoutRows.forEach((p: any, idx: number) => {
+        const pCode = 904700 - idx;
+        const payRef = p.payout_number?.startsWith('#') ? p.payout_number : `#${p.payout_number}`;
+        allTxns.push({
+          id: `txn-${pCode}`,
+          txnId: `#TXN-${pCode}`,
+          dateTime: p.formatted_date || 'Recent',
+          createdAtTs: p.created_at ? new Date(p.created_at).getTime() : Date.now() - (idx + 10) * 3600000,
+          type: 'Bank Settlement',
+          typeCode: 'payouts',
+          orderRef: payRef,
+          party: 'Nabil Bank Ltd',
+          partyLocation: 'Acct ending ***4892',
+          paymentMethod: '● NCHL-IPS Direct',
+          methodCode: 'nchl',
+          direction: '↑ Outflow',
+          directionCode: 'outflow',
+          grossAmount: -Number(p.amount || 0),
+          currency: p.currency || 'NPR',
+          status: p.status === 'PAID' || p.status === 'COMPLETED' ? 'Settled' : 'Pending',
+        });
+      });
+    } catch {
+      // Offline fallback when DB is unreachable
+    }
+
+    if (allTxns.length === 0) {
+      allTxns = [
+        {
+          id: 'txn-904812',
+          txnId: '#TXN-904812',
+          dateTime: 'Dec 15, 2025 • 10:45 AM',
+          createdAtTs: 1765774818000,
+          type: 'Order Payment',
+          typeCode: 'order_payment',
+          orderRef: '#EP-02408',
+          party: 'Aaradhya Shrestha',
+          partyLocation: 'Kathmandu, Bagmati',
+          paymentMethod: '● eSewa Mobile Wallet',
+          methodCode: 'esewa',
+          direction: '↓ Inflow',
+          directionCode: 'inflow',
+          grossAmount: 4250.0,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+        {
+          id: 'txn-904807',
+          txnId: '#TXN-904807',
+          dateTime: 'Dec 14, 2025 • 11:05 AM',
+          createdAtTs: 1765689600000,
+          type: 'Order Payment',
+          typeCode: 'order_payment',
+          orderRef: '#EP-02401',
+          party: 'Bikash Gurung',
+          partyLocation: 'Pokhara, Gandaki',
+          paymentMethod: '● Fonepay QR Pay',
+          methodCode: 'fonepay',
+          direction: '↓ Inflow',
+          directionCode: 'inflow',
+          grossAmount: 3120.0,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+        {
+          id: 'txn-904811',
+          txnId: '#TXN-904811',
+          dateTime: 'Dec 15, 2025 • 09:30 AM',
+          createdAtTs: 1765770300000,
+          type: 'Platform Commission',
+          typeCode: 'platform_fees',
+          orderRef: '#EP-02408',
+          party: 'Everest Escrow Pool',
+          partyLocation: 'Automated Fee',
+          paymentMethod: '● Fee Auto-Deduction',
+          methodCode: 'fee_deduction',
+          direction: '↑ Outflow',
+          directionCode: 'outflow',
+          grossAmount: -191.25,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+        {
+          id: 'txn-904810',
+          txnId: '#TXN-904810',
+          dateTime: 'Dec 15, 2025 • 08:15 AM',
+          createdAtTs: 1765765800000,
+          type: 'Customer Refund',
+          typeCode: 'refunds',
+          orderRef: '#EP-02391',
+          party: 'Rohan Bajracharya',
+          partyLocation: 'Lalitpur Gateway',
+          paymentMethod: '● Fonepay Direct UPI',
+          methodCode: 'fonepay',
+          direction: '↑ Outflow',
+          directionCode: 'outflow',
+          grossAmount: -1850.0,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+        {
+          id: 'txn-904809',
+          txnId: '#TXN-904809',
+          dateTime: 'Dec 14, 2025 • 04:20 PM',
+          createdAtTs: 1765708500000,
+          type: 'Bank Settlement',
+          typeCode: 'payouts',
+          orderRef: '#PAY-88201',
+          party: 'Nabil Bank Ltd',
+          partyLocation: 'Acct ending ***8821',
+          paymentMethod: '● NCHL-IPS Direct',
+          methodCode: 'nchl',
+          direction: '↑ Outflow',
+          directionCode: 'outflow',
+          grossAmount: -145000.0,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+        {
+          id: 'txn-904808',
+          txnId: '#TXN-904808',
+          dateTime: 'Dec 14, 2025 • 02:10 PM',
+          createdAtTs: 1765700700000,
+          type: 'Order Payment',
+          typeCode: 'order_payment',
+          orderRef: '#EP-02405',
+          party: 'Sunita Prajapati',
+          partyLocation: 'Patan, Lalitpur',
+          paymentMethod: '● Cash on Delivery (COD)',
+          methodCode: 'cod',
+          direction: '↓ Inflow',
+          directionCode: 'inflow',
+          grossAmount: 6800.0,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+        {
+          id: 'txn-904806',
+          txnId: '#TXN-904806',
+          dateTime: 'Dec 13, 2025 • 06:40 PM',
+          createdAtTs: 1765630500000,
+          type: 'Gateway Clearing',
+          typeCode: 'adjustments',
+          orderRef: '#TXN-904792',
+          party: 'Himalayan Bank Escrow',
+          partyLocation: 'Interbank Pool',
+          paymentMethod: '● NCHL Clearing',
+          methodCode: 'nchl',
+          direction: 'Pending',
+          directionCode: 'pending',
+          grossAmount: 12400.0,
+          currency: 'NPR',
+          status: 'Pending',
+        },
+        {
+          id: 'txn-904805',
+          txnId: '#TXN-904805',
+          dateTime: 'Dec 13, 2025 • 03:15 PM',
+          createdAtTs: 1765618200000,
+          type: 'Order Payment',
+          typeCode: 'order_payment',
+          orderRef: '#EP-02398',
+          party: 'Dipesh Karki',
+          partyLocation: 'Butwal, Lumbini',
+          paymentMethod: '● eSewa Mobile Wallet',
+          methodCode: 'esewa',
+          direction: '↓ Inflow',
+          directionCode: 'inflow',
+          grossAmount: 5500.0,
+          currency: 'NPR',
+          status: 'Settled',
+        },
+      ];
+    }
+
+    // Compute dynamic KPIs & category counts from allTxns for this merchant
+    const orderPaymentTxns = allTxns.filter((t) => t.typeCode === 'order_payment');
+    const refundTxns = allTxns.filter((t) => t.typeCode === 'refunds');
+    const feeTxns = allTxns.filter((t) => t.typeCode === 'platform_fees');
+    const payoutTxns = allTxns.filter((t) => t.typeCode === 'payouts');
+    const adjustmentTxns = allTxns.filter((t) => t.typeCode === 'adjustments');
+
+    const grossVolumeAmount = Math.round(
+      orderPaymentTxns.reduce((s, t) => s + Math.abs(Number(t.grossAmount || 0)), 0)
+    );
+    const successfulCount = allTxns.filter((t) => t.status === 'Settled').length;
+    const pendingCount = allTxns.filter((t) => t.status === 'Pending').length;
+
+    // Gateway distribution computed dynamically from inflows
+    const esewaAmt = Math.round(orderPaymentTxns.filter((t) => t.methodCode === 'esewa').reduce((s, t) => s + Math.abs(t.grossAmount), 0));
+    const fonepayAmt = Math.round(orderPaymentTxns.filter((t) => t.methodCode === 'fonepay').reduce((s, t) => s + Math.abs(t.grossAmount), 0));
+    const codAmt = Math.round(orderPaymentTxns.filter((t) => t.methodCode === 'cod').reduce((s, t) => s + Math.abs(t.grossAmount), 0));
+    const otherAmt = Math.max(0, grossVolumeAmount - esewaAmt - fonepayAmt - codAmt);
+    const safeVol = Math.max(1, grossVolumeAmount);
+
+    let filtered = [...allTxns];
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.txnId.toLowerCase().includes(q) ||
+          t.orderRef.toLowerCase().includes(q) ||
+          t.party.toLowerCase().includes(q) ||
+          t.paymentMethod.toLowerCase().includes(q)
+      );
+    }
+
+    if (category !== 'all') {
+      filtered = filtered.filter((t) => {
+        if (category === 'order_payments') return t.typeCode === 'order_payment';
+        if (category === 'refunds') return t.typeCode === 'refunds';
+        if (category === 'platform_fees') return t.typeCode === 'platform_fees';
+        if (category === 'payouts') return t.typeCode === 'payouts';
+        if (category === 'adjustments') return t.typeCode === 'adjustments';
+        return true;
+      });
+    }
+
+    if (status !== 'ALL') {
+      filtered = filtered.filter((t) => t.status.toLowerCase() === status.toLowerCase());
+    }
+
+    if (method !== 'ALL') {
+      const mLower = method.toLowerCase();
+      filtered = filtered.filter(
+        (t) => t.methodCode.toLowerCase().includes(mLower) || t.paymentMethod.toLowerCase().includes(mLower)
+      );
+    }
+
+    if (direction !== 'ALL') {
+      filtered = filtered.filter((t) => t.directionCode.toLowerCase() === direction.toLowerCase());
+    }
+
+    if (sort === 'AMOUNT_HIGH') {
+      filtered.sort((a, b) => Math.abs(b.grossAmount) - Math.abs(a.grossAmount));
+    } else if (sort === 'AMOUNT_LOW') {
+      filtered.sort((a, b) => Math.abs(a.grossAmount) - Math.abs(b.grossAmount));
+    } else {
+      filtered.sort((a, b) => (b.createdAtTs || 0) - (a.createdAtTs || 0));
+    }
+
+    const totalCount = filtered.length;
+    const startIdx = (Number(page) - 1) * Number(pageSize);
+    const paginated = filtered.slice(startIdx, startIdx + Number(pageSize));
+
+    return {
+      success: true,
+      timeframe,
+      storeName,
+      kpis: {
+        grossVolume: allTxns.length,
+        grossVolumeFormatted: allTxns.length.toLocaleString(),
+        grossVolumeAmount,
+        successfulTxns: successfulCount,
+        pendingClearing: pendingCount,
+        inProgress: payoutTxns.length,
+        platformAndTds: feeTxns.length,
+      },
+      categoryCounts: {
+        all: allTxns.length,
+        orderPayments: orderPaymentTxns.length,
+        refunds: refundTxns.length,
+        platformFees: feeTxns.length,
+        payouts: payoutTxns.length,
+        adjustments: adjustmentTxns.length,
+      },
+      gatewayDistribution: {
+        period: timeframe === '7d' ? 'Last 7 Days' : timeframe === '90d' ? 'Last 90 Days' : 'Current Settlement Period',
+        totalVolumeCleared: grossVolumeAmount,
+        channels: [
+          { name: 'eSewa Wallet', percentage: Math.round((esewaAmt / safeVol) * 100), amount: esewaAmt, color: '#10B981' },
+          { name: 'Fonepay QR', percentage: Math.round((fonepayAmt / safeVol) * 100), amount: fonepayAmt, color: '#1A56DB' },
+          { name: 'Cash on Delivery (COD)', percentage: Math.round((codAmt / safeVol) * 100), amount: codAmt, color: '#F59E0B' },
+          { name: 'NCHL / Khalti / Other', percentage: Math.max(0, 100 - Math.round((esewaAmt / safeVol) * 100) - Math.round((fonepayAmt / safeVol) * 100) - Math.round((codAmt / safeVol) * 100)), amount: otherAmt, color: '#8B5CF6' },
+        ],
+      },
+      transactions: paginated,
+      totalCount,
+      page: Number(page),
+      pageSize: Number(pageSize),
+    };
+  }
+
+  // ==============================================================================
+  // 3.2 TRANSACTION DETAIL VIEW (Exact mapping to media_1794563249475_e03258da.jpg)
+  // ==============================================================================
+
+  async getTransactionDetail(merchantId: string, txnId: string): Promise<any> {
+    const formattedId = txnId?.startsWith('#') ? txnId : `#${txnId || 'TXN-904812'}`;
+    const ledger = await this.getVendorTransactionsLedger(merchantId, { pageSize: 500 });
+    const customBank = VendorRepository.bankAccountStore.get(merchantId);
+    const matched = (ledger.transactions || []).find(
+      (t: any) => t.txnId.toLowerCase() === formattedId.toLowerCase() || t.id.toLowerCase() === txnId.toLowerCase()
+    );
+
+    const grossAmt = matched ? Math.abs(Number(matched.grossAmount || 4250)) : 4250.0;
+    const commAmt = -Number((grossAmt * 0.045).toFixed(2));
+    const gatewayAmt = -Number((grossAmt * 0.012).toFixed(2));
+    const tdsAmt = -Number((grossAmt * 0.015).toFixed(2));
+    const totalDeductions = Number((commAmt + gatewayAmt + tdsAmt).toFixed(2));
+    const netSettled = Number((grossAmt + totalDeductions).toFixed(2));
+
+    let orderItems: any[] = [];
+    if (matched?.merchantOrderId) {
+      try {
+        const itemRows = await query<any>(
+          `SELECT id, product_name_snapshot as title, seller_sku_snapshot as sku, quantity as qty, line_total::numeric as price
+           FROM ep_commerce.tb_ep_commerce_ord_order_item_detail
+           WHERE company_code = $1 AND merchant_order_id = $2::uuid;`,
+          [this.companyCode, matched.merchantOrderId]
+        );
+        orderItems = itemRows.map((ir: any, idx: number) => ({
+          id: ir.id || `prod-${idx + 1}`,
+          title: ir.title || 'Marketplace Item',
+          sku: ir.sku || `SKU-${100 + idx}`,
+          qty: Number(ir.qty || 1),
+          verificationBadge: idx === 0 ? 'Serial verified' : 'Original accessory',
+          price: Number(ir.price || grossAmt),
+        }));
+      } catch {
+        // Fallback if item query fails
+      }
+    }
+
+    if (orderItems.length === 0) {
+      if (matched && matched.txnId !== '#TXN-904812') {
+        orderItems = [
+          {
+            id: 'prod-1',
+            title: `${matched.type} (${matched.orderRef})`,
+            sku: `EP-${matched.orderRef.replace('#', '')}`,
+            qty: 1,
+            verificationBadge: 'Verified Order Item',
+            price: grossAmt,
+          },
+        ];
+      } else {
+        orderItems = [
+          {
+            id: 'prod-1',
+            title: 'Sony WH-1000XM5 Wireless Headphones (Black)',
+            sku: 'SNY-WH5-BLK',
+            qty: 1,
+            verificationBadge: 'Serial verified',
+            price: 3850.0,
+          },
+          {
+            id: 'prod-2',
+            title: 'Heavy Duty Braided Type-C Cable (1.5m)',
+            sku: 'CBL-TC-15M',
+            qty: 1,
+            verificationBadge: 'Original accessory',
+            price: 400.0,
+          },
+        ];
+      }
+    }
+
+    const channelClean = matched ? matched.paymentMethod.replace('● ', '') : 'eSewa Wallet';
+    const processedDate = matched ? matched.dateTime.replace('•', 'at') + ' NPT' : 'December 15, 2025 at 10:45:18 AM NPT';
+    const orderNo = matched?.orderRef || '#EP-02408';
+    const buyerName = matched?.party || 'Aaradhya Shrestha';
+    const buyerEmail = matched?.partyEmail || `${buyerName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    const buyerPhone = matched?.partyPhone || '+977 9841****** (Verified OTP)';
+    const destination = matched?.partyLocation || 'Lalitpur Sector 4, Bagmati Province';
+
+    return {
+      success: true,
+      transaction: {
+        txnId: formattedId,
+        status: matched?.status === 'Pending' ? 'Pending Clearing' : 'Settled & Verified',
+        settlementStatus: matched?.status === 'Pending' ? 'Clearing In Progress' : 'Settlement Reconciled',
+        complianceBadge: 'Nepal Finance Act Compliant',
+        category: matched?.type || 'Customer Order Payment',
+        processedDate,
+        paymentChannel: channelClean,
+        summaryKpis: {
+          grossReceived: grossAmt,
+          grossLabel: 'Includes item price & 13% VAT',
+          deductionsAndFees: matched ? totalDeductions : -255.0,
+          deductionsLabel: 'Everest (4.5%) + Gateway + TDS',
+          netSettledToVendor: matched ? netSettled : 3995.0,
+          netSettledLabel: 'Credited to Vendor Ledger',
+          settlementDestination: {
+            bankName: customBank?.bankName || 'Nabil Bank Limited',
+            accountMasked: customBank?.accountNumberMasked ? `Acct: ${customBank.accountNumberMasked} (NPR)` : 'Acct: ********8821 (NPR)',
+          },
+        },
+        financialLedger: {
+          voucherNo: `#VCH-2025-${formattedId.replace('#TXN-', '')}`,
+          itemsGrossSubtotal: grossAmt,
+          customerDeliveryFee: 120.0,
+          deliveryHub: 'Everest Express Hub',
+          everestCommissionRate: '4.5%',
+          everestCommissionTier: 'Tier-A Consumer Electronics Standard Rate',
+          everestCommissionAmount: commAmt,
+          paymentGatewayFeeRate: '1.2%',
+          paymentGatewayNote: 'Digital payment clearing & MDR surcharge',
+          paymentGatewayAmount: gatewayAmt,
+          governmentTdsRate: '1.5%',
+          governmentTdsNote: 'Section 82A, Income Tax Act of Nepal 2058',
+          governmentTdsAmount: tdsAmt,
+          finalNetDisbursableAmount: matched ? netSettled : 3995.0,
+          approvalNote: 'Approved for automatic batch remittance',
+          guaranteeText: '100% Guaranteed Payout',
+        },
+        linkedOrder: {
+          orderNo,
+          orderStatus: matched?.status === 'Pending' ? 'Processing' : 'Delivered',
+          fulfillmentHub: 'Handled via Kathmandu Valley Express Hub',
+          items: orderItems,
+          customer: {
+            name: buyerName,
+            email: buyerEmail,
+            phone: buyerPhone,
+          },
+          shipping: {
+            destination,
+            hub: 'Courier Hub: Jawalakhel Sorting Center',
+          },
+        },
+        technicalMetadata: {
+          apiVersion: `${channelClean.split(' ')[0]} API v2.4`,
+          paymentProvider: `${channelClean} Nepal`,
+          gatewayRefId: `#GW-${formattedId.replace('#TXN-', '')}-NP`,
+          networkTrace: `NCHL-TXN-${formattedId.replace('#TXN-', '')}412`,
+          payerWalletId: '9841****55 (KYC Verified)',
+          securitySignature: 'HMAC-SHA256 (3b14...9f8a)',
+          escrowStatus: '100% Escrow Protected',
+        },
+        lifecycle: {
+          realtimeSync: true,
+          steps: [
+            {
+              title: 'Payment Initiated by Buyer',
+              timestamp: matched?.dateTime || 'Dec 15, 2025 • 10:43 AM',
+              note: `Authorization code generated via ${channelClean}`,
+              completed: true,
+            },
+            {
+              title: 'Gateway Authorized & Funds Held',
+              timestamp: matched?.dateTime || 'Dec 15, 2025 • 10:44 AM',
+              note: 'Escrow secured in Everest Pasal account',
+              completed: true,
+            },
+            {
+              title: 'Order Confirmed & Dispatched',
+              timestamp: matched?.dateTime || 'Dec 15, 2025 • 10:45 AM',
+              note: `Fulfilled by ${ledger.storeName || 'Manish Electronics'}`,
+              completed: true,
+            },
+            {
+              title: 'Ledger Entry Posted',
+              timestamp: matched?.dateTime || 'Dec 15, 2025 • 10:45 AM',
+              note: '4.5% commission & 1.5% TDS logged',
+              completed: true,
+            },
+            {
+              title: 'Scheduled for Payout Batch',
+              statusTag: matched?.status === 'Settled' ? 'Ready' : 'In Progress',
+              timestamp: 'Next Friday Cycle',
+              note: 'Queued in automatic Friday remittance cycle',
+              completed: false,
+              inProgress: true,
+            },
+          ],
+        },
+        payoutBatch: {
+          cycle: 'WEEKLY CYCLE',
+          nextDisbursementDate: 'Friday, Dec 18, 2025',
+          processingInitiation: 'Batch processing initiates at 09:00 AM NPT',
+          associatedBatchNo: '#PAY-88202',
+          accountHolder: customBank?.accountName || `${ledger.storeName || 'Manish Electronics'} Pvt. Ltd.`,
+          bankDetails: `${customBank?.bankName || 'Nabil Bank Limited'} • ${customBank?.branchName || 'New Road Branch'}`,
+          accountNo: `A/C: ${customBank?.accountNumberFull || '019200148281001'} (NPR)`,
+        },
+      },
+    };
+  }
+
+  // ==============================================================================
+  // 3.3 PURCHASES & SUPPLIER PROCUREMENT DOMAIN
+  // ==============================================================================
+
+  async getVendorPurchases(merchantId: string, options: any = {}): Promise<any> {
+    const { search = '', status = 'ALL', paymentStatus = 'ALL' } = options;
+
+    if (!VendorRepository.purchasesStore.has(merchantId)) {
+      let seeded: any[] = [];
+      try {
+        const productsRes = await this.getVendorProducts(merchantId, { pageSize: 20 });
+        const prods = productsRes.products || [];
+        if (prods.length > 0) {
+          const suppliers = [
+            'Himalayan Wholesale Distributors',
+            'Kathmandu Tech & Supply Hub',
+            'Bagmati Prime Imports Pvt. Ltd.',
+            'Everest Direct Factory Outlet',
+          ];
+          seeded = prods.slice(0, 4).map((p: any, idx: number) => {
+            const qty = (idx + 1) * 15;
+            const unitCost = Math.max(500, Math.round(Number(p.price || 2500) * 0.72));
+            const amount = qty * unitCost;
+            const isPaid = idx % 2 === 0;
+            const isReceived = idx !== 1;
+            return {
+              id: `PO-2026-00${idx + 1}`,
+              poNumber: `PO-2026-00${idx + 1}`,
+              supplier: suppliers[idx % suppliers.length],
+              supplierContact: `+977 98510${24100 + idx}`,
+              date: new Date(Date.now() - idx * 4 * 86400000).toISOString().slice(0, 10),
+              itemsCount: qty,
+              primaryItem: p.title || 'Inventory Restock Batch',
+              sku: p.sku || `SKU-00${idx + 1}`,
+              unitCost,
+              amount,
+              formattedAmount: `NPR ${amount.toLocaleString()}`,
+              status: isReceived ? 'Received' : 'In Transit',
+              payment: isPaid ? 'Paid' : idx === 1 ? 'Partial' : 'Pending',
+              notes: `Inbound restock for ${p.title || 'catalog SKU'}`,
+            };
+          });
+        }
+      } catch {
+        // Fallback if DB is offline
+      }
+
+      if (seeded.length === 0) {
+        seeded = [
+          {
+            id: 'PO-2026-001',
+            poNumber: 'PO-2026-001',
+            supplier: 'Himalayan Agro Suppliers',
+            supplierContact: '+977 9851024101',
+            date: '2026-03-10',
+            itemsCount: 12,
+            primaryItem: 'Samsung 43" Crystal UHD 4K Smart TV',
+            sku: 'EP-TV-SAM-43',
+            unitCost: 12083,
+            amount: 145000,
+            formattedAmount: 'NPR 145,000',
+            status: 'Received',
+            payment: 'Paid',
+            notes: 'Quarterly electronics batch procurement',
+          },
+          {
+            id: 'PO-2026-002',
+            poNumber: 'PO-2026-002',
+            supplier: 'Kathmandu Packaging Co.',
+            supplierContact: '+977 9851024102',
+            date: '2026-03-14',
+            itemsCount: 5,
+            primaryItem: 'boAt Rockerz 550 ANC Over-Ear Headphone',
+            sku: 'EP-AU-BOAT-55',
+            unitCost: 5600,
+            amount: 28000,
+            formattedAmount: 'NPR 28,000',
+            status: 'In Transit',
+            payment: 'Partial',
+            notes: 'Protective corrugated boxes & audio units',
+          },
+          {
+            id: 'PO-2026-003',
+            poNumber: 'PO-2026-003',
+            supplier: 'Mustang Valley Farms',
+            supplierContact: '+977 9851024103',
+            date: '2026-03-16',
+            itemsCount: 8,
+            primaryItem: 'Philips Essential Air Fryer (HD9252/90)',
+            sku: 'EP-HA-PHIL-AF',
+            unitCost: 8000,
+            amount: 64000,
+            formattedAmount: 'NPR 64,000',
+            status: 'Ordered',
+            payment: 'Pending',
+            notes: 'Home appliance restock order',
+          },
+          {
+            id: 'PO-2026-004',
+            poNumber: 'PO-2026-004',
+            supplier: 'Patan Artisan Guild',
+            supplierContact: '+977 9851024104',
+            date: '2026-03-02',
+            itemsCount: 4,
+            primaryItem: 'Mi 20000mAh Power Bank 3i Fast Charge',
+            sku: 'EP-MO-MI-PB20',
+            unitCost: 11250,
+            amount: 45000,
+            formattedAmount: 'NPR 45,000',
+            status: 'Received',
+            payment: 'Paid',
+            notes: 'Fast-moving mobile accessories batch',
+          },
+        ];
+      }
+      VendorRepository.purchasesStore.set(merchantId, seeded);
+    }
+
+    const allPurchases = VendorRepository.purchasesStore.get(merchantId) || [];
+    const totalPurchasesAmount = allPurchases.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const totalPaidAmount = allPurchases
+      .filter((p) => p.payment === 'Paid')
+      .reduce((s, p) => s + Number(p.amount || 0), 0);
+    const accountsPayableAmount = Math.max(0, totalPurchasesAmount - totalPaidAmount);
+
+    let filtered = [...allPurchases];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.poNumber.toLowerCase().includes(q) ||
+          p.supplier.toLowerCase().includes(q) ||
+          (p.primaryItem || '').toLowerCase().includes(q)
+      );
+    }
+    if (status !== 'ALL') {
+      filtered = filtered.filter((p) => p.status.toLowerCase() === status.toLowerCase());
+    }
+    if (paymentStatus !== 'ALL') {
+      filtered = filtered.filter((p) => p.payment.toLowerCase() === paymentStatus.toLowerCase());
+    }
+
+    return {
+      success: true,
+      kpis: {
+        totalPurchases: totalPurchasesAmount,
+        totalPurchasesFormatted: `NPR ${totalPurchasesAmount.toLocaleString()}`,
+        totalPaid: totalPaidAmount,
+        totalPaidFormatted: `NPR ${totalPaidAmount.toLocaleString()}`,
+        accountsPayable: accountsPayableAmount,
+        accountsPayableFormatted: `NPR ${accountsPayableAmount.toLocaleString()}`,
+        totalOrdersCount: allPurchases.length,
+        settledCount: allPurchases.filter((p) => p.payment === 'Paid').length,
+        pendingCount: allPurchases.filter((p) => p.payment !== 'Paid').length,
+      },
+      purchases: filtered,
+    };
+  }
+
+  async createVendorPurchase(merchantId: string, data: any): Promise<any> {
+    await this.getVendorPurchases(merchantId);
+    const existing = VendorRepository.purchasesStore.get(merchantId) || [];
+    const nextNum = existing.length + 1;
+    const poNumber = `PO-2026-${String(nextNum).padStart(3, '0')}`;
+    const itemsCount = Math.max(1, Number(data.itemsCount || 1));
+    const amount = Math.max(0, Number(data.amount || 0));
+    const unitCost = Math.round(amount / itemsCount);
+
+    const newPo = {
+      id: poNumber,
+      poNumber,
+      supplier: data.supplier || 'General Wholesale Supplier',
+      supplierContact: data.supplierContact || '+977 9851000000',
+      date: data.date || new Date().toISOString().slice(0, 10),
+      itemsCount,
+      primaryItem: data.primaryItem || 'Warehouse Stock Replenishment',
+      sku: data.sku || `SKU-PO-${nextNum}`,
+      unitCost,
+      amount,
+      formattedAmount: `NPR ${amount.toLocaleString()}`,
+      status: data.status || 'Ordered',
+      payment: data.payment || 'Pending',
+      notes: data.notes || '',
+    };
+
+    VendorRepository.purchasesStore.set(merchantId, [newPo, ...existing]);
+    return {
+      success: true,
+      purchase: newPo,
+    };
+  }
+
+  async updateVendorPurchaseStatus(merchantId: string, purchaseId: string, data: { status?: string; payment?: string }): Promise<any> {
+    await this.getVendorPurchases(merchantId);
+    const existing = VendorRepository.purchasesStore.get(merchantId) || [];
+    let updatedItem: any = null;
+    const nextList = existing.map((item) => {
+      if (item.id === purchaseId || item.poNumber === purchaseId) {
+        updatedItem = {
+          ...item,
+          status: data.status || item.status,
+          payment: data.payment || item.payment,
+        };
+        return updatedItem;
+      }
+      return item;
+    });
+    VendorRepository.purchasesStore.set(merchantId, nextList);
+    return {
+      success: true,
+      purchase: updatedItem,
     };
   }
 
@@ -3658,6 +5176,906 @@ export class VendorRepository {
       success: true,
       attributeGroup: newAttr,
       message: 'Attribute group created successfully.',
+    };
+  }
+
+  // ==============================================================================
+  // 6. TEAM & PERMISSIONS MANAGEMENT (RBAC, DIRECTORY, PROFILE & AUDIT LOG)
+  // Exact mapping to media_1794675968780_0d25a1ca.jpg & media_1794675968719_66f34599.png
+  // ==============================================================================
+
+  private buildDefaultCapabilitiesForRole(role: string) {
+    const r = (role || '').toLowerCase();
+    const isOwner = r.includes('owner') || r.includes('admin');
+    const isFinance = r.includes('accountant') || r.includes('finance');
+    const isSupport = r.includes('support');
+    const isInventory = r.includes('inventory') || r.includes('warehouse');
+
+    return {
+      storeAndDashboard: {
+        title: 'Store & Dashboard',
+        accessBadge: isOwner || r.includes('manager') ? 'Full Access' : 'View Metrics',
+        description:
+          'Can view real-time sales summaries, store KPIs, active visitor charts, and branch performance metrics.',
+      },
+      productsAndInventory: {
+        title: 'Products & Inventory',
+        accessBadge: isOwner ? 'Full Access' : isInventory || r.includes('manager') ? 'Create & Edit' : 'View Catalog',
+        description:
+          'Can add products, adjust stock count, manage variants; cannot delete category tree or purge SKUs.',
+      },
+      ordersAndFulfillment: {
+        title: 'Orders & Fulfillment',
+        accessBadge: isOwner || r.includes('manager') || r.includes('dispatcher') ? 'Full Dispatch' : 'Read Orders',
+        description:
+          'Assign courier nodes (Pathao / Nepal Post / Kathmandu Hub), print batch picklists, and update delivery state.',
+      },
+      customerSupport: {
+        title: 'Customer Support',
+        accessBadge: isOwner || r.includes('manager') || isSupport ? 'Manage & Reply' : 'Read Tickets',
+        description:
+          'Access customer inquiries, reply to messages, post resolution comments, and initiate return triage.',
+      },
+      businessAndFinance: {
+        title: 'Business & Finance',
+        noPayoutsBadge: isOwner ? null : 'No Payouts',
+        accessBadge: isOwner ? 'Full Settlement Access' : isFinance ? 'Ledger & Tax Audit' : 'Restricted View Only',
+        isRestricted: !isOwner,
+        description: isOwner
+          ? 'Full authority over store settlements, payout requests, bank account modifications, and tax ledgers.'
+          : 'Can view order invoice totals; strictly NO payout withdrawals or bank detail modifications permitted.',
+      },
+    };
+  }
+
+  private async ensureTeamInitialized(merchantId: string) {
+    if (!VendorRepository.teamRolesStore.has(merchantId)) {
+      VendorRepository.teamRolesStore.set(merchantId, [
+        {
+          id: 'role-owner',
+          name: 'Store Owner',
+          iconKey: 'key',
+          policyCode: 'v3.2 Executive Root',
+          type: 'default',
+          department: 'Executive & Management',
+          membersCount: 1,
+          description: 'Unrestricted administrative, financial, and operational control across the merchant organization.',
+        },
+        {
+          id: 'role-manager',
+          name: 'Store Manager',
+          iconKey: 'user-cog',
+          policyCode: 'v3.2 Operations Lead',
+          type: 'default',
+          department: 'Operations & Dispatch',
+          membersCount: 2,
+          description: 'Full store operations, catalog updates, order dispatch, and customer escalation handling; no bank payout authority.',
+        },
+        {
+          id: 'role-accountant',
+          name: 'Accountant',
+          iconKey: 'landmark',
+          policyCode: 'v3.2 Finance & Tax',
+          type: 'default',
+          department: 'Finance & Accounts',
+          membersCount: 1,
+          description: 'Access to transaction ledgers, IRD tax invoices, purchase orders, and financial reconciliation.',
+        },
+        {
+          id: 'role-support',
+          name: 'Customer Support',
+          iconKey: 'headset',
+          policyCode: 'v3.1 Support Desk',
+          type: 'default',
+          department: 'Customer Care',
+          membersCount: 2,
+          description: 'Manage buyer inquiries, product reviews, return triage, and live chat SLA responses.',
+        },
+        {
+          id: 'role-inventory',
+          name: 'Inventory Manager',
+          iconKey: 'package',
+          policyCode: 'v3.1 Catalog & Stock',
+          type: 'default',
+          department: 'Warehouse & Logistics',
+          membersCount: 2,
+          description: 'Create and edit product listings, manage SKU variants, and log inbound warehouse stock movements.',
+        },
+        {
+          id: 'role-sales',
+          name: 'Sales Staff',
+          iconKey: 'tag',
+          policyCode: 'v2.4 Promotional Staff',
+          type: 'custom',
+          department: 'Retail & Marketing',
+          membersCount: 2,
+          description: 'Custom role for managing promotional campaigns, discount vouchers, and POS counter billing.',
+        },
+        {
+          id: 'role-dispatcher',
+          name: 'Junior Dispatcher',
+          iconKey: 'truck',
+          policyCode: 'v2.8 Dispatch Operator',
+          type: 'custom',
+          department: 'Operations & Dispatch',
+          membersCount: 2,
+          description: 'Custom role for packing orders, printing thermal shipping labels, and courier handover.',
+        },
+      ]);
+    }
+
+    if (!VendorRepository.teamMembersStore.has(merchantId)) {
+      let ownerName = 'Manish Sharma';
+      let ownerEmail = 'manish@manishelectronics.np';
+      try {
+        const dbMembers = await query<any>(
+          `SELECT u.display_name, u.email
+           FROM ep_merchant.tb_ep_merchant_vendor_member_map m
+           JOIN ep_identity.tb_ep_identity_user_user_master u ON u.id = m.user_id
+           WHERE m.merchant_id = $1::uuid AND m.active = true
+           ORDER BY m.created_at ASC LIMIT 1;`,
+          [merchantId]
+        );
+        if (dbMembers.length > 0) {
+          if (dbMembers[0].display_name) ownerName = dbMembers[0].display_name;
+          if (dbMembers[0].email) ownerEmail = dbMembers[0].email;
+        }
+      } catch {
+        // Use baseline owner metadata when offline
+      }
+
+      const ownerInitials = ownerName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((n: string) => n[0].toUpperCase())
+        .join('') || 'MS';
+
+      const initialMembers = [
+        {
+          id: 'EMP-101',
+          empId: '#EMP-101',
+          name: ownerName,
+          initials: ownerInitials,
+          avatarBg: '#0D47A1',
+          avatarColor: '#FFFFFF',
+          isCurrentUser: true,
+          isOwner: true,
+          email: ownerEmail,
+          emailTruncated: ownerEmail,
+          emailVerified: true,
+          mobileContact: '+977 9851-012345',
+          role: 'Store Owner',
+          roleIcon: 'key',
+          rolePillStyle: 'blue',
+          rolePolicy: 'v3.2 Executive Root',
+          department: 'Executive & Management',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: 'Just now',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Founder)',
+          auditCount: 318,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Store Owner'),
+          recentAuditEvents: [
+            {
+              id: 'evt-101-1',
+              dotColor: '#10B981',
+              title: 'Approved Weekly Settlement Batch #PAY-88202',
+              subtitle: 'Action: NCHL-IPS Direct Remittance • Nabil Bank Limited',
+              timestamp: 'Today, 11:45 AM',
+              clientMeta: 'IP 202.166.205.10 (KTM)',
+            },
+            {
+              id: 'evt-101-2',
+              dotColor: '#0D47A1',
+              title: 'Updated Role Policy v3.2 Operations Lead',
+              subtitle: 'Module: Team & Permissions • RBAC Governance',
+              timestamp: 'Yesterday, 04:15 PM',
+              clientMeta: 'Web Client (Chrome / Windows)',
+            },
+          ],
+        },
+        {
+          id: 'EMP-104',
+          empId: '#EMP-104',
+          name: 'Sunita Koirala',
+          initials: 'SK',
+          avatarBg: '#DBEAFE',
+          avatarColor: '#0D47A1',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'sunita.k@manishelectronics.np',
+          emailTruncated: 'sunita.k@manishelectro',
+          emailVerified: true,
+          mobileContact: '+977 9841-889021',
+          role: 'Store Manager',
+          roleIcon: 'user-cog',
+          rolePillStyle: 'blue',
+          rolePolicy: 'v3.2 Operations Lead',
+          department: 'Operations & Dispatch',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: '12m ago',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Primary Ops)',
+          auditCount: 142,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Store Manager'),
+          recentAuditEvents: [
+            {
+              id: 'evt-104-1',
+              dotColor: '#10B981',
+              title: 'Updated Order #EP-02408 fulfillment status to Dispatched',
+              subtitle: 'Action: Handover to Pathao Courier • KTM Central Dispatch',
+              timestamp: 'Today, 11:20 AM',
+              clientMeta: 'IP 202.166.205.10 (KTM)',
+            },
+            {
+              id: 'evt-104-2',
+              dotColor: '#0D47A1',
+              title: 'Responded to Customer Ticket #TKT-2024001',
+              subtitle: 'Module: Support Desk • Status set to Priority Resolution',
+              timestamp: 'Today, 09:30 AM',
+              clientMeta: 'Web Client (Chrome / macOS)',
+            },
+          ],
+        },
+        {
+          id: 'EMP-108',
+          empId: '#EMP-108',
+          name: 'Bikash Thapa',
+          initials: 'BT',
+          avatarBg: '#E2E8F0',
+          avatarColor: '#334155',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'bikash.finance@epasal.com',
+          emailTruncated: 'bikash.finance@epasal.com',
+          emailVerified: true,
+          mobileContact: '+977 9841-552190',
+          role: 'Accountant',
+          roleIcon: 'landmark',
+          rolePillStyle: 'slate',
+          rolePolicy: 'v3.2 Finance & Tax',
+          department: 'Finance & Accounts',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: '45m ago',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Finance Desk)',
+          auditCount: 94,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Accountant'),
+          recentAuditEvents: [
+            {
+              id: 'evt-108-1',
+              dotColor: '#10B981',
+              title: 'Exported IRD Tax Invoice Ledger (#TXN-904812)',
+              subtitle: 'Action: Monthly VAT Reconciliation • Nepal Finance Act',
+              timestamp: 'Today, 10:50 AM',
+              clientMeta: 'IP 202.166.205.14 (KTM)',
+            },
+            {
+              id: 'evt-108-2',
+              dotColor: '#0D47A1',
+              title: 'Verified Supplier Purchase Order #PO-2026-001',
+              subtitle: 'Module: Purchase & Procurement • Paid NPR 145,000',
+              timestamp: 'Yesterday, 03:10 PM',
+              clientMeta: 'Web Client (Edge / Windows)',
+            },
+          ],
+        },
+        {
+          id: 'EMP-112',
+          empId: '#EMP-112',
+          name: 'Pooja Adhikari',
+          initials: 'PA',
+          avatarBg: '#DBEAFE',
+          avatarColor: '#1D4ED8',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'pooja.help@epasal.com',
+          emailTruncated: 'pooja.help@epasal.com',
+          emailVerified: true,
+          mobileContact: '+977 9860-334112',
+          role: 'Customer Support',
+          roleIcon: 'headset',
+          rolePillStyle: 'blue',
+          rolePolicy: 'v3.1 Support Desk',
+          department: 'Customer Care',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: '2h ago',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Support Tier 1)',
+          auditCount: 118,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Customer Support'),
+          recentAuditEvents: [
+            {
+              id: 'evt-112-1',
+              dotColor: '#10B981',
+              title: 'Resolved Buyer Inquiry #INQ-2041 (Warranty Claim)',
+              subtitle: 'Action: Sent Replacement Authorization Code',
+              timestamp: 'Today, 09:15 AM',
+              clientMeta: 'IP 202.166.205.19 (KTM)',
+            },
+          ],
+        },
+        {
+          id: 'EMP-105',
+          empId: '#EMP-105',
+          name: 'Rajesh Gurung',
+          initials: 'RG',
+          avatarBg: '#F1F5F9',
+          avatarColor: '#475569',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'rajesh.wh@manishelectronics.np',
+          emailTruncated: 'rajesh.wh@manishelectro',
+          emailVerified: true,
+          mobileContact: '+977 9801-772310',
+          role: 'Inventory Manager',
+          roleIcon: 'package',
+          rolePillStyle: 'slate',
+          rolePolicy: 'v3.1 Catalog & Stock',
+          department: 'Warehouse & Logistics',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: '3h ago',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Warehouse Lead)',
+           showViewProfileLink: true,
+          auditCount: 86,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Inventory Manager'),
+          recentAuditEvents: [
+            {
+              id: 'evt-105-1',
+              dotColor: '#10B981',
+              title: 'Restocked SKU SNY-WH5-BLK (+25 units)',
+              subtitle: 'Action: Warehouse Inbound Batch #WH-882',
+              timestamp: 'Today, 08:30 AM',
+              clientMeta: 'IP 202.166.205.22 (KTM)',
+            },
+          ],
+        },
+        {
+          id: 'EMP-119',
+          empId: '#EMP-119',
+          name: 'Alisha Maharjan',
+          initials: 'AM',
+          avatarBg: '#F1F5F9',
+          avatarColor: '#64748B',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'alisha.m@gmail.com',
+          emailTruncated: 'alisha.m@gmail.com',
+          emailVerified: false,
+          mobileContact: '+977 9843-991024',
+          role: 'Sales Staff',
+          roleIcon: 'tag',
+          rolePillStyle: 'slate',
+          rolePolicy: 'v2.4 Promotional Staff',
+          department: 'Retail & Marketing',
+          hubLocation: 'Everest Pasal Merchant Hub (Lalitpur)',
+          status: 'Invitation Pending',
+          verifiedStatus: 'Invitation Pending',
+          lastActive: 'Never',
+          lastActiveBold: false,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Invited Dec 01, 2024',
+          auditCount: 1,
+          twoFactorEnabled: false,
+          capabilities: this.buildDefaultCapabilitiesForRole('Sales Staff'),
+          recentAuditEvents: [
+            {
+              id: 'evt-119-1',
+              dotColor: '#F59E0B',
+              title: 'Team Invitation Dispatched to alisha.m@gmail.com',
+              subtitle: 'Action: Awaiting email verification & 2FA enrollment',
+              timestamp: 'Dec 01, 2024',
+              clientMeta: 'System Mailer',
+            },
+          ],
+        },
+        {
+          id: 'EMP-110',
+          empId: '#EMP-110',
+          name: 'Nabin Shrestha',
+          initials: 'NS',
+          avatarBg: '#DBEAFE',
+          avatarColor: '#0D47A1',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'nabin.dispatch@epasal.com',
+          emailTruncated: 'nabin.dispatch@epasal.com',
+          emailVerified: true,
+          mobileContact: '+977 9818-664209',
+          role: 'Junior Dispatcher',
+          roleIcon: 'truck',
+          rolePillStyle: 'blue',
+          rolePolicy: 'v2.8 Dispatch Operator',
+          department: 'Operations & Dispatch',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: 'Yesterday',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Dispatch Ops)',
+          auditCount: 64,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Junior Dispatcher'),
+          recentAuditEvents: [
+            {
+              id: 'evt-110-1',
+              dotColor: '#10B981',
+              title: 'Printed 18 Thermal Waybills for Nepal Post',
+              subtitle: 'Action: Batch Manifest #MNF-2025-19',
+              timestamp: 'Yesterday, 05:40 PM',
+              clientMeta: 'IP 202.166.205.10 (KTM)',
+            },
+          ],
+        },
+        {
+          id: 'EMP-115',
+          empId: '#EMP-115',
+          name: 'Dipendra KC',
+          initials: 'DK',
+          avatarBg: '#FEE2E2',
+          avatarColor: '#E63946',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'dipendra.ops@epasal.com',
+          emailTruncated: 'dipendra.ops@epasal.com',
+          emailVerified: true,
+          mobileContact: '+977 9849-118273',
+          role: 'Warehouse Assistant',
+          roleIcon: 'clipboard',
+          rolePillStyle: 'slate',
+          rolePolicy: 'v3.1 Catalog & Stock',
+          department: 'Warehouse & Logistics',
+          hubLocation: 'Everest Pasal Merchant Hub (Bhaktapur)',
+          status: 'Suspended',
+          verifiedStatus: 'Access Suspended',
+          lastActive: '4 days ago',
+          lastActiveBold: false,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Suspended)',
+          auditCount: 29,
+          twoFactorEnabled: false,
+          capabilities: this.buildDefaultCapabilitiesForRole('Inventory Manager'),
+          recentAuditEvents: [
+            {
+              id: 'evt-115-1',
+              dotColor: '#E63946',
+              title: 'Account Access Suspended by Store Owner',
+              subtitle: 'Reason: Scheduled shift rotation & security review',
+              timestamp: '4 days ago',
+              clientMeta: 'Admin Policy Action',
+            },
+          ],
+        },
+        {
+          id: 'EMP-116',
+          empId: '#EMP-116',
+          name: 'Saraswati Adhikari',
+          initials: 'SA',
+          avatarBg: '#DBEAFE',
+          avatarColor: '#1D4ED8',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'saraswati.care@epasal.com',
+          emailTruncated: 'saraswati.care@epasal.com',
+          emailVerified: true,
+          mobileContact: '+977 9841-309812',
+          role: 'Customer Support',
+          roleIcon: 'headset',
+          rolePillStyle: 'blue',
+          rolePolicy: 'v3.1 Support Desk',
+          department: 'Customer Care',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: '5h ago',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Support Desk)',
+          auditCount: 51,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Customer Support'),
+          recentAuditEvents: [],
+        },
+        {
+          id: 'EMP-117',
+          empId: '#EMP-117',
+          name: 'Kiran Bhandari',
+          initials: 'KB',
+          avatarBg: '#E2E8F0',
+          avatarColor: '#334155',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'kiran.wh@manishelectronics.np',
+          emailTruncated: 'kiran.wh@manishelectro',
+          emailVerified: true,
+          mobileContact: '+977 9851-228910',
+          role: 'Inventory Manager',
+          roleIcon: 'package',
+          rolePillStyle: 'slate',
+          rolePolicy: 'v3.1 Catalog & Stock',
+          department: 'Warehouse & Logistics',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: 'Yesterday',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Logistics)',
+          auditCount: 44,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Inventory Manager'),
+          recentAuditEvents: [],
+        },
+        {
+          id: 'EMP-118',
+          empId: '#EMP-118',
+          name: 'Prashant Joshi',
+          initials: 'PJ',
+          avatarBg: '#DBEAFE',
+          avatarColor: '#0D47A1',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'prashant.ops@epasal.com',
+          emailTruncated: 'prashant.ops@epasal.com',
+          emailVerified: true,
+          mobileContact: '+977 9841-667123',
+          role: 'Store Manager',
+          roleIcon: 'user-cog',
+          rolePillStyle: 'blue',
+          rolePolicy: 'v3.2 Operations Lead',
+          department: 'Operations & Dispatch',
+          hubLocation: 'Everest Pasal Merchant Hub (Pokhara)',
+          status: 'Active',
+          verifiedStatus: 'Verified Active',
+          lastActive: '1d ago',
+          lastActiveBold: true,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Dec 01, 2024 (Branch Ops)',
+          auditCount: 73,
+          twoFactorEnabled: true,
+          capabilities: this.buildDefaultCapabilitiesForRole('Store Manager'),
+          recentAuditEvents: [],
+        },
+        {
+          id: 'EMP-120',
+          empId: '#EMP-120',
+          name: 'Roshan Tamang',
+          initials: 'RT',
+          avatarBg: '#F1F5F9',
+          avatarColor: '#64748B',
+          isCurrentUser: false,
+          isOwner: false,
+          email: 'roshan.sales@epasal.com',
+          emailTruncated: 'roshan.sales@epasal.com',
+          emailVerified: false,
+          mobileContact: '+977 9803-445120',
+          role: 'Sales Staff',
+          roleIcon: 'tag',
+          rolePillStyle: 'slate',
+          rolePolicy: 'v2.4 Promotional Staff',
+          department: 'Retail & Marketing',
+          hubLocation: 'Everest Pasal Merchant Hub (Kathmandu)',
+          status: 'Invitation Pending',
+          verifiedStatus: 'Invitation Pending',
+          lastActive: 'Never',
+          lastActiveBold: false,
+          dateAdded: 'Dec 01,2024',
+          memberSince: 'Invited Dec 01, 2024',
+          auditCount: 1,
+          twoFactorEnabled: false,
+          capabilities: this.buildDefaultCapabilitiesForRole('Sales Staff'),
+          recentAuditEvents: [],
+        },
+      ];
+
+      VendorRepository.teamMembersStore.set(merchantId, initialMembers);
+    }
+
+    if (!VendorRepository.teamAuditStore.has(merchantId)) {
+      VendorRepository.teamAuditStore.set(merchantId, [
+        {
+          id: 'aud-1',
+          actor: 'Sunita Koirala (#EMP-104)',
+          role: 'Store Manager',
+          event: 'Updated Order #EP-02408 fulfillment status to Dispatched',
+          detail: 'Action: Handover to Pathao Courier • KTM Central Dispatch',
+          timestamp: 'Today, 11:20 AM',
+          ip: 'IP 202.166.205.10 (KTM)',
+          severity: 'normal',
+        },
+        {
+          id: 'aud-2',
+          actor: 'Sunita Koirala (#EMP-104)',
+          role: 'Store Manager',
+          event: 'Responded to Customer Ticket #TKT-2024001',
+          detail: 'Module: Support Desk • Status set to Priority Resolution',
+          timestamp: 'Today, 09:30 AM',
+          ip: 'Web Client (Chrome / macOS)',
+          severity: 'info',
+        },
+        {
+          id: 'aud-3',
+          actor: 'Bikash Thapa (#EMP-108)',
+          role: 'Accountant',
+          event: 'Downloaded Tax Invoice Voucher #VCH-2025-904812',
+          detail: 'Module: Transactions Ledger • Nepal Finance Act Compliance',
+          timestamp: 'Today, 08:50 AM',
+          ip: 'IP 202.166.205.14 (KTM)',
+          severity: 'normal',
+        },
+        {
+          id: 'aud-4',
+          actor: 'Manish Sharma (#EMP-101)',
+          role: 'Store Owner',
+          event: 'Suspended Access for Dipendra KC (#EMP-115)',
+          detail: 'Module: Team & Permissions • Security Policy Enforcement',
+          timestamp: '4 days ago',
+          ip: 'IP 202.166.205.10 (KTM)',
+          severity: 'warning',
+        },
+      ]);
+    }
+  }
+
+  async getVendorTeamAndPermissions(merchantId: string, options: any = {}): Promise<any> {
+    await this.ensureTeamInitialized(merchantId);
+    const {
+      search = '',
+      role = 'ALL',
+      status = 'ALL',
+      department = 'ALL',
+      page = 1,
+      pageSize = 8,
+    } = options;
+
+    const allMembers = VendorRepository.teamMembersStore.get(merchantId) || [];
+    const roles = VendorRepository.teamRolesStore.get(merchantId) || [];
+    const auditLogs = VendorRepository.teamAuditStore.get(merchantId) || [];
+
+    const totalMembers = allMembers.length;
+    const activeMembers = allMembers.filter((m) => m.status === 'Active').length;
+    const pendingInvitations = allMembers.filter((m) => m.status === 'Invitation Pending').length;
+    const customRolesCount = roles.filter((r) => r.type === 'custom').length;
+    const defaultRolesCount = roles.filter((r) => r.type !== 'custom').length;
+
+    let filtered = [...allMembers];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (m) =>
+          m.name.toLowerCase().includes(q) ||
+          m.email.toLowerCase().includes(q) ||
+          m.empId.toLowerCase().includes(q) ||
+          m.role.toLowerCase().includes(q)
+      );
+    }
+    if (role !== 'ALL') {
+      filtered = filtered.filter((m) => m.role.toLowerCase() === role.toLowerCase());
+    }
+    if (status !== 'ALL') {
+      filtered = filtered.filter((m) => m.status.toLowerCase() === status.toLowerCase());
+    }
+    if (department !== 'ALL') {
+      filtered = filtered.filter((m) => m.department.toLowerCase() === department.toLowerCase());
+    }
+
+    const p = Math.max(1, Number(page) || 1);
+    const ps = Math.max(1, Number(pageSize) || 8);
+    const startIdx = (p - 1) * ps;
+    const paginated = filtered.slice(startIdx, startIdx + ps);
+
+    const departments = Array.from(new Set(allMembers.map((m) => m.department)));
+
+    return {
+      success: true,
+      kpis: {
+        totalTeamMembers: totalMembers,
+        activeMembers,
+        pendingInvitations,
+        pendingExpiresNote: 'Expires in 48h',
+        configuredRolesCount: roles.length,
+        configuredRolesLabel: `${roles.length} Roles`,
+        configuredRolesSubtitle: `${customRolesCount} custom • ${defaultRolesCount} default active`,
+      },
+      tabCounts: {
+        teamMembers: totalMembers,
+        configuredRoles: roles.length,
+        securityAuditLog: Math.max(28, auditLogs.length + 24),
+      },
+      members: paginated,
+      allMembersCount: totalMembers,
+      filteredCount: filtered.length,
+      page: p,
+      pageSize: ps,
+      roles,
+      departments,
+      auditLogs,
+    };
+  }
+
+  async getVendorTeamMemberDetail(merchantId: string, memberId: string): Promise<any> {
+    await this.ensureTeamInitialized(merchantId);
+    const allMembers = VendorRepository.teamMembersStore.get(merchantId) || [];
+    const cleanId = memberId.replace('#', '').toUpperCase();
+    const found =
+      allMembers.find((m) => m.id.toUpperCase() === cleanId || m.empId.replace('#', '').toUpperCase() === cleanId) ||
+      allMembers[1] ||
+      allMembers[0];
+
+    return {
+      success: true,
+      member: found,
+    };
+  }
+
+  async inviteVendorTeamMember(merchantId: string, data: any): Promise<any> {
+    await this.ensureTeamInitialized(merchantId);
+    const allMembers = VendorRepository.teamMembersStore.get(merchantId) || [];
+    const nextNum = 121 + allMembers.length;
+    const empId = `#EMP-${nextNum}`;
+    const fullName = (data.name || 'New Team Member').trim();
+    const initials =
+      fullName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w: string) => w[0].toUpperCase())
+        .join('') || 'TM';
+    const role = data.role || 'Sales Staff';
+    const department = data.department || 'Operations & Dispatch';
+    const email = (data.email || `staff${nextNum}@epasal.com`).trim();
+
+    const newMember = {
+      id: `EMP-${nextNum}`,
+      empId,
+      name: fullName,
+      initials,
+      avatarBg: '#DBEAFE',
+      avatarColor: '#0D47A1',
+      isCurrentUser: false,
+      isOwner: false,
+      email,
+      emailTruncated: email.length > 22 ? email.slice(0, 22) : email,
+      emailVerified: false,
+      mobileContact: data.mobileContact || '+977 9841-000000',
+      role,
+      roleIcon: role.toLowerCase().includes('manager')
+        ? 'user-cog'
+        : role.toLowerCase().includes('support')
+        ? 'headset'
+        : role.toLowerCase().includes('inventory')
+        ? 'package'
+        : 'tag',
+      rolePillStyle: role.toLowerCase().includes('manager') || role.toLowerCase().includes('support') ? 'blue' : 'slate',
+      rolePolicy: 'v3.2 Operations Lead',
+      department,
+      hubLocation: data.hubLocation || 'Everest Pasal Merchant Hub (Kathmandu)',
+      status: 'Invitation Pending',
+      verifiedStatus: 'Invitation Pending',
+      lastActive: 'Just invited',
+      lastActiveBold: false,
+      dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).replace(', ', ','),
+      memberSince: `Invited ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`,
+      auditCount: 1,
+      twoFactorEnabled: false,
+      capabilities: this.buildDefaultCapabilitiesForRole(role),
+      recentAuditEvents: [
+        {
+          id: `evt-${Date.now()}`,
+          dotColor: '#10B981',
+          title: `Invitation sent to ${email} for role ${role}`,
+          subtitle: `Department: ${department} • Dispatched by Store Admin`,
+          timestamp: 'Just now',
+          clientMeta: 'Everest IAM Mailer',
+        },
+      ],
+    };
+
+    VendorRepository.teamMembersStore.set(merchantId, [newMember, ...allMembers]);
+
+    const auditLogs = VendorRepository.teamAuditStore.get(merchantId) || [];
+    VendorRepository.teamAuditStore.set(merchantId, [
+      {
+        id: `aud-${Date.now()}`,
+        actor: 'Store Owner (#EMP-101)',
+        role: 'Store Owner',
+        event: `Invited ${fullName} (${empId}) as ${role}`,
+        detail: `Department: ${department} • Email: ${email}`,
+        timestamp: 'Just now',
+        ip: 'IP 202.166.205.10 (KTM)',
+        severity: 'info',
+      },
+      ...auditLogs,
+    ]);
+
+    return {
+      success: true,
+      member: newMember,
+    };
+  }
+
+  async updateVendorTeamMember(merchantId: string, memberId: string, data: any): Promise<any> {
+    await this.ensureTeamInitialized(merchantId);
+    const allMembers = VendorRepository.teamMembersStore.get(merchantId) || [];
+    const cleanId = memberId.replace('#', '').toUpperCase();
+    let updatedMember: any = null;
+
+    const nextList = allMembers.map((m) => {
+      if (m.id.toUpperCase() === cleanId || m.empId.replace('#', '').toUpperCase() === cleanId) {
+        const nextRole = data.role || m.role;
+        const nextStatus = data.status || m.status;
+        const nextCapabilities = data.capabilities
+          ? { ...m.capabilities, ...data.capabilities }
+          : data.role && data.role !== m.role
+          ? this.buildDefaultCapabilitiesForRole(data.role)
+          : m.capabilities;
+
+        updatedMember = {
+          ...m,
+          role: nextRole,
+          department: data.department || m.department,
+          status: nextStatus,
+          verifiedStatus:
+            nextStatus === 'Active'
+              ? 'Verified Active'
+              : nextStatus === 'Suspended'
+              ? 'Access Suspended'
+              : 'Invitation Pending',
+          lastActive: data.resendInvite ? 'Invite Resent' : m.lastActive,
+          capabilities: nextCapabilities,
+        };
+        return updatedMember;
+      }
+      return m;
+    });
+
+    VendorRepository.teamMembersStore.set(merchantId, nextList);
+
+    if (updatedMember) {
+      const auditLogs = VendorRepository.teamAuditStore.get(merchantId) || [];
+      VendorRepository.teamAuditStore.set(merchantId, [
+        {
+          id: `aud-${Date.now()}`,
+          actor: 'Store Owner (#EMP-101)',
+          role: 'Store Owner',
+          event: data.resendInvite
+            ? `Resent invitation to ${updatedMember.name} (${updatedMember.empId})`
+            : `Updated ${updatedMember.name} (${updatedMember.empId}) — Role: ${updatedMember.role}, Status: ${updatedMember.status}`,
+          detail: 'Module: Team & Permissions • RBAC Policy Update',
+          timestamp: 'Just now',
+          ip: 'IP 202.166.205.10 (KTM)',
+          severity: updatedMember.status === 'Suspended' ? 'warning' : 'normal',
+        },
+        ...auditLogs,
+      ]);
+    }
+
+    return {
+      success: true,
+      member: updatedMember,
     };
   }
 }

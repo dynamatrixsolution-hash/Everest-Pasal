@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext.js';
 import { useRouter, Link } from '../router/index.js';
 import { StatusBadge } from '../components/Common/StatusBadge.js';
 import { Modal } from '../components/Common/Modal.js';
+import { FolderTree, Mountain, Plus } from 'lucide-react';
 
 interface CategoryItem {
   id: string;
@@ -90,8 +91,8 @@ export const CategoriesPage: React.FC = () => {
         }}
       >
         <div>
-          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#38bdf8', fontWeight: 700 }}>
-            🗂️ Marketplace Taxonomy
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#38bdf8', fontWeight: 700 }}>
+            <FolderTree size={14} /> Marketplace Taxonomy
           </span>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#f8fafc', margin: '6px 0' }}>
             Product Categories & Collections
@@ -155,7 +156,7 @@ export const CategoriesPage: React.FC = () => {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '28px' }}>🏔️</span>
+                <Mountain size={28} color="#0B4EA2" />
                 <span
                   style={{
                     backgroundColor: '#0f172a',
