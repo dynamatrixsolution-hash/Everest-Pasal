@@ -4189,6 +4189,1161 @@ export class AdminService {
     AdminService.returnsStore.unshift(newReq);
     return newReq;
   }
+
+  // ============================================================================
+  // AGENT MANAGEMENT DATA STORES & METHODS (Screens 35 - 41)
+  // ============================================================================
+
+  private static agentsStore: any[] = [
+    {
+      agentId: 'AGT-1001',
+      name: 'Sujan Karki',
+      joined: '12 Aug 2026',
+      email: 'sujan.k@example.test',
+      phone: '98•••••101',
+      fullPhone: '+977 9841234101',
+      region: 'Kathmandu',
+      status: 'Active',
+      ordersCount: 12,
+      deliveredCount: 8,
+      commissionAmount: 1200,
+      commissionText: 'NPR 1,200',
+      commissionStatus: 'Approved, unpaid',
+    },
+    {
+      agentId: 'AGT-1002',
+      name: 'Nirmala Rai',
+      joined: '18 Aug 2026',
+      email: 'nirmala.r@example.test',
+      phone: '98•••••102',
+      fullPhone: '+977 9841234102',
+      region: 'Pokhara',
+      status: 'Active',
+      ordersCount: 9,
+      deliveredCount: 6,
+      commissionAmount: 850,
+      commissionText: 'NPR 850',
+      commissionStatus: 'Approved, unpaid',
+    },
+    {
+      agentId: 'AGT-1003',
+      name: 'Bikash Thapa',
+      joined: '22 Aug 2026',
+      email: 'bikash.t@example.test',
+      phone: '98•••••103',
+      fullPhone: '+977 9841234103',
+      region: 'Biratnagar',
+      status: 'Active',
+      ordersCount: 7,
+      deliveredCount: 4,
+      commissionAmount: 250,
+      commissionText: 'NPR 250',
+      commissionStatus: 'Pending review',
+    },
+    {
+      agentId: 'AGT-1004',
+      name: 'Pratik Shrestha',
+      joined: '29 Aug 2026',
+      email: 'pratik.s@example.test',
+      phone: '98•••••104',
+      fullPhone: '+977 9841234104',
+      region: 'Lalitpur',
+      status: 'Suspended',
+      suspendedSince: '29 Oct',
+      ordersCount: 3,
+      deliveredCount: 1,
+      cancelledCount: 1,
+      commissionAmount: 0,
+      commissionText: 'NPR 400 reversed',
+      commissionStatus: 'Excluded from balance',
+    },
+    {
+      agentId: 'AGT-1005',
+      name: 'Sarita Gurung',
+      joined: '02 Sep 2026',
+      email: 'sarita.g@example.test',
+      phone: '98•••••105',
+      fullPhone: '+977 9841234105',
+      region: 'Butwal',
+      status: 'Active',
+      ordersCount: 6,
+      deliveredCount: 4,
+      commissionAmount: 700,
+      commissionText: 'NPR 700',
+      commissionStatus: 'Approved, unpaid',
+    },
+    {
+      agentId: 'AGT-1006',
+      name: 'Deepak Adhikari',
+      joined: '06 Sep 2026',
+      email: 'deepak.a@example.test',
+      phone: '98•••••106',
+      fullPhone: '+977 9841234106',
+      region: 'Dharan',
+      status: 'Active',
+      ordersCount: 5,
+      deliveredCount: 3,
+      commissionAmount: 500,
+      commissionText: 'NPR 500',
+      commissionStatus: 'Approved, unpaid',
+    },
+    {
+      agentId: 'AGT-1007',
+      name: 'Roshani Lama',
+      joined: '11 Sep 2026',
+      email: 'roshani.l@example.test',
+      phone: '98•••••107',
+      fullPhone: '+977 9841234107',
+      region: 'Kathmandu',
+      status: 'Inactive',
+      ordersCount: 2,
+      deliveredCount: 1,
+      commissionAmount: 0,
+      commissionText: 'NPR 0',
+      commissionStatus: 'No available balance',
+    },
+    {
+      agentId: 'AGT-1008',
+      name: 'Kiran Basnet',
+      joined: '15 Sep 2026',
+      email: 'kiran.b@example.test',
+      phone: '98•••••108',
+      fullPhone: '+977 9841234108',
+      region: 'Lalitpur',
+      status: 'Active',
+      ordersCount: 4,
+      deliveredCount: 2,
+      commissionAmount: 0,
+      commissionText: 'NPR 0',
+      commissionStatus: 'Pending settlement',
+    },
+  ];
+
+  private static agentApplicationsStore: any[] = [
+    {
+      appId: 'AP-2042',
+      name: 'Asha Tamang',
+      email: 'asha.t@example.test',
+      region: 'Kathmandu',
+      source: 'Mobile',
+      submittedDate: '31 Oct 2026 · 14:20 NPT',
+      status: 'Under Review',
+      docCompleteness: '3 of 3 submitted',
+      docSubtext: 'Verification pending',
+      reviewer: 'Meera Joshi',
+      nextAction: 'Review application',
+      contactMasked: '98•••••242',
+      coverageArea: 'Kathmandu · Baneshwor & Koteshwor',
+      experience: '2 years in retail sales. Plans to assist neighborhood customers with product discovery and order placement.',
+    },
+    {
+      appId: 'AP-2041',
+      name: 'Manoj Poudel',
+      email: 'manoj.p@example.test',
+      region: 'Pokhara',
+      source: 'Web',
+      submittedDate: '31 Oct 2026 · 11:05 NPT',
+      status: 'Submitted',
+      docCompleteness: '2 of 3 submitted',
+      docSubtext: 'PAN missing',
+      reviewer: 'Unassigned',
+      nextAction: 'Assign reviewer',
+    },
+    {
+      appId: 'AP-2040',
+      name: 'Sita Magar',
+      email: 'sita.m@example.test',
+      region: 'Butwal',
+      source: 'Referral',
+      submittedDate: '30 Oct 2026 · 16:40 NPT',
+      status: 'Under Review',
+      docCompleteness: '3 of 3 submitted',
+      docSubtext: 'Identity check pending',
+      reviewer: 'Rajesh Sharma',
+      nextAction: 'Review application',
+    },
+    {
+      appId: 'AP-2039',
+      name: 'Rajan Neupane',
+      email: 'rajan.n@example.test',
+      region: 'Lalitpur',
+      source: 'Web',
+      submittedDate: '30 Oct 2026 · 09:10 NPT',
+      status: 'Needs information',
+      docCompleteness: '2 of 3 submitted',
+      docSubtext: 'Address proof unclear',
+      reviewer: 'Meera Joshi',
+      nextAction: 'View request',
+    },
+    {
+      appId: 'AP-2038',
+      name: 'Pema Sherpa',
+      email: 'pema.s@example.test',
+      region: 'Dharan',
+      source: 'Mobile',
+      submittedDate: '29 Oct 2026 · 15:35 NPT',
+      status: 'Under Review',
+      docCompleteness: '2 of 3 submitted',
+      docSubtext: 'Awaiting PAN upload',
+      reviewer: 'Meera Joshi',
+      nextAction: 'Review application',
+    },
+    {
+      appId: 'AP-2037',
+      name: 'Anil Chaudhary',
+      email: 'anil.c@example.test',
+      region: 'Biratnagar',
+      source: 'Referral',
+      submittedDate: '29 Oct 2026 · 12:00 NPT',
+      status: 'Under Review',
+      docCompleteness: '3 of 3 submitted',
+      docSubtext: 'Address mismatch',
+      reviewer: 'Unassigned',
+      nextAction: 'Review application',
+    },
+    {
+      appId: 'AP-2036',
+      name: 'Ritu Acharya',
+      email: 'ritu.a@example.test',
+      region: 'Kathmandu',
+      source: 'Web',
+      submittedDate: '28 Oct 2026 · 10:30 NPT',
+      status: 'Approved',
+      docCompleteness: '3 of 3 verified',
+      docSubtext: 'Decision 30 Oct',
+      reviewer: 'Rajesh Sharma',
+      nextAction: 'View application',
+    },
+    {
+      appId: 'AP-2035',
+      name: 'Sunil Khadka',
+      email: 'sunil.k@example.test',
+      region: 'Pokhara',
+      source: 'Mobile',
+      submittedDate: '28 Oct 2026 · 08:20 NPT',
+      status: 'Submitted',
+      docCompleteness: '1 of 3 submitted',
+      docSubtext: 'ID and PAN missing',
+      reviewer: 'Unassigned',
+      nextAction: 'Assign reviewer',
+    },
+    {
+      appId: 'AP-2034',
+      name: 'Bina Bhandari',
+      email: 'bina.b@example.test',
+      region: 'Butwal',
+      source: 'Web',
+      submittedDate: '27 Oct 2026 · 16:45 NPT',
+      status: 'Needs information',
+      docCompleteness: '2 of 3 submitted',
+      docSubtext: 'Replace expired ID',
+      reviewer: 'Meera Joshi',
+      nextAction: 'View request',
+    },
+    {
+      appId: 'AP-2033',
+      name: 'Dinesh K.C.',
+      email: 'dinesh.k@example.test',
+      region: 'Dharan',
+      source: 'Referral',
+      submittedDate: '27 Oct 2026 · 14:00 NPT',
+      status: 'Submitted',
+      docCompleteness: '3 of 3 submitted',
+      docSubtext: 'Not yet reviewed',
+      reviewer: 'Unassigned',
+      nextAction: 'Assign reviewer',
+    },
+  ];
+
+  private static agentApprovalsStore: any[] = [
+    {
+      appId: 'AP-2042',
+      name: 'Asha Tamang',
+      region: 'Kathmandu',
+      source: 'Mobile application',
+      submittedDate: '31 Oct 2026, 14:20 NPT',
+      reviewer: 'Meera Joshi',
+      stage: 'Ready for review',
+      stageSubtext: '3 documents · Verification pending',
+      contactMasked: '98•••••242',
+      email: 'asha.t@example.test',
+      coverageArea: 'Kathmandu · Baneshwor & Koteshwor',
+      experience: '2 years in retail sales. Plans to assist neighborhood customers with product discovery and order placement.',
+      documents: [
+        { name: 'Citizenship document', note: 'Name and date of birth', submittedDate: '31 Oct · 14:18', status: 'Pending', subtext: 'Identity match required' },
+        { name: 'PAN certificate', note: 'Tax registration', submittedDate: '31 Oct · 14:18', status: 'Pending', subtext: 'Validate tax details' },
+        { name: 'Address proof', note: 'Kathmandu coverage', submittedDate: '31 Oct · 14:20', status: 'Verified', subtext: 'Meera · 01 Nov, 08:50' },
+      ],
+      checklist: {
+        coverageAvailable: true,
+        is18Plus: true,
+        identityConfirmed: false,
+        panValidated: false,
+        termsAcknowledged: false,
+      },
+      reviewerNotes: 'Address proof matches the requested coverage. Confirm citizenship details and PAN before approval. No decision recorded.',
+      reviewerTimestamp: 'Meera Joshi · 01 Nov, 09:50 NPT',
+    },
+    {
+      appId: 'AP-2040',
+      name: 'Sita Magar',
+      region: 'Butwal',
+      source: 'Referral',
+      submittedDate: '30 Oct 2026, 16:40 NPT',
+      reviewer: 'Rajesh Sharma',
+      stage: 'Ready for review',
+      stageSubtext: '3 documents · Identity check pending',
+      contactMasked: '98•••••440',
+      email: 'sita.m@example.test',
+      coverageArea: 'Butwal · Traffic Chowk & Golpark',
+      experience: 'Experienced local distributor for consumer electronics.',
+      documents: [
+        { name: 'Citizenship document', note: 'Front and back scan', submittedDate: '30 Oct · 16:30', status: 'Pending', subtext: 'Review pending' },
+        { name: 'PAN certificate', note: 'Individual PAN', submittedDate: '30 Oct · 16:32', status: 'Verified', subtext: 'Valid IRD record' },
+        { name: 'Address proof', note: 'Electricity bill', submittedDate: '30 Oct · 16:35', status: 'Verified', subtext: 'Matches ward address' },
+      ],
+      checklist: {
+        coverageAvailable: true,
+        is18Plus: true,
+        identityConfirmed: false,
+        panValidated: true,
+        termsAcknowledged: true,
+      },
+      reviewerNotes: 'PAN verified against IRD portal. Citizenship photo needs brightness enhancement.',
+      reviewerTimestamp: 'Rajesh Sharma · 31 Oct, 11:20 NPT',
+    },
+    {
+      appId: 'AP-2038',
+      name: 'Pema Sherpa',
+      region: 'Dharan',
+      source: 'Mobile',
+      submittedDate: '29 Oct 2026, 15:35 NPT',
+      reviewer: 'Meera Joshi',
+      stage: 'Awaiting documents',
+      stageSubtext: 'PAN upload requested · 29 Oct',
+      contactMasked: '98•••••138',
+      email: 'pema.s@example.test',
+      coverageArea: 'Dharan · Bhanu Chowk',
+      experience: 'Apparel shop owner with strong community footfall.',
+      documents: [
+        { name: 'Citizenship document', note: 'Clear copy attached', submittedDate: '29 Oct · 15:30', status: 'Verified', subtext: 'DOB verified' },
+        { name: 'PAN certificate', note: 'Awaiting re-upload', submittedDate: 'Pending', status: 'Missing', subtext: 'Blurry upload' },
+        { name: 'Address proof', note: 'Municipality tax receipt', submittedDate: '29 Oct · 15:32', status: 'Verified', subtext: 'Address confirmed' },
+      ],
+      checklist: {
+        coverageAvailable: true,
+        is18Plus: true,
+        identityConfirmed: true,
+        panValidated: false,
+        termsAcknowledged: false,
+      },
+      reviewerNotes: 'Notification sent to upload readable PAN card image.',
+      reviewerTimestamp: 'Meera Joshi · 29 Oct, 17:00 NPT',
+    },
+    {
+      appId: 'AP-2037',
+      name: 'Anil Chaudhary',
+      region: 'Biratnagar',
+      source: 'Referral',
+      submittedDate: '29 Oct 2026, 12:00 NPT',
+      reviewer: 'Unassigned',
+      stage: 'Escalated',
+      stageSubtext: 'Address mismatch · Assign reviewer',
+      contactMasked: '98•••••737',
+      email: 'anil.c@example.test',
+      coverageArea: 'Biratnagar · Main Road',
+      experience: 'Freelance sales promoter for regional FMCG goods.',
+      documents: [
+        { name: 'Citizenship document', note: 'Dhangadhi issued', submittedDate: '29 Oct · 11:50', status: 'Verified', subtext: 'Valid citizen card' },
+        { name: 'PAN certificate', note: 'Verified', submittedDate: '29 Oct · 11:52', status: 'Verified', subtext: 'Verified' },
+        { name: 'Address proof', note: 'Rent agreement Biratnagar', submittedDate: '29 Oct · 11:55', status: 'Pending', subtext: 'Mismatch with permanent' },
+      ],
+      checklist: {
+        coverageAvailable: true,
+        is18Plus: true,
+        identityConfirmed: true,
+        panValidated: true,
+        termsAcknowledged: false,
+      },
+      reviewerNotes: 'Temporary residence proof provided without landlord stamp. Escalated for supervisor sign-off.',
+      reviewerTimestamp: 'System Escalation · 30 Oct, 09:00 NPT',
+    },
+  ];
+
+  private static agentActivitiesStore: any[] = [
+    {
+      eventId: 'EVT-8108',
+      time: '01 Nov · 10:12:08',
+      tz: 'NPT',
+      actor: 'Sujan Karki',
+      actorRole: 'Agent',
+      actorId: 'AGT-1001',
+      action: 'Payout requested',
+      affectedRecord: 'PAY-301',
+      recordAmount: 'NPR 1,000',
+      outcome: 'Requested',
+      context: 'Awaiting finance review',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8107',
+      time: '01 Nov · 10:02:34',
+      tz: 'NPT',
+      actor: 'Nirmala Rai',
+      actorRole: 'Agent',
+      actorId: 'AGT-1002',
+      action: 'Order created',
+      affectedRecord: 'ORD-AG2010',
+      recordAmount: 'Assisted attribution',
+      outcome: 'Success',
+      context: 'Processing · payment pending',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8106',
+      time: '01 Nov · 09:50:10',
+      tz: 'NPT',
+      actor: 'Meera Joshi',
+      actorRole: 'Admin',
+      actorId: 'ADM-003',
+      action: 'Status changed',
+      affectedRecord: 'AP-2042',
+      recordAmount: 'Address proof verified',
+      outcome: 'Success',
+      context: 'Application still Under Review',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8105',
+      time: '01 Nov · 09:42:19',
+      tz: 'NPT',
+      actor: 'Sujan Karki',
+      actorRole: 'Agent',
+      actorId: 'AGT-1001',
+      action: 'Customer registered',
+      affectedRecord: 'CUS-7301',
+      recordAmount: 'Consent recorded',
+      outcome: 'Success',
+      context: 'Mobile number verified',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8105B',
+      time: '01 Nov · 09:30:04',
+      tz: 'NPT',
+      actor: 'Bikash Thapa',
+      actorRole: 'Agent',
+      actorId: 'AGT-1003',
+      action: 'Sign-in',
+      affectedRecord: 'Agent portal',
+      recordAmount: 'Session audit recorded',
+      outcome: 'Success',
+      context: 'Password sign-in',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8104',
+      time: '31 Oct · 17:25:41',
+      tz: 'NPT',
+      actor: 'Commission rules',
+      actorRole: 'System',
+      actorId: 'SYS-001',
+      action: 'Commission adjusted',
+      affectedRecord: 'ORD-AG2004',
+      recordAmount: 'NPR 400 reversed',
+      outcome: 'Success',
+      context: 'Cancelled order · never payable',
+      inspectText: 'View details',
+      description: 'System rule cancelled ORD-AG2004\'s provisional commission after the order was cancelled. Commission changed from NPR 400 to NPR 0 payable.',
+      agentRef: 'Pratik Shrestha / AGT-1004',
+      reason: 'Order cancelled',
+    },
+    {
+      eventId: 'EVT-8103',
+      time: '31 Oct · 16:40:12',
+      tz: 'NPT',
+      actor: 'Rajesh Sharma',
+      actorRole: 'Admin',
+      actorId: 'ADM-001',
+      action: 'Order assigned',
+      affectedRecord: 'ORD-AG2008',
+      recordAmount: 'Deepak Adhikari',
+      outcome: 'Success',
+      context: 'Assigned to Dharan coverage',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8102',
+      time: '31 Oct · 14:20:00',
+      tz: 'NPT',
+      actor: 'Asha Tamang',
+      actorRole: 'Applicant',
+      actorId: 'AP-2042',
+      action: 'Document uploaded',
+      affectedRecord: 'AP-2042',
+      recordAmount: 'Address proof PDF',
+      outcome: 'Submitted',
+      context: 'Upload received; not verification',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8101',
+      time: '30 Oct · 15:10:03',
+      tz: 'NPT',
+      actor: 'Meera Joshi',
+      actorRole: 'Admin',
+      actorId: 'ADM-003',
+      action: 'Status changed',
+      affectedRecord: 'AP-2039',
+      recordAmount: 'Needs information',
+      outcome: 'Success',
+      context: 'Requested clearer address proof',
+      inspectText: 'View details',
+    },
+    {
+      eventId: 'EVT-8100',
+      time: '29 Oct · 11:05:20',
+      tz: 'NPT',
+      actor: 'Rajesh Sharma',
+      actorRole: 'Admin',
+      actorId: 'ADM-001',
+      action: 'Status changed',
+      affectedRecord: 'AGT-1004',
+      recordAmount: 'Pratik Shrestha',
+      outcome: 'Success',
+      context: 'Active → Suspended · policy review',
+      inspectText: 'View details',
+    },
+  ];
+
+  private static agentOrdersStore: any[] = [
+    {
+      orderId: 'ORD-AG2001',
+      customer: 'Mina Adhikari',
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      region: 'Kathmandu',
+      attributionType: 'Direct',
+      orderTotal: 10800,
+      orderStatus: 'Delivered',
+      orderDate: '28 Oct 2026',
+      paymentState: 'Paid',
+      commissionEligibility: 'Eligible',
+      commissionAmountText: 'NPR 500 approved',
+    },
+    {
+      orderId: 'ORD-AG2002',
+      customer: 'Rohan Gurung',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      region: 'Pokhara',
+      attributionType: 'Assisted',
+      orderTotal: 7560,
+      orderStatus: 'Delivered',
+      orderDate: '29 Oct 2026',
+      paymentState: 'Paid',
+      commissionEligibility: 'Eligible',
+      commissionAmountText: 'NPR 350 approved',
+    },
+    {
+      orderId: 'ORD-AG2003',
+      customer: 'Anita K.C.',
+      agentId: 'AGT-1003',
+      agentName: 'Bikash Thapa',
+      region: 'Biratnagar',
+      attributionType: 'Referral',
+      orderTotal: 5400,
+      orderStatus: 'Delivered',
+      orderDate: '29 Oct 2026',
+      paymentState: 'Paid',
+      commissionEligibility: 'Eligible',
+      commissionAmountText: 'NPR 250 pending',
+    },
+    {
+      orderId: 'ORD-AG2004',
+      customer: 'Suman Lama',
+      agentId: 'AGT-1004',
+      agentName: 'Pratik Shrestha',
+      region: 'Lalitpur',
+      attributionType: 'Direct',
+      orderTotal: 8640,
+      orderStatus: 'Cancelled',
+      orderDate: '31 Oct 2026',
+      paymentState: 'Voided',
+      paymentSubtext: 'No charge settled',
+      commissionEligibility: 'Not eligible',
+      commissionAmountText: 'NPR 400 reversed',
+    },
+    {
+      orderId: 'ORD-AG2005',
+      customer: 'Puja Shah',
+      agentId: 'AGT-1005',
+      agentName: 'Sarita Gurung',
+      region: 'Butwal',
+      attributionType: 'Assisted',
+      orderTotal: 6480,
+      orderStatus: 'Delivered',
+      orderDate: '30 Oct 2026',
+      paymentState: 'Unsettled',
+      paymentSubtext: 'COD reconciliation',
+      commissionEligibility: 'On hold',
+      commissionAmountText: 'Await settlement',
+    },
+    {
+      orderId: 'ORD-AG2006',
+      customer: 'Arjun Bista',
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      region: 'Kathmandu',
+      attributionType: 'Direct',
+      orderTotal: 4320,
+      orderStatus: 'In Transit',
+      paymentState: 'Paid',
+      paymentDate: '31 Oct 2026',
+      commissionEligibility: 'Not yet eligible',
+      commissionAmountText: 'Await delivery',
+    },
+    {
+      orderId: 'ORD-AG2007',
+      customer: 'Sabina Rai',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      region: 'Pokhara',
+      attributionType: 'Referral',
+      orderTotal: 3780,
+      orderStatus: 'Processing',
+      paymentState: 'Pending',
+      paymentSubtext: 'Bank confirmation',
+      commissionEligibility: 'Not yet eligible',
+      commissionAmountText: 'Await delivery & payment',
+    },
+    {
+      orderId: 'ORD-AG2008',
+      customer: 'Nabin Tamang',
+      agentId: 'AGT-1006',
+      agentName: 'Deepak Adhikari',
+      region: 'Dharan',
+      attributionType: 'Assisted',
+      orderTotal: 9720,
+      orderStatus: 'In Transit',
+      paymentState: 'COD due',
+      paymentSubtext: 'Collect on delivery',
+      commissionEligibility: 'Not yet eligible',
+      commissionAmountText: 'Await delivery & payment',
+    },
+    {
+      orderId: 'ORD-AG2009',
+      customer: 'Gita Pandey',
+      agentId: 'AGT-1008',
+      agentName: 'Kiran Basnet',
+      region: 'Lalitpur',
+      attributionType: 'Direct',
+      orderTotal: 2160,
+      orderStatus: 'Delivered',
+      orderDate: '31 Oct 2026',
+      paymentState: 'Unsettled',
+      paymentSubtext: 'Wallet reconciliation',
+      commissionEligibility: 'On hold',
+      commissionAmountText: 'Await settlement',
+    },
+    {
+      orderId: 'ORD-AG2010',
+      customer: 'Laxmi Shrestha',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      region: 'Pokhara',
+      attributionType: 'Assisted',
+      orderTotal: 6284,
+      orderStatus: 'Processing',
+      paymentState: 'Pending',
+      paymentSubtext: 'Payment link sent',
+      commissionEligibility: 'Not yet eligible',
+      commissionAmountText: 'Await delivery & payment',
+    },
+  ];
+
+  private static agentCommissionsStore: any[] = [
+    {
+      commId: 'COM-6001',
+      orderId: 'ORD-AG2001',
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      eligibleBase: 10000,
+      orderTotal: 10800,
+      excludedCharges: 800,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 500,
+      status: 'Approved',
+      payoutSubtext: 'Not yet paid',
+      adjustment: 'No adjustment',
+      approvedBy: 'Rajesh Sharma',
+      approvedDate: '30 Oct 2026',
+    },
+    {
+      commId: 'COM-6002',
+      orderId: 'ORD-AG2002',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      eligibleBase: 7000,
+      orderTotal: 7560,
+      excludedCharges: 560,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 350,
+      status: 'Approved',
+      payoutSubtext: 'Not yet paid',
+      adjustment: 'No adjustment',
+    },
+    {
+      commId: 'COM-6003',
+      orderId: 'ORD-AG2003',
+      agentId: 'AGT-1003',
+      agentName: 'Bikash Thapa',
+      eligibleBase: 5000,
+      orderTotal: 5400,
+      excludedCharges: 400,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 250,
+      status: 'Pending',
+      payoutSubtext: 'Review required',
+      adjustment: 'No adjustment',
+    },
+    {
+      commId: 'COM-6004',
+      orderId: 'ORD-AG2004',
+      agentId: 'AGT-1004',
+      agentName: 'Pratik Shrestha',
+      eligibleBase: 8000,
+      eligibleBaseSubtext: 'Original base',
+      orderTotal: 8640,
+      excludedCharges: 640,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 0,
+      commissionText: 'NPR 0 payable',
+      status: 'Reversed',
+      payoutSubtext: 'Order cancelled',
+      adjustment: '- NPR 400',
+      adjustmentSubtext: 'Excluded',
+    },
+    {
+      commId: 'COM-5998',
+      orderId: 'ORD-AG1998',
+      agentId: 'AGT-1005',
+      agentName: 'Sarita Gurung',
+      eligibleBase: 8000,
+      orderTotal: 8500,
+      excludedCharges: 500,
+      policy: 'Promotional 7.5%',
+      rate: '7.5%',
+      commission: 600,
+      status: 'Approved',
+      payoutSubtext: 'Not yet paid',
+      adjustment: 'No adjustment',
+    },
+    {
+      commId: 'COM-5997',
+      orderId: 'ORD-AG1997',
+      agentId: 'AGT-1006',
+      agentName: 'Deepak Adhikari',
+      eligibleBase: 6000,
+      orderTotal: 6300,
+      excludedCharges: 300,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 300,
+      status: 'Approved',
+      payoutSubtext: 'Not yet paid',
+      adjustment: 'No adjustment',
+    },
+    {
+      commId: 'COM-5986',
+      orderId: 'ORD-AG1986',
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      eligibleBase: 20000,
+      orderTotal: 21000,
+      excludedCharges: 1000,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 1000,
+      status: 'Paid',
+      payoutSubtext: 'PAY-291 · 28 Oct',
+      adjustment: 'No adjustment',
+    },
+    {
+      commId: 'COM-5982',
+      orderId: 'ORD-AG1982',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      eligibleBase: 12000,
+      orderTotal: 12600,
+      excludedCharges: 600,
+      policy: 'Standard 5%',
+      rate: '5.0%',
+      commission: 600,
+      status: 'Paid',
+      payoutSubtext: 'PAY-290 · 27 Oct',
+      adjustment: 'No adjustment',
+    },
+  ];
+
+  private static agentPayoutsStore: any[] = [
+    {
+      payoutId: 'PAY-301',
+      requestedDate: '01 Nov · 10:12',
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      amount: 1000,
+      method: 'Bank transfer',
+      destination: 'Account •••• 4812',
+      status: 'Requested',
+      paymentContext: 'Not paid',
+      contextSubtext: 'Await finance review',
+      nextAction: 'Review payout',
+    },
+    {
+      payoutId: 'PAY-300',
+      requestedDate: '31 Oct · 16:10',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      amount: 500,
+      method: 'Wallet',
+      destination: '98•••••102',
+      status: 'Processing',
+      paymentContext: 'Not paid',
+      contextSubtext: 'Confirmation pending',
+      nextAction: 'View payment details',
+    },
+    {
+      payoutId: 'PAY-299',
+      requestedDate: '31 Oct · 14:20',
+      agentId: 'AGT-1005',
+      agentName: 'Sarita Gurung',
+      amount: 300,
+      method: 'Bank transfer',
+      destination: 'Account •••• 7720',
+      status: 'Scheduled',
+      paymentContext: 'Not paid',
+      contextSubtext: '02 Nov batch',
+      nextAction: 'View payment details',
+    },
+    {
+      payoutId: 'PAY-298',
+      requestedDate: '30 Oct · 12:30',
+      agentId: 'AGT-1006',
+      agentName: 'Deepak Adhikari',
+      amount: 200,
+      method: 'Wallet',
+      destination: '98•••••106',
+      status: 'Under Review',
+      paymentContext: 'Not paid',
+      contextSubtext: 'Name match check',
+      nextAction: 'Review payout',
+    },
+    {
+      payoutId: 'PAY-297',
+      requestedDate: '30 Oct · 09:45',
+      agentId: 'AGT-1005',
+      agentName: 'Sarita Gurung',
+      amount: 200,
+      method: 'Bank transfer',
+      destination: 'Account •••• 7720',
+      status: 'Failed',
+      paymentContext: 'Not paid',
+      contextSubtext: 'Account validation failed',
+      nextAction: 'Review failed payout',
+    },
+    {
+      payoutId: 'PAY-291',
+      requestedDate: '28 Oct · 15:00',
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      amount: 1000,
+      method: 'Bank transfer',
+      destination: 'Account •••• 4812',
+      status: 'Paid',
+      paymentContext: 'Confirmed 28 Oct',
+      contextSubtext: 'Reference •••• 9082',
+      nextAction: 'View payment details',
+    },
+    {
+      payoutId: 'PAY-290',
+      requestedDate: '27 Oct · 11:20',
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      amount: 600,
+      method: 'Wallet',
+      destination: '98•••••102',
+      status: 'Paid',
+      paymentContext: 'Confirmed 27 Oct',
+      contextSubtext: 'Reference •••• 7231',
+      nextAction: 'View payment details',
+    },
+  ];
+
+  private static agentStatementsStore: any[] = [
+    {
+      agentId: 'AGT-1001',
+      agentName: 'Sujan Karki',
+      approved: 10200,
+      paid: 9000,
+      available: 1200,
+      pending: 3500,
+    },
+    {
+      agentId: 'AGT-1002',
+      agentName: 'Nirmala Rai',
+      approved: 8850,
+      paid: 8000,
+      available: 850,
+      pending: 2750,
+    },
+    {
+      agentId: 'AGT-1003',
+      agentName: 'Bikash Thapa',
+      approved: 4000,
+      paid: 4000,
+      available: 0,
+      pending: 2500,
+    },
+  ];
+
+  // 1. All Agents (Screen 35)
+  public async getAgents(queryParam: any = {}): Promise<any> {
+    const { search, status, region } = queryParam;
+    let list = [...AdminService.agentsStore];
+    if (search) {
+      const q = String(search).toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.name.toLowerCase().includes(q) ||
+          a.agentId.toLowerCase().includes(q) ||
+          a.email.toLowerCase().includes(q)
+      );
+    }
+    if (status && status !== 'ALL') {
+      list = list.filter((a) => a.status.toLowerCase() === String(status).toLowerCase());
+    }
+    if (region && region !== 'ALL') {
+      list = list.filter((a) => a.region.toLowerCase() === String(region).toLowerCase());
+    }
+    return {
+      kpis: {
+        onboarded: 32,
+        active: 24,
+        inactive: 5,
+        suspended: 3,
+      },
+      agents: list,
+    };
+  }
+
+  public async getAgentById(id: string): Promise<any> {
+    const a = AdminService.agentsStore.find((x) => x.agentId.toLowerCase() === id.toLowerCase());
+    return a || null;
+  }
+
+  public async updateAgentStatus(id: string, status: string): Promise<any> {
+    const a = AdminService.agentsStore.find((x) => x.agentId.toLowerCase() === id.toLowerCase());
+    if (a) {
+      a.status = status;
+      return a;
+    }
+    return null;
+  }
+
+  public async createAgent(payload: any): Promise<any> {
+    const nextNum = AdminService.agentsStore.length + 1001;
+    const newAgent = {
+      agentId: `AGT-${nextNum}`,
+      name: payload.name || 'New Agent',
+      joined: 'Today',
+      email: payload.email || 'agent@example.test',
+      phone: payload.phone || '98•••••000',
+      fullPhone: payload.phone || '+977 9800000000',
+      region: payload.region || 'Kathmandu',
+      status: 'Active',
+      ordersCount: 0,
+      deliveredCount: 0,
+      commissionAmount: 0,
+      commissionText: 'NPR 0',
+      commissionStatus: 'No available balance',
+    };
+    AdminService.agentsStore.unshift(newAgent);
+    return newAgent;
+  }
+
+  // 2. Agent Applications (Screen 36)
+  public async getAgentApplications(queryParam: any = {}): Promise<any> {
+    const { search, status, source } = queryParam;
+    let list = [...AdminService.agentApplicationsStore];
+    if (search) {
+      const q = String(search).toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.name.toLowerCase().includes(q) ||
+          a.appId.toLowerCase().includes(q) ||
+          a.email.toLowerCase().includes(q)
+      );
+    }
+    if (status && status !== 'ALL') {
+      list = list.filter((a) => a.status.toLowerCase() === String(status).toLowerCase());
+    }
+    if (source && source !== 'ALL') {
+      list = list.filter((a) => a.source.toLowerCase() === String(source).toLowerCase());
+    }
+    return {
+      kpis: {
+        recent: 12,
+        submitted: 5,
+        underReview: 4,
+        needsInformation: 2,
+        approved: 1,
+      },
+      applications: list,
+    };
+  }
+
+  public async assignAgentApplication(id: string, reviewer: string): Promise<any> {
+    const app = AdminService.agentApplicationsStore.find((x) => x.appId.toLowerCase() === id.toLowerCase());
+    if (app) {
+      app.reviewer = reviewer;
+      return app;
+    }
+    return null;
+  }
+
+  // 3. Agent Approvals (Screen 37)
+  public async getAgentApprovals(queryParam: any = {}): Promise<any> {
+    return {
+      summaryBanner: '4 applications Under Review · 2 ready for review · 1 awaiting documents · 1 escalated',
+      queue: AdminService.agentApprovalsStore,
+    };
+  }
+
+  public async approveAgentApplication(id: string, note: string): Promise<any> {
+    const item = AdminService.agentApprovalsStore.find((x) => x.appId.toLowerCase() === id.toLowerCase());
+    if (item) {
+      item.stage = 'Approved';
+      item.decision = 'Approved';
+      item.reviewerNotes = note || 'Applicant approved for agent onboarding.';
+      const app = AdminService.agentApplicationsStore.find((x) => x.appId.toLowerCase() === id.toLowerCase());
+      if (app) {
+        app.status = 'Approved';
+        app.nextAction = 'View application';
+      }
+      return item;
+    }
+    return null;
+  }
+
+  public async rejectAgentApplication(id: string, reason: string): Promise<any> {
+    const item = AdminService.agentApprovalsStore.find((x) => x.appId.toLowerCase() === id.toLowerCase());
+    if (item) {
+      item.stage = 'Rejected';
+      item.decision = 'Rejected';
+      item.reviewerNotes = reason || 'Applicant rejected.';
+      const app = AdminService.agentApplicationsStore.find((x) => x.appId.toLowerCase() === id.toLowerCase());
+      if (app) {
+        app.status = 'Rejected';
+      }
+      return item;
+    }
+    return null;
+  }
+
+  // 4. Agent Activities (Screen 38)
+  public async getAgentActivities(queryParam: any = {}): Promise<any> {
+    const { search, activity, actor } = queryParam;
+    let list = [...AdminService.agentActivitiesStore];
+    if (search) {
+      const q = String(search).toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.eventId.toLowerCase().includes(q) ||
+          e.actor.toLowerCase().includes(q) ||
+          e.affectedRecord.toLowerCase().includes(q) ||
+          e.action.toLowerCase().includes(q)
+      );
+    }
+    return {
+      totalEvents: 146,
+      events: list,
+    };
+  }
+
+  // 5. Agent Orders (Screen 39)
+  public async getAgentOrders(queryParam: any = {}): Promise<any> {
+    const { search, status, attribution } = queryParam;
+    let list = [...AdminService.agentOrdersStore];
+    if (search) {
+      const q = String(search).toLowerCase();
+      list = list.filter(
+        (o) =>
+          o.orderId.toLowerCase().includes(q) ||
+          o.customer.toLowerCase().includes(q) ||
+          o.agentName.toLowerCase().includes(q)
+      );
+    }
+    return {
+      kpis: {
+        attributedOrders: 56,
+        delivered: 34,
+        inTransit: 10,
+        processing: 8,
+        cancelled: 4,
+      },
+      orders: list,
+    };
+  }
+
+  // 6. Agent Commissions (Screen 40)
+  public async getAgentCommissions(queryParam: any = {}): Promise<any> {
+    return {
+      kpis: {
+        approved: 'NPR 31,250',
+        approvedNote: 'Includes NPR 28,000 already paid',
+        pendingReview: 'NPR 11,250',
+        pendingReviewNote: 'Not withdrawable',
+        availableApproved: 'NPR 3,250',
+        availableApprovedNote: 'Approved less paid',
+        reversalsExcluded: 'NPR 1,500',
+        reversalsExcludedNote: 'Not included in balances',
+      },
+      ledger: AdminService.agentCommissionsStore,
+    };
+  }
+
+  // 7. Agent Earnings (Screen 41)
+  public async getAgentEarnings(queryParam: any = {}): Promise<any> {
+    return {
+      kpis: {
+        approved: 'NPR 31,250',
+        approvedNote: 'Includes paid commissions',
+        pendingCommissions: 'NPR 11,250',
+        pendingCommissionsNote: 'Not yet withdrawable',
+        paidCommissions: 'NPR 28,000',
+        paidCommissionsNote: 'Confirmed payouts only',
+        availableApproved: 'NPR 3,250',
+        availableApprovedNote: '31,250 approved - 28,000 paid',
+      },
+      payouts: AdminService.agentPayoutsStore,
+      statements: AdminService.agentStatementsStore,
+    };
+  }
+
+  public async reviewAgentPayout(id: string, payload: any): Promise<any> {
+    const p = AdminService.agentPayoutsStore.find((x) => x.payoutId.toLowerCase() === id.toLowerCase());
+    if (p) {
+      p.status = payload.status || 'Processing';
+      p.contextSubtext = payload.note || 'Review completed';
+      return p;
+    }
+    return null;
+  }
 }
 
 export const adminService = new AdminService();

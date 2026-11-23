@@ -90,6 +90,13 @@ import { AdminRefundRequestsPage } from './pages/admin/AdminRefundRequestsPage.j
 import { AdminRefundProcessingPage } from './pages/admin/AdminRefundProcessingPage.js';
 import { AdminReturnInspectionsPage } from './pages/admin/AdminReturnInspectionsPage.js';
 import { AdminRefundHistoryPage } from './pages/admin/AdminRefundHistoryPage.js';
+import { AdminAgentsPage } from './pages/admin/AdminAgentsPage.js';
+import { AdminAgentApplicationsPage } from './pages/admin/AdminAgentApplicationsPage.js';
+import { AdminAgentApprovalsPage } from './pages/admin/AdminAgentApprovalsPage.js';
+import { AdminAgentActivitiesPage } from './pages/admin/AdminAgentActivitiesPage.js';
+import { AdminAgentOrdersPage } from './pages/admin/AdminAgentOrdersPage.js';
+import { AdminAgentCommissionsPage } from './pages/admin/AdminAgentCommissionsPage.js';
+import { AdminAgentEarningsPage } from './pages/admin/AdminAgentEarningsPage.js';
 import { AdminAuditPage } from './pages/admin/AdminAuditPage.js';
 import { SystemHealthPage } from './pages/SystemHealthPage.js';
 
@@ -210,6 +217,25 @@ const AppRouterContent: React.FC = () => {
           {(path === '/admin/returns/refund-history' ||
             path.startsWith('/admin/returns/refund-history') ||
             path === '/admin/returns/history') && <AdminRefundHistoryPage />}
+          {(path === '/admin/agents' || path === '/admin/agents/all') && <AdminAgentsPage />}
+          {(path === '/admin/agents/applications' || path.startsWith('/admin/agents/applications')) && (
+            <AdminAgentApplicationsPage />
+          )}
+          {(path === '/admin/agents/approvals' || path.startsWith('/admin/agents/approvals')) && (
+            <AdminAgentApprovalsPage />
+          )}
+          {(path === '/admin/agents/activities' || path.startsWith('/admin/agents/activities')) && (
+            <AdminAgentActivitiesPage />
+          )}
+          {(path === '/admin/agents/orders' || path.startsWith('/admin/agents/orders')) && (
+            <AdminAgentOrdersPage />
+          )}
+          {(path === '/admin/agents/commissions' || path.startsWith('/admin/agents/commissions')) && (
+            <AdminAgentCommissionsPage />
+          )}
+          {(path === '/admin/agents/earnings' || path.startsWith('/admin/agents/earnings')) && (
+            <AdminAgentEarningsPage />
+          )}
           {path === '/admin/audits' && <AdminAuditPage />}
           {path === '/admin/health' && <SystemHealthPage />}
         </AdminLayout>

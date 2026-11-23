@@ -54,6 +54,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(true);
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
   const [isReturnsOpen, setIsReturnsOpen] = useState(true);
+  const [isAgentsOpen, setIsAgentsOpen] = useState(true);
 
   const isCustomerPath = path.startsWith('/admin/customers');
   const isVendorPath =
@@ -70,6 +71,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const isPaymentPath = path.startsWith('/admin/payments');
   const isDeliveryPath = path.startsWith('/admin/delivery') || path.startsWith('/admin/logistics');
   const isReturnsPath = path.startsWith('/admin/returns');
+  const isAgentsPath = path.startsWith('/admin/agents');
   const isDashboardPath =
     path === '/admin' ||
     path === '/admin/' ||
@@ -110,7 +112,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const marketplaceItems: { label: string; to: string; icon: any }[] = [];
 
   const businessItems = [
-    { label: 'Agent Management', to: '/admin/agents', icon: Headphones },
     { label: 'Influencer Management', to: '/admin/influencers', icon: Star },
     { label: 'Finance & Settlements', to: '/admin/finance', icon: Wallet },
     { label: 'Promotions & Marketing', to: '/admin/promotions', icon: Tag },
@@ -1599,6 +1600,92 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             >
               BUSINESS & PARTNERS
             </div>
+
+            {/* Agent Management Navigation Group (Screens 35 - 41) */}
+            {isAgentsPath ? (
+              <div style={{ margin: '2px 0' }}>
+                <div
+                  onClick={() => setIsAgentsOpen(!isAgentsOpen)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '7px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    backgroundColor: '#E63946',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Headphones size={15} color="#FFFFFF" />
+                    <span>Agent Management</span>
+                  </div>
+                  <ChevronDown size={14} color="#FFFFFF" />
+                </div>
+
+                {isAgentsOpen && (
+                  <div style={{ paddingLeft: '8px', marginTop: '2px' }}>
+                    {[
+                      { label: 'All Agents', to: '/admin/agents', active: path === '/admin/agents' || path === '/admin/agents/all' },
+                      { label: 'Agent Applications', to: '/admin/agents/applications', active: path.includes('/applications') },
+                      { label: 'Agent Approvals', to: '/admin/agents/approvals', active: path.includes('/approvals') },
+                      { label: 'Agent Activities', to: '/admin/agents/activities', active: path.includes('/activities') },
+                      { label: 'Agent Orders', to: '/admin/agents/orders', active: path.includes('/orders') },
+                      { label: 'Agent Commissions', to: '/admin/agents/commissions', active: path.includes('/commissions') },
+                      { label: 'Agent Earnings', to: '/admin/agents/earnings', active: path.includes('/earnings') },
+                    ].map((sub) => (
+                      <div
+                        key={sub.to}
+                        onClick={() => navigate(sub.to)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '7.5px 12px',
+                          margin: '2px 0',
+                          fontSize: '12.5px',
+                          fontWeight: sub.active ? 600 : 500,
+                          color: sub.active ? '#E63946' : '#475569',
+                          borderLeft: sub.active ? '3px solid #E63946' : '3px solid transparent',
+                          borderRadius: '0 6px 6px 0',
+                          backgroundColor: sub.active ? '#FFF1F2' : 'transparent',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span>{sub.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                onClick={() => navigate('/admin/agents')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 10px',
+                  margin: '2px 0',
+                  borderRadius: '7px',
+                  fontSize: '12.5px',
+                  fontWeight: 500,
+                  color: '#475569',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Headphones size={15} color="#64748B" />
+                  <span>Agent Management</span>
+                </div>
+                <ChevronRight size={13} color="#94A3B8" />
+              </div>
+            )}
+
             {businessItems.map((item) => {
               const IconComp = item.icon;
               const active = isCurrentParent(item.to);
@@ -1922,6 +2009,26 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     : 'Return Requests'}
                 </span>
               </>
+            ) : isAgentsPath ? (
+              <>
+                <span>Agent Management</span>
+                <span style={{ color: '#CBD5E1' }}>/</span>
+                <span style={{ fontWeight: 600, color: '#0F172A' }}>
+                  {path.includes('/applications')
+                    ? 'Agent Applications'
+                    : path.includes('/approvals')
+                    ? 'Agent Approvals'
+                    : path.includes('/activities')
+                    ? 'Agent Activities'
+                    : path.includes('/orders')
+                    ? 'Agent Orders'
+                    : path.includes('/commissions')
+                    ? 'Agent Commissions'
+                    : path.includes('/earnings')
+                    ? 'Agent Earnings'
+                    : 'All Agents'}
+                </span>
+              </>
             ) : (
               <span style={{ fontWeight: 600, color: '#0F172A' }}>{getBreadcrumbTitle()}</span>
             )}
@@ -1946,7 +2053,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <input
                 type="text"
                 placeholder={
-                  isReturnsPath
+                  isAgentsPath
+                    ? path.includes('/activities')
+                      ? 'Search event, agent or record ID'
+                      : path.includes('/applications') || path.includes('/approvals')
+                      ? 'Search applicant or application ID'
+                      : path.includes('/orders')
+                      ? 'Search order ID, customer or agent...'
+                      : path.includes('/commissions')
+                      ? 'Search commission ID, order or agent...'
+                      : path.includes('/earnings')
+                      ? 'Search statement ID, payout or agent...'
+                      : 'Search agent ID, name, email or phone...'
+                    : isReturnsPath
                     ? 'Search return ID, order or customer...'
                     : isDeliveryPath
                     ? 'Search shipment, partner or zone...'

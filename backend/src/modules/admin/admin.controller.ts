@@ -836,3 +836,137 @@ export async function getRefundHistoryHandler(req: Request, res: Response): Prom
     sendError(res, 'GET_REFUND_HISTORY_FAILED', err.message, 500);
   }
 }
+
+// ============================================================================
+// AGENT MANAGEMENT CONTROLLERS (Screens 35 - 41)
+// ============================================================================
+
+export async function getAgentsHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgents(req.query);
+    sendSuccess(res, data, 'Agents list retrieved successfully', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENTS_FAILED', err.message, 500);
+  }
+}
+
+export async function getAgentByIdHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentById(String(req.params.id));
+    if (!data) {
+      sendError(res, 'AGENT_NOT_FOUND', 'Agent record not found', 404);
+      return;
+    }
+    sendSuccess(res, data, 'Agent details retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_FAILED', err.message, 500);
+  }
+}
+
+export async function updateAgentStatusHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.updateAgentStatus(String(req.params.id), req.body.status);
+    sendSuccess(res, data, 'Agent status updated successfully', 200);
+  } catch (err: any) {
+    sendError(res, 'UPDATE_AGENT_STATUS_FAILED', err.message, 400);
+  }
+}
+
+export async function createAgentHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.createAgent(req.body);
+    sendSuccess(res, data, 'Agent created successfully', 201);
+  } catch (err: any) {
+    sendError(res, 'CREATE_AGENT_FAILED', err.message, 400);
+  }
+}
+
+export async function getAgentApplicationsHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentApplications(req.query);
+    sendSuccess(res, data, 'Agent applications retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_APPLICATIONS_FAILED', err.message, 500);
+  }
+}
+
+export async function assignAgentApplicationHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.assignAgentApplication(String(req.params.id), req.body.reviewer);
+    sendSuccess(res, data, 'Reviewer assigned to application', 200);
+  } catch (err: any) {
+    sendError(res, 'ASSIGN_APPLICATION_FAILED', err.message, 400);
+  }
+}
+
+export async function getAgentApprovalsHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentApprovals(req.query);
+    sendSuccess(res, data, 'Agent approvals queue retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_APPROVALS_FAILED', err.message, 500);
+  }
+}
+
+export async function approveAgentApplicationHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.approveAgentApplication(String(req.params.id), req.body.note);
+    sendSuccess(res, data, 'Agent application approved', 200);
+  } catch (err: any) {
+    sendError(res, 'APPROVE_AGENT_FAILED', err.message, 400);
+  }
+}
+
+export async function rejectAgentApplicationHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.rejectAgentApplication(String(req.params.id), req.body.reason);
+    sendSuccess(res, data, 'Agent application rejected', 200);
+  } catch (err: any) {
+    sendError(res, 'REJECT_AGENT_FAILED', err.message, 400);
+  }
+}
+
+export async function getAgentActivitiesHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentActivities(req.query);
+    sendSuccess(res, data, 'Agent activity log retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_ACTIVITIES_FAILED', err.message, 500);
+  }
+}
+
+export async function getAgentOrdersHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentOrders(req.query);
+    sendSuccess(res, data, 'Agent orders retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_ORDERS_FAILED', err.message, 500);
+  }
+}
+
+export async function getAgentCommissionsHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentCommissions(req.query);
+    sendSuccess(res, data, 'Agent commissions retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_COMMISSIONS_FAILED', err.message, 500);
+  }
+}
+
+export async function getAgentEarningsHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.getAgentEarnings(req.query);
+    sendSuccess(res, data, 'Agent earnings & payouts retrieved', 200);
+  } catch (err: any) {
+    sendError(res, 'GET_AGENT_EARNINGS_FAILED', err.message, 500);
+  }
+}
+
+export async function reviewAgentPayoutHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await adminService.reviewAgentPayout(String(req.params.id), req.body);
+    sendSuccess(res, data, 'Agent payout review saved', 200);
+  } catch (err: any) {
+    sendError(res, 'REVIEW_PAYOUT_FAILED', err.message, 400);
+  }
+}

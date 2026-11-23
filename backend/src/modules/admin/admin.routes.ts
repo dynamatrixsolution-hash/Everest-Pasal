@@ -83,6 +83,20 @@ import {
   getRefundProcessingHandler,
   reconcilePayoutJobHandler,
   getRefundHistoryHandler,
+  getAgentsHandler,
+  getAgentByIdHandler,
+  updateAgentStatusHandler,
+  createAgentHandler,
+  getAgentApplicationsHandler,
+  assignAgentApplicationHandler,
+  getAgentApprovalsHandler,
+  approveAgentApplicationHandler,
+  rejectAgentApplicationHandler,
+  getAgentActivitiesHandler,
+  getAgentOrdersHandler,
+  getAgentCommissionsHandler,
+  getAgentEarningsHandler,
+  reviewAgentPayoutHandler,
 } from './admin.controller.js';
 import {
   getAllBannersAdminHandler,
@@ -213,6 +227,22 @@ router.post('/returns/refund-requests/:id/authorize', authorizeRefundHandler);
 router.get('/returns/processing', getRefundProcessingHandler);
 router.post('/returns/processing/:id/reconcile', reconcilePayoutJobHandler);
 router.get('/returns/refund-history', getRefundHistoryHandler);
+
+// Agent Management (Screens 35 - 41)
+router.get('/agents', getAgentsHandler);
+router.post('/agents', createAgentHandler);
+router.get('/agents/applications', getAgentApplicationsHandler);
+router.post('/agents/applications/:id/assign', assignAgentApplicationHandler);
+router.get('/agents/approvals', getAgentApprovalsHandler);
+router.post('/agents/approvals/:id/approve', approveAgentApplicationHandler);
+router.post('/agents/approvals/:id/reject', rejectAgentApplicationHandler);
+router.get('/agents/activities', getAgentActivitiesHandler);
+router.get('/agents/orders', getAgentOrdersHandler);
+router.get('/agents/commissions', getAgentCommissionsHandler);
+router.get('/agents/earnings', getAgentEarningsHandler);
+router.post('/agents/earnings/payouts/:id/review', reviewAgentPayoutHandler);
+router.get('/agents/:id', getAgentByIdHandler);
+router.put('/agents/:id/status', updateAgentStatusHandler);
 
 // Super Admin Dynamic Hero Banner Management
 router.get('/banners', getAllBannersAdminHandler);
