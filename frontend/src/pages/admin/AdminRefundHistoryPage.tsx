@@ -288,102 +288,155 @@ export const AdminRefundHistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div style={{ padding: '24px 28px', backgroundColor: '#F8FAFC', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
+      {/* 1. Header Area matching media_1795254092865_ec48ca1e.jpg */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Refund History</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+            Refund History
+          </h1>
+          <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
             An audit-ready ledger of completed refunds, with payment references and traceable receipts.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={handleExportLedger}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors shadow-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              color: '#0F172A',
+              cursor: 'pointer',
+            }}
           >
-            <Download className="w-4 h-4 text-slate-500" />
-            Export ledger
+            <Download size={14} color="#0F172A" />
+            <span>Export ledger</span>
           </button>
           <button
             onClick={handleDownloadReceiptPdf}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors shadow-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              color: '#0F172A',
+              cursor: 'pointer',
+            }}
           >
-            <FileText className="w-4 h-4 text-slate-500" />
-            Download receipts
+            <FileText size={14} color="#0F172A" />
+            <span>Download receipts</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      {/* 2. Top 3 KPI Cards matching media_1795254092865_ec48ca1e.jpg */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Completed refunds
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">42</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Last 30 days · 03 Oct–01 Nov 2026</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            42
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            Last 30 days · 03 Oct–01 Nov 2026
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Total completed amount
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">NPR 124,800</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">All 42 completed records, not only visible rows</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            NPR 124,800
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            All 42 completed records, not only visible rows
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Average completed refund
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">NPR 2,971.43</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">NPR 124,800 ÷ 42 completed refunds</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            NPR 2,971.43
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            NPR 124,800 ÷ 42 completed refunds
+          </div>
         </div>
       </div>
 
-      {/* Completed Refund Ledger Table Section */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* 3. Completed Refund Ledger Table matching media_1795254092865_ec48ca1e.jpg */}
+      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F1F5F9' }}>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Completed refund ledger</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              Completed refund ledger
+            </h2>
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
               Verified refunds with unique gateway reconciliation codes
-            </p>
+            </div>
           </div>
-          <span className="text-xs font-medium text-slate-400">
+          <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
             Confirmed payments only
           </span>
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '340px' }}>
+            <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search receipt, return, order or customer"
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+              style={{
+                width: '100%',
+                padding: '7.5px 12px 7.5px 32px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                borderRadius: '6px',
+                fontSize: '12.5px',
+                color: '#0F172A',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
-          <div className="px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-400" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7.5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#475569' }}>
+            <Calendar size={13} color="#64748B" />
             <span>03 Oct–01 Nov 2026</span>
           </div>
 
           <select
             value={methodFilter}
             onChange={(e) => setMethodFilter(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+            style={{
+              padding: '7.5px 12px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '6px',
+              fontSize: '12.5px',
+              color: '#475569',
+              outline: 'none',
+              cursor: 'pointer',
+            }}
           >
             <option value="ALL">All methods</option>
             <option value="Visa">Visa Card</option>
@@ -393,76 +446,109 @@ export const AdminRefundHistoryPage: React.FC = () => {
             <option value="Bank transfer">Bank transfer</option>
           </select>
 
-          <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              backgroundColor: '#ECFDF5',
+              border: '1px solid #A7F3D0',
+              color: '#047857',
+            }}
+          >
             Completed only
-          </div>
+          </span>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50/70 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200/60">
-              <tr>
-                <th className="py-3.5 px-6">Refund Receipt</th>
-                <th className="py-3.5 px-6">Return / Order</th>
-                <th className="py-3.5 px-6">Customer</th>
-                <th className="py-3.5 px-6">Method</th>
-                <th className="py-3.5 px-6">Completed Amount</th>
-                <th className="py-3.5 px-6">Completed At</th>
-                <th className="py-3.5 px-6">Provider / Unique Ref.</th>
-                <th className="py-3.5 px-6 text-right">Record</th>
+        {/* Table Rows */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12.5px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '11px', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '11px 20px' }}>REFUND RECEIPT</th>
+                <th style={{ padding: '11px 16px' }}>RETURN / ORDER</th>
+                <th style={{ padding: '11px 16px' }}>CUSTOMER</th>
+                <th style={{ padding: '11px 16px' }}>METHOD</th>
+                <th style={{ padding: '11px 16px' }}>COMPLETED AMOUNT</th>
+                <th style={{ padding: '11px 16px' }}>COMPLETED AT</th>
+                <th style={{ padding: '11px 16px' }}>PROVIDER / UNIQUE REF.</th>
+                <th style={{ padding: '11px 20px', textAlign: 'right' }}>RECORD</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {filteredHistory.map((item) => {
                 const isSelected = item.receiptId === selectedReceiptId;
                 return (
                   <tr
                     key={item.receiptId}
                     onClick={() => setSelectedReceiptId(item.receiptId)}
-                    className={`cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50/60'
-                    }`}
+                    style={{
+                      borderBottom: '1px solid #F1F5F9',
+                      backgroundColor: isSelected ? '#F0F7FF' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                    }}
                   >
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-900">{item.receiptId}</div>
-                      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 mt-0.5">
+                    <td style={{ padding: '13px 20px' }}>
+                      <div style={{ fontWeight: 600, color: '#0F172A' }}>{item.receiptId}</div>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          backgroundColor: '#ECFDF5',
+                          color: '#047857',
+                          marginTop: '2px',
+                        }}
+                      >
                         Completed
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-slate-900">{item.returnId}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{item.orderId}</div>
+                    <td style={{ padding: '13px 16px' }}>
+                      <div style={{ fontWeight: 500, color: '#0F172A' }}>{item.returnId}</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>{item.orderId}</div>
                     </td>
-                    <td className="py-4 px-6 font-medium text-slate-900">
+                    <td style={{ padding: '13px 16px', fontWeight: 500, color: '#0F172A' }}>
                       {item.customer}
                     </td>
-                    <td className="py-4 px-6 font-medium text-slate-900">
+                    <td style={{ padding: '13px 16px', fontWeight: 500, color: '#0F172A' }}>
                       {item.method}
                     </td>
-                    <td className="py-4 px-6 font-semibold text-slate-900">
+                    <td style={{ padding: '13px 16px', fontWeight: 600, color: '#0F172A' }}>
                       NPR {item.amount.toLocaleString()}
                     </td>
-                    <td className="py-4 px-6 text-xs text-slate-500">
+                    <td style={{ padding: '13px 16px', fontSize: '12px', color: '#64748B' }}>
                       <div>{item.completedDate}</div>
-                      <div className="text-[11px] text-slate-400">{item.completedTime}</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8' }}>{item.completedTime}</div>
                     </td>
-                    <td className="py-4 px-6 font-mono text-xs">
-                      <div className="text-slate-800">{item.providerRef}</div>
-                      <div className="text-slate-400 mt-0.5">{item.uniqueRef}</div>
+                    <td style={{ padding: '13px 16px', fontSize: '11.5px', fontFamily: 'monospace' }}>
+                      <div style={{ color: '#0F172A', fontWeight: 500 }}>{item.providerRef}</div>
+                      <div style={{ color: '#94A3B8', fontSize: '11px' }}>{item.uniqueRef}</div>
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td style={{ padding: '13px 20px', textAlign: 'right' }}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedReceiptId(item.receiptId);
                         }}
-                        className={`text-xs font-semibold inline-flex items-center gap-1 ${
-                          isSelected ? 'text-[#0B4EA2]' : 'text-blue-600 hover:text-blue-800'
-                        }`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '12.5px',
+                          fontWeight: 600,
+                          color: isSelected ? '#0B4EA2' : '#0B4EA2',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
                       >
-                        <FileText className="w-3.5 h-3.5" />
-                        View receipt
+                        <FileText size={13} />
+                        <span>View receipt</span>
                       </button>
                     </td>
                   </tr>
@@ -473,16 +559,16 @@ export const AdminRefundHistoryPage: React.FC = () => {
         </div>
 
         {/* Pagination Footer */}
-        <div className="p-4 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0', fontSize: '12px', color: '#64748B' }}>
           <span>Showing 1–8 of 42 completed refunds · Newest first</span>
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            <span className="text-slate-400">8 per page</span>
-            <div className="flex items-center gap-1">
-              <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ color: '#94A3B8' }}>8 per page ▾</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button style={{ padding: '5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
                 Previous
               </button>
-              <span className="px-3 py-1.5 font-semibold text-slate-700">1 of 6</span>
-              <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+              <span style={{ fontWeight: 600, color: '#0F172A', padding: '0 4px' }}>1 of 6</span>
+              <button style={{ padding: '5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
                 Next
               </button>
             </div>
@@ -490,126 +576,140 @@ export const AdminRefundHistoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Split Card: Receipt Card & Traceable Audit Trail */}
+      {/* 4. Bottom Split Card: Receipt Card & Traceable Audit Trail matching media_1795254092865_ec48ca1e.jpg */}
       {selectedRecord && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left / Main Section (2 cols): Refund Receipt Detail */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 gap-2">
-              <h3 className="text-base font-bold text-slate-900">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          {/* Left: Refund Receipt Detail Panel */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1px solid #F1F5F9', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
                 {selectedRecord.receiptId} · Refund receipt
               </h3>
-              <span className="text-sm font-semibold text-slate-800">
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>
                 {selectedRecord.customer}
               </span>
             </div>
 
             {/* Big Amount and PDF Download Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-slate-50/80 p-4 rounded-xl border border-slate-100 gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-slate-900">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '14px 18px', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>
                   NPR {selectedRecord.amount.toLocaleString()}
                 </span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span style={{ padding: '3px 9px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857' }}>
                   Completed
                 </span>
               </div>
               <button
                 type="button"
                 onClick={handleDownloadReceiptPdf}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs shadow-sm transition-colors"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#0F172A',
+                  cursor: 'pointer',
+                }}
               >
-                <Download className="w-3.5 h-3.5 text-slate-500" />
-                Receipt PDF
+                <Download size={13} color="#64748B" />
+                <span>Receipt PDF</span>
               </button>
             </div>
 
             {/* 6-Grid Detail */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Return / order</div>
-                <div className="text-slate-900 font-semibold mt-1">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Return / order</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRecord.returnId} / {selectedRecord.orderId}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Original payment</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Original payment</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRecord.method} / CD-PAY-88112
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Completed at</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Completed at</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRecord.completedAt}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Provider reference</div>
-                <div className="text-slate-900 font-mono font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Provider reference</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px', fontFamily: 'monospace' }}>
                   {selectedRecord.providerRef}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Unique payout reference</div>
-                <div className="text-slate-900 font-mono font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Unique payout reference</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px', fontFamily: 'monospace' }}>
                   {selectedRecord.uniqueRef}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Authorized by</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Authorized by</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRecord.authorizedBy || 'A. Sharma · 30 Oct'}
                 </div>
               </div>
             </div>
 
             {/* Receipt Summary Note */}
-            <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/70 text-xs text-slate-600 italic">
+            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '10px 14px', fontSize: '12px', color: '#475569', fontStyle: 'italic', lineHeight: 1.5 }}>
               {selectedRecord.item || 'Reading lamp'} · {selectedRecord.reason || 'Defective item'} · Full item amount returned to the original payment source. Receipt recorded in the customer case timeline.
             </div>
           </div>
 
-          {/* Right Card (1 col): Traceable Audit Trail */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between space-y-6">
+          {/* Right: Traceable Audit Trail */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-900">Audit trail</h3>
-                <span className="text-xs font-mono text-slate-500 font-semibold">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9', marginBottom: '14px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                  Audit trail
+                </h3>
+                <span style={{ fontSize: '11.5px', color: '#64748B', fontFamily: 'monospace', fontWeight: 600 }}>
                   {selectedRecord.returnId}
                 </span>
               </div>
 
               {/* Step Timeline */}
-              <div className="space-y-4 pt-4 text-xs">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingTop: '4px' }}>
                 {(selectedRecord.auditTrail || [
                   { label: 'Inspection passed', date: '30 Oct · 09:20 · S. Shrestha' },
                   { label: 'Refund authorized · NPR 2,400', date: '30 Oct · 11:05 · A. Sharma' },
                   { label: 'Payout submitted · PAY-7033', date: '30 Oct · 11:15 · Rajesh Sharma' },
                   { label: 'Payment confirmed · RF-6033', date: '01 Nov · 08:40 · Reference recorded' },
                 ]).map((step, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 stroke-[2.5]" />
+                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: '#D1FAE5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                      <Check size={11} strokeWidth={3} />
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-900">{step.label}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">{step.date}</div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A' }}>{step.label}</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '1px' }}>{step.date}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500">
-              Immutable ledger hash: <span className="font-mono text-slate-700">sha256:7f9b81...4a2</span>
+            <div style={{ fontSize: '11px', color: '#94A3B8', padding: '10px 12px', backgroundColor: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0', marginTop: '16px' }}>
+              Immutable ledger hash: <span style={{ fontFamily: 'monospace', color: '#475569' }}>sha256:7f9b81...4a2</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Subtle Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-200/60">
+      {/* 5. Subtle Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: '#94A3B8', paddingTop: '16px', borderTop: '1px solid #E2E8F0' }}>
         <span>Example data · 01 Nov 2026, 10:30 NPT · All amounts in NPR</span>
         <span>Everest Pasal / Operations</span>
       </div>

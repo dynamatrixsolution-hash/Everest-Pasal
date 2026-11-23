@@ -248,156 +248,231 @@ export const AdminReturnInspectionsPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div style={{ padding: '24px 28px', backgroundColor: '#F8FAFC', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
+      {/* 1. Header Area matching media_1795254092896_e790ee94.jpg */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Return Inspections</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+            Return Inspections
+          </h1>
+          <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
             Inspect received items, record damage or defect findings, and determine item disposition before refund authorization.
           </p>
         </div>
         <button
           onClick={() => alert('Everest Pasal QC Guidelines v2.4: Check SKU, count, tags, serial numbers, and packaging before disposition.')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors shadow-sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '8px',
+            padding: '9px 16px',
+            fontSize: '12.5px',
+            fontWeight: 600,
+            color: '#0F172A',
+            cursor: 'pointer',
+          }}
         >
-          <BookOpen className="w-4 h-4 text-slate-500" />
-          Inspection guidelines
+          <BookOpen size={14} color="#0F172A" />
+          <span>Inspection guidelines</span>
         </button>
       </div>
 
       {feedbackMsg && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            {feedbackMsg}
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            backgroundColor: '#ECFDF5',
+            border: '1px solid #A7F3D0',
+            color: '#065F46',
+            fontSize: '13px',
+            fontWeight: 500,
+            marginBottom: '16px',
+          }}
+        >
+          <CheckCircle2 size={16} color="#059669" />
+          <span>{feedbackMsg}</span>
         </div>
       )}
 
-      {/* Info Notice Banner */}
-      <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-start gap-3">
-        <Layers className="w-5 h-5 text-[#0B4EA2] shrink-0 mt-0.5" />
+      {/* 2. Info Notice Banner matching media_1795254092896_e790ee94.jpg */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          backgroundColor: '#EFF6FF',
+          border: '1px solid #BFDBFE',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '20px',
+        }}
+      >
+        <Layers size={18} color="#0B4EA2" style={{ marginTop: '2px', flexShrink: 0 }} />
         <div>
-          <div className="font-bold text-blue-950">6 cases awaiting inspection</div>
-          <p className="text-blue-800 mt-0.5">
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#1E3A8A' }}>
+            6 cases awaiting inspection
+          </div>
+          <div style={{ fontSize: '12px', color: '#1E40AF', marginTop: '2px', lineHeight: 1.45 }}>
             Items listed here have been checked in at the warehouse and assigned an intake bin. Completed inspections release the case for refund authorization.
-          </p>
+          </div>
         </div>
       </div>
 
-      {/* Split Screen Master-Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Received returns (4 cols) */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-slate-900">Received returns</span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+      {/* 3. Split Screen Master-Detail matching media_1795254092896_e790ee94.jpg */}
+      <div style={{ display: 'grid', gridTemplateColumns: '4fr 8fr', gap: '20px', alignItems: 'start' }}>
+        {/* Left Column: Received returns */}
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>Received returns</span>
+              <span style={{ backgroundColor: '#F1F5F9', color: '#475569', fontSize: '11px', fontWeight: 600, padding: '2px 7px', borderRadius: '10px' }}>
                 {inspections.length}
               </span>
             </div>
-            <span className="text-xs text-slate-400">Oldest received first</span>
+            <span style={{ fontSize: '11.5px', color: '#94A3B8' }}>Oldest received first</span>
           </div>
 
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <Search size={13} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search return, SKU or customer..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+              style={{
+                width: '100%',
+                padding: '7px 10px 7px 30px',
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #CBD5E1',
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#0F172A',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
-          {/* Cards List */}
-          <div className="space-y-2">
+          {/* List Cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filteredList.map((item) => {
               const isSelected = item.returnId === selectedReturnId;
               return (
                 <div
                   key={item.returnId}
                   onClick={() => setSelectedReturnId(item.returnId)}
-                  className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-[#0B4EA2] bg-blue-50/40 ring-1 ring-[#0B4EA2]'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
-                  }`}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: isSelected ? '1.5px solid #0B4EA2' : '1px solid #E2E8F0',
+                    backgroundColor: isSelected ? '#EFF6FF' : '#FFFFFF',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900">{item.returnId}</span>
-                    <span className="text-[11px] text-slate-400">{item.receivedDate}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 700, color: '#0F172A', fontSize: '12.5px' }}>{item.returnId}</span>
+                    <span style={{ fontSize: '11px', color: '#94A3B8' }}>{item.receivedDate}</span>
                   </div>
-                  <div className="font-semibold text-slate-700 mt-1">{item.customer}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">{item.reportedReason}</div>
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[11px]">
-                    <span className="text-slate-600 truncate max-w-[150px]">{item.item}</span>
-                    <span className="font-bold text-slate-900">
-                      NPR {item.amount.toLocaleString()}
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginTop: '3px' }}>{item.customer}</div>
+                  <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>{item.reportedReason}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #F1F5F9', fontSize: '11px' }}>
+                    <span style={{ color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                      {item.item}
                     </span>
+                    <span style={{ fontWeight: 700, color: '#0F172A' }}>NPR {item.amount.toLocaleString()}</span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="text-[11px] text-slate-400 text-center pt-2 border-t border-slate-100">
+          <div style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'center', paddingTop: '12px', borderTop: '1px solid #F1F5F9', marginTop: '12px' }}>
             Showing 1–6 of 6 awaiting inspection
           </div>
         </div>
 
-        {/* Right Column: Item Inspection Workflow (8 cols) */}
+        {/* Right Column: Item Inspection Workflow */}
         {selectedCase && (
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
-            {/* Header info */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 gap-2">
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px 24px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1px solid #F1F5F9', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
                   {selectedCase.returnId} · Item inspection
                 </h2>
-                <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                  <span>Customer: <strong className="text-slate-800">{selectedCase.customer}</strong></span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+                  <span>Customer: <strong style={{ color: '#0F172A' }}>{selectedCase.customer}</strong></span>
                   <span>·</span>
-                  <span>Order: <strong className="text-slate-800">{selectedCase.orderId}</strong></span>
+                  <span>Order: <strong style={{ color: '#0F172A' }}>{selectedCase.orderId}</strong></span>
                   <span>·</span>
-                  <span>Reason: <strong className="text-slate-800">{selectedCase.reportedReason}</strong></span>
+                  <span>Reason: <strong style={{ color: '#0F172A' }}>{selectedCase.reportedReason}</strong></span>
                 </div>
               </div>
-              <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                Intake: <strong className="text-slate-800">{selectedCase.intake || 'RCV-5041 / 31 Oct · 16:40'}</strong> · Bin: <strong className="text-slate-800">{selectedCase.bin || 'QC-B04'}</strong>
+              <div style={{ fontSize: '11.5px', color: '#475569', backgroundColor: '#F8FAFC', padding: '6px 12px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                Intake: <strong style={{ color: '#0F172A' }}>{selectedCase.intake || 'RCV-5041 / 31 Oct · 16:40'}</strong> · Bin: <strong style={{ color: '#0F172A' }}>{selectedCase.bin || 'QC-B04'}</strong>
               </div>
             </div>
 
             {/* Step 1: Confirm item & quantity */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '10px' }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
                   1
                 </span>
-                Confirm item & quantity
+                <span>Confirm item & quantity</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12px' }}>
                 <div>
-                  <label className="text-slate-400 block font-medium">Expected SKU & Variant</label>
-                  <div className="font-semibold text-slate-900 mt-1">
+                  <div style={{ color: '#64748B', fontWeight: 500 }}>Expected SKU & Variant</div>
+                  <div style={{ fontWeight: 600, color: '#0F172A', marginTop: '4px' }}>
                     {selectedCase.expectedSku || `${selectedCase.sku} · ${selectedCase.variant}`}
                   </div>
                 </div>
                 <div>
-                  <label className="text-slate-400 block font-medium">Counted Quantity</label>
+                  <div style={{ color: '#64748B', fontWeight: 500 }}>Counted Quantity</div>
                   <input
                     type="number"
                     defaultValue={selectedCase.countedQuantity || 1}
-                    className="mt-1 w-20 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                    style={{
+                      marginTop: '4px',
+                      width: '70px',
+                      padding: '5px 8px',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '6px',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      color: '#0F172A',
+                      outline: 'none',
+                    }}
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block font-medium">SKU Match</label>
+                  <div style={{ color: '#64748B', fontWeight: 500 }}>SKU Match</div>
                   <select
                     value={skuMatch}
                     onChange={(e) => setSkuMatch(e.target.value)}
-                    className="mt-1 w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                    style={{
+                      marginTop: '4px',
+                      width: '100%',
+                      padding: '5px 8px',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#0F172A',
+                      outline: 'none',
+                    }}
                   >
                     <option value="Match verified">Match verified</option>
                     <option value="SKU mismatch">SKU mismatch</option>
@@ -408,20 +483,20 @@ export const AdminReturnInspectionsPage: React.FC = () => {
             </div>
 
             {/* Step 2: Assess condition */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '10px' }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
                   2
                 </span>
-                Assess condition
+                <span>Assess condition</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
-                  <label className="text-slate-500 font-semibold block">Item condition</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: '12px' }}>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '12px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <label style={{ display: 'block', color: '#475569', fontWeight: 600, marginBottom: '6px' }}>Item condition</label>
                   <select
                     value={itemCondition}
                     onChange={(e) => setItemCondition(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                    style={{ width: '100%', padding: '6px 10px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#0F172A', outline: 'none' }}
                   >
                     <option value="New / pristine">New / pristine</option>
                     <option value="Used / undamaged">Used / undamaged</option>
@@ -429,12 +504,12 @@ export const AdminReturnInspectionsPage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
-                  <label className="text-slate-500 font-semibold block">Packaging & accessories</label>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '12px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <label style={{ display: 'block', color: '#475569', fontWeight: 600, marginBottom: '6px' }}>Packaging & accessories</label>
                   <select
                     value={packagingStatus}
                     onChange={(e) => setPackagingStatus(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                    style={{ width: '100%', padding: '6px 10px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#0F172A', outline: 'none' }}
                   >
                     <option value="Original box intact">Original box intact</option>
                     <option value="Original box damaged">Original box damaged</option>
@@ -442,24 +517,24 @@ export const AdminReturnInspectionsPage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
-                  <label className="text-slate-500 font-semibold block">Reported damage verified</label>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '12px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <label style={{ display: 'block', color: '#475569', fontWeight: 600, marginBottom: '6px' }}>Reported damage verified</label>
                   <select
                     value={damageVerified}
                     onChange={(e) => setDamageVerified(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                    style={{ width: '100%', padding: '6px 10px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#0F172A', outline: 'none' }}
                   >
                     <option value="Yes - confirmed">Yes - confirmed</option>
                     <option value="No - unconfirmed">No - unconfirmed</option>
                   </select>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
-                  <label className="text-slate-500 font-semibold block">Use / wear / tags</label>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '12px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <label style={{ display: 'block', color: '#475569', fontWeight: 600, marginBottom: '6px' }}>Use / wear / tags</label>
                   <select
                     value={tagsStatus}
                     onChange={(e) => setTagsStatus(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                    style={{ width: '100%', padding: '6px 10px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#0F172A', outline: 'none' }}
                   >
                     <option value="Tags attached · Not used">Tags attached · Not used</option>
                     <option value="Signs of wear">Signs of wear</option>
@@ -470,31 +545,43 @@ export const AdminReturnInspectionsPage: React.FC = () => {
             </div>
 
             {/* Step 3: Document defect & evidence */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '10px' }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
                   3
                 </span>
-                Document defect & evidence
+                <span>Document defect & evidence</span>
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg text-slate-700 font-medium border border-slate-200">
-                  <FileText className="w-4 h-4 text-slate-500" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 12px', backgroundColor: '#F1F5F9', borderRadius: '6px', fontSize: '12px', color: '#475569', fontWeight: 500, border: '1px solid #E2E8F0' }}>
+                  <FileText size={14} color="#64748B" />
                   <span>{selectedCase.evidenceFile || 'damage-claim.jpg (388 KB)'}</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 cursor-pointer hover:text-slate-600" />
+                  <ExternalLink size={12} color="#94A3B8" style={{ cursor: 'pointer' }} />
                 </div>
                 <button
                   type="button"
                   onClick={() => alert('Photo upload dialog: Attach warehouse inspection photos.')}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-dashed border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition-colors"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 12px',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px dashed #CBD5E1',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Upload className="w-3.5 h-3.5 text-slate-500" />
-                  + Add inspection photo
+                  <Upload size={13} color="#64748B" />
+                  <span>+ Add inspection photo</span>
                 </button>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700">
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '6px' }}>
                   Inspection findings & notes
                 </label>
                 <textarea
@@ -502,21 +589,33 @@ export const AdminReturnInspectionsPage: React.FC = () => {
                   value={findingsNote}
                   onChange={(e) => setFindingsNote(e.target.value)}
                   placeholder="Record defect description, transit shock observations, or repackaging state..."
-                  className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '7px',
+                    fontSize: '12px',
+                    color: '#0F172A',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                  }}
                 />
               </div>
             </div>
 
             {/* Step 4: Choose disposition & decision */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '10px' }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
                   4
                 </span>
-                Choose disposition & decision
+                <span>Choose disposition & decision</span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '18px' }}>
                 {[
                   { id: 'Scrap / Dispose', label: 'Scrap / Dispose', note: 'Unsalvageable defect' },
                   { id: 'Restock to inventory', label: 'Restock to inventory', note: 'Grade A pristine' },
@@ -528,26 +627,41 @@ export const AdminReturnInspectionsPage: React.FC = () => {
                     <div
                       key={disp.id}
                       onClick={() => setDisposition(disp.id)}
-                      className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
-                        isDispSelected
-                          ? 'border-[#0B4EA2] bg-blue-50/50 text-[#0B4EA2] font-semibold'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
-                      }`}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        border: isDispSelected ? '1.5px solid #0B4EA2' : '1px solid #E2E8F0',
+                        backgroundColor: isDispSelected ? '#EFF6FF' : '#FFFFFF',
+                        color: isDispSelected ? '#0B4EA2' : '#0F172A',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <div className="font-semibold">{disp.label}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{disp.note}</div>
+                      <div style={{ fontWeight: 600, fontSize: '12px' }}>{disp.label}</div>
+                      <div style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>{disp.note}</div>
                     </div>
                   );
                 })}
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 flex flex-wrap items-center gap-3">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   disabled={isSubmitting}
                   onClick={() => handleDecision('Passed')}
-                  className="px-5 py-2.5 rounded-xl bg-[#0B4EA2] text-white hover:bg-blue-800 font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
+                  style={{
+                    backgroundColor: '#0B4EA2',
+                    border: 'none',
+                    borderRadius: '7px',
+                    padding: '9px 18px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    opacity: isSubmitting ? 0.7 : 1,
+                  }}
                 >
                   {isSubmitting ? 'Submitting...' : 'Pass inspection (Eligible for refund)'}
                 </button>
@@ -555,14 +669,33 @@ export const AdminReturnInspectionsPage: React.FC = () => {
                   type="button"
                   disabled={isSubmitting}
                   onClick={() => handleDecision('Failed')}
-                  className="px-5 py-2.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #FECACA',
+                    borderRadius: '7px',
+                    padding: '9px 18px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#DC2626',
+                    cursor: 'pointer',
+                    opacity: isSubmitting ? 0.7 : 1,
+                  }}
                 >
                   Fail inspection (Ineligible)
                 </button>
                 <button
                   type="button"
                   onClick={() => alert('Inspection draft saved to local station.')}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '7px',
+                    padding: '9px 16px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
                 >
                   Save inspection draft
                 </button>
@@ -572,8 +705,8 @@ export const AdminReturnInspectionsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Subtle Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-200/60">
+      {/* 4. Subtle Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: '#94A3B8', paddingTop: '16px', borderTop: '1px solid #E2E8F0', marginTop: '20px' }}>
         <span>Example data · 01 Nov 2026, 10:30 NPT · All amounts in NPR</span>
         <span>Everest Pasal / Operations</span>
       </div>

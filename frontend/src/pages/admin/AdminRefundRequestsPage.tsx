@@ -9,6 +9,7 @@ import {
   Info,
   Clock,
   ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { ApiClient } from '../../api/client.js';
 import { exportToCsv } from '../../utils/documentExport.js';
@@ -114,7 +115,6 @@ export const AdminRefundRequestsPage: React.FC = () => {
     try {
       const res: any = await ApiClient.get('/admin/returns/refund-requests');
       if (res && res.data && res.data.requests && res.data.requests.length > 0) {
-        // Map backend returnsStore to match RefundItem
         const mapped = res.data.requests.map((r: any) => ({
           returnId: r.returnId,
           orderId: r.orderId,
@@ -219,174 +219,249 @@ export const AdminRefundRequestsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div style={{ padding: '24px 28px', backgroundColor: '#F8FAFC', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
+      {/* 1. Header Area matching media_1795254092872_12b3efef.jpg */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Refund Requests</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+            Refund Requests
+          </h1>
+          <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
             Authorize eligible refund amounts after inspection, before any payout is submitted.
           </p>
         </div>
         <button
           onClick={handleExport}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors shadow-sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '8px',
+            padding: '9px 16px',
+            fontSize: '12.5px',
+            fontWeight: 600,
+            color: '#0F172A',
+            cursor: 'pointer',
+          }}
         >
-          <Download className="w-4 h-4 text-slate-500" />
-          Export authorization queue
+          <Download size={14} color="#0F172A" />
+          <span>Export authorization queue</span>
         </button>
       </div>
 
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            {successMessage}
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            backgroundColor: '#ECFDF5',
+            border: '1px solid #A7F3D0',
+            color: '#065F46',
+            fontSize: '13px',
+            fontWeight: 500,
+            marginBottom: '16px',
+          }}
+        >
+          <CheckCircle2 size={16} color="#059669" />
+          <span>{successMessage}</span>
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      {/* 2. Top 3 KPI Cards matching media_1795254092872_12b3efef.jpg */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Awaiting Refund Authorization
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">{refunds.length} cases</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">All four have passed return inspection</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            {refunds.length} cases
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            All four have passed return inspection
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Total requested
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">
-              NPR {totalRequested.toLocaleString()}
-            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            NPR {totalRequested.toLocaleString()}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
             NPR 2,100 + NPR 4,500 + NPR 1,250 + NPR 850
-          </p>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Authorized in this queue
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">NPR 0</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">No authorization decision has been saved</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            NPR 0
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            No authorization decision has been saved
+          </div>
         </div>
       </div>
 
-      {/* Main Section: Eligible refunds */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* 3. Main Section: Eligible refunds Table matching media_1795254092872_12b3efef.jpg */}
+      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
+        {/* Table Title bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F1F5F9' }}>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Eligible refunds</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {filteredRefunds.length} of {refunds.length} cases · No active filters
-            </p>
+            <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              Eligible refunds
+            </h2>
           </div>
-          <div className="text-xs text-slate-400 font-medium">
-            Sorted by inspection completion
+          <div style={{ fontSize: '12px', color: '#64748B' }}>
+            {filteredRefunds.length} of {refunds.length} cases · No active filters
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search return, order or customer..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2] focus:border-transparent"
-            />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '260px' }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
+              <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search return, order or customer..."
+                style={{
+                  width: '100%',
+                  padding: '7.5px 12px 7.5px 32px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '6px',
+                  fontSize: '12.5px',
+                  color: '#0F172A',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              style={{
+                padding: '7.5px 12px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                borderRadius: '6px',
+                fontSize: '12.5px',
+                color: '#475569',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="ALL">All original payment methods</option>
+              <option value="eSewa">eSewa</option>
+              <option value="Visa">Visa Card</option>
+              <option value="Khalti">Khalti</option>
+            </select>
+
+            <div style={{ padding: '7.5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', color: '#475569' }}>
+              Inspection passed ▾
+            </div>
           </div>
 
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
-          >
-            <option value="ALL">All original payment methods</option>
-            <option value="eSewa">eSewa</option>
-            <option value="Visa">Visa Card</option>
-            <option value="Khalti">Khalti</option>
-          </select>
-
-          <div className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 flex items-center gap-1.5">
-            <span>Inspection passed</span>
+          <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
+            Sorted by inspection completion
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50/70 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200/60">
-              <tr>
-                <th className="py-3.5 px-6">Return / Customer</th>
-                <th className="py-3.5 px-6">Order / Reason</th>
-                <th className="py-3.5 px-6">Original Payment</th>
-                <th className="py-3.5 px-6">Requested</th>
-                <th className="py-3.5 px-6">Authorized Amount</th>
-                <th className="py-3.5 px-6">Eligibility</th>
-                <th className="py-3.5 px-6 text-right">Action</th>
+        {/* Table Rows */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12.5px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '11px', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '11px 20px' }}>RETURN / CUSTOMER</th>
+                <th style={{ padding: '11px 16px' }}>ORDER / REASON</th>
+                <th style={{ padding: '11px 16px' }}>ORIGINAL PAYMENT</th>
+                <th style={{ padding: '11px 16px' }}>REQUESTED</th>
+                <th style={{ padding: '11px 16px' }}>AUTHORIZED AMOUNT</th>
+                <th style={{ padding: '11px 16px' }}>ELIGIBILITY</th>
+                <th style={{ padding: '11px 20px', textAlign: 'right' }}>ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {filteredRefunds.map((item) => {
                 const isSelected = item.returnId === selectedReturnId;
                 return (
                   <tr
                     key={item.returnId}
                     onClick={() => setSelectedReturnId(item.returnId)}
-                    className={`cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50/60'
-                    }`}
+                    style={{
+                      borderBottom: '1px solid #F1F5F9',
+                      backgroundColor: isSelected ? '#F0F7FF' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                    }}
                   >
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-900">{item.returnId}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{item.customer}</div>
+                    <td style={{ padding: '13px 20px' }}>
+                      <div style={{ fontWeight: 600, color: '#0F172A' }}>{item.returnId}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>{item.customer}</div>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-slate-900">{item.orderId}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{item.reason}</div>
+                    <td style={{ padding: '13px 16px' }}>
+                      <div style={{ fontWeight: 500, color: '#0F172A' }}>{item.orderId}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>{item.reason}</div>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-slate-900">{item.originalPaymentMethod}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">Paid {item.paidDate}</div>
+                    <td style={{ padding: '13px 16px' }}>
+                      <div style={{ fontWeight: 500, color: '#0F172A' }}>{item.originalPaymentMethod}</div>
+                      <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '2px' }}>Paid {item.paidDate}</div>
                     </td>
-                    <td className="py-4 px-6 font-semibold text-slate-900">
+                    <td style={{ padding: '13px 16px', fontWeight: 600, color: '#0F172A' }}>
                       NPR {item.amount.toLocaleString()}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="text-slate-600 text-xs">Not authorized</div>
-                      <div className="text-xs text-slate-400 mt-0.5">
+                    <td style={{ padding: '13px 16px' }}>
+                      <div style={{ color: '#475569', fontSize: '12px' }}>Not authorized</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
                         Proposed: NPR {item.amount.toLocaleString()}
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <td style={{ padding: '13px 16px' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '3px 9px',
+                          borderRadius: '12px',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          backgroundColor: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          color: '#047857',
+                        }}
+                      >
                         {item.eligibility}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td style={{ padding: '13px 20px', textAlign: 'right' }}>
                       {isSelected ? (
-                        <span className="text-xs font-semibold text-[#0B4EA2]">Reviewing</span>
+                        <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0B4EA2' }}>Reviewing</span>
                       ) : (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedReturnId(item.returnId);
                           }}
-                          className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            color: '#0B4EA2',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
                         >
                           Review
                         </button>
@@ -399,105 +474,117 @@ export const AdminRefundRequestsPage: React.FC = () => {
           </table>
         </div>
 
-        <div className="p-4 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 gap-2">
+        {/* Table Footer */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0', fontSize: '12px', color: '#64748B' }}>
           <span>Showing all 4 eligible refunds awaiting authorization</span>
-          <span className="font-semibold text-slate-700">
+          <span style={{ fontWeight: 600, color: '#0F172A' }}>
             Total requested: NPR {totalRequested.toLocaleString()}
           </span>
         </div>
       </div>
 
-      {/* Bottom Split Card: Detail Review & Original Payment */}
+      {/* 4. Bottom Split Card: Detail Review & Original Payment matching media_1795254092872_12b3efef.jpg */}
       {selectedRefund && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left / Main Section (2 cols): Authorization Review */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 gap-2">
-              <div className="flex items-center gap-3">
-                <h3 className="text-base font-bold text-slate-900">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          {/* Left: Authorization Review Panel */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1px solid #F1F5F9', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
                   {selectedRefund.returnId} · Authorization review
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 600, backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857' }}>
                   {selectedRefund.eligibility}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 600, backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }}>
                   {selectedRefund.status}
                 </span>
               </div>
-              <span className="text-sm font-semibold text-slate-800">
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>
                 {selectedRefund.customer}
               </span>
             </div>
 
-            {/* Inspection details info */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Return / original order</div>
-                <div className="text-slate-900 font-semibold mt-1">
+            {/* Inspection Metadata 3-grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Return / original order</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRefund.returnId} / {selectedRefund.orderId}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Inspection / inspector</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Inspection / inspector</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRefund.inspector}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Passed at</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Passed at</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedRefund.inspectionPassedAt}
                 </div>
               </div>
             </div>
 
-            {/* Inspection Note Box */}
-            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/70 text-xs text-slate-700 italic leading-relaxed">
+            {/* Quote Note */}
+            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px', fontSize: '12px', color: '#475569', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
               &quot;{selectedRefund.inspectionNote}&quot;
             </div>
 
-            {/* Calculation summary */}
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="text-xs text-slate-400 font-medium">Item paid</div>
-                <div className="text-base font-bold text-slate-900 mt-1">
+            {/* Calculation 3-box */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center', marginBottom: '16px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontSize: '11.5px', color: '#64748B' }}>Item paid</div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>
                   NPR {selectedRefund.amount.toLocaleString()}
                 </div>
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="text-xs text-slate-400 font-medium">Deductions / fees</div>
-                <div className="text-base font-bold text-slate-900 mt-1">NPR 0</div>
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontSize: '11.5px', color: '#64748B' }}>Deductions / fees</div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>NPR 0</div>
               </div>
-              <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-100">
-                <div className="text-xs text-emerald-700 font-medium">Maximum eligible</div>
-                <div className="text-base font-bold text-emerald-800 mt-1">
+              <div style={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontSize: '11.5px', color: '#065F46', fontWeight: 500 }}>Maximum eligible</div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#065F46', marginTop: '4px' }}>
                   NPR {selectedRefund.amount.toLocaleString()}
                 </div>
               </div>
             </div>
 
-            {/* Proposed authorization input */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700">
+            {/* Proposed Authorization Input */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '6px' }}>
                 Proposed authorization
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type="number"
                   value={authorizedInputAmount}
                   onChange={(e) => setAuthorizedInputAmount(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                  style={{
+                    width: '100%',
+                    padding: '8.5px 14px',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '7px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#0F172A',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
                 />
-                <Edit3 className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Edit3 size={14} color="#94A3B8" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               </div>
-              <p className="text-[11px] text-slate-400">
+              <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
                 Requested: NPR {selectedRefund.amount.toLocaleString()}. Cannot exceed the eligible amount. A reduction requires a reason.
-              </p>
+              </div>
             </div>
 
-            {/* Finance decision note */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700">
+            {/* Finance Decision Note */}
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '6px' }}>
                 Finance decision note
               </label>
               <textarea
@@ -505,16 +592,37 @@ export const AdminRefundRequestsPage: React.FC = () => {
                 value={decisionNote}
                 onChange={(e) => setDecisionNote(e.target.value)}
                 placeholder="Full item value proposed. Add your authorization rationale before saving."
-                className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '7px',
+                  fontSize: '12.5px',
+                  color: '#0F172A',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                }}
               />
             </div>
 
-            {/* Action buttons */}
-            <div className="pt-2 flex flex-wrap items-center gap-3">
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button
                 type="button"
                 onClick={() => alert('Hold marked. Clarification requested from warehouse QC team.')}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '7px',
+                  padding: '9px 18px',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                }}
               >
                 Hold for clarification
               </button>
@@ -522,78 +630,90 @@ export const AdminRefundRequestsPage: React.FC = () => {
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleAuthorize}
-                className="px-6 py-2.5 rounded-xl bg-[#0B4EA2] text-white hover:bg-blue-800 font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
+                style={{
+                  backgroundColor: '#0B4EA2',
+                  border: 'none',
+                  borderRadius: '7px',
+                  padding: '9px 20px',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  opacity: isSubmitting ? 0.7 : 1,
+                }}
               >
                 {isSubmitting ? 'Saving...' : `Authorize NPR ${authorizedInputAmount.toLocaleString()}`}
               </button>
             </div>
           </div>
 
-          {/* Right Card (1 col): Original Payment */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between space-y-6">
-            <div className="space-y-5">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-900">Original payment</h3>
-                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          {/* Right: Original Payment Panel */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1px solid #F1F5F9', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                  Original payment
+                </h3>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#047857', backgroundColor: '#ECFDF5', padding: '2px 8px', borderRadius: '10px', border: '1px solid #A7F3D0' }}>
                   Verified record
                 </span>
               </div>
 
-              <div className="space-y-4 text-xs">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
                 <div>
-                  <div className="text-slate-400 font-medium">Method / transaction</div>
-                  <div className="text-slate-900 font-semibold text-sm mt-1">
+                  <div style={{ color: '#64748B', fontWeight: 500 }}>Method / transaction</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginTop: '3px' }}>
                     {selectedRefund.originalPaymentMethod} / {selectedRefund.transactionRef}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <div className="text-slate-400 font-medium">Paid amount</div>
-                    <div className="text-slate-900 font-semibold text-sm mt-1">
+                    <div style={{ color: '#64748B', fontWeight: 500 }}>Paid amount</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginTop: '3px' }}>
                       NPR {selectedRefund.amount.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <div className="text-slate-400 font-medium">Paid on</div>
-                    <div className="text-slate-900 font-semibold text-sm mt-1">
+                    <div style={{ color: '#64748B', fontWeight: 500 }}>Paid on</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginTop: '3px' }}>
                       26 Oct 2026
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-slate-400 font-medium">Refund destination</div>
-                  <div className="text-slate-900 font-semibold mt-1">
+                  <div style={{ color: '#64748B', fontWeight: 500 }}>Refund destination</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A', marginTop: '3px' }}>
                     Original payment source only
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-slate-400 font-medium">Prior refunds on this payment</div>
-                  <div className="text-slate-700 mt-1">
+                  <div style={{ color: '#64748B', fontWeight: 500 }}>Prior refunds on this payment</div>
+                  <div style={{ fontSize: '12px', color: '#475569', marginTop: '3px' }}>
                     NPR 0. No existing payout job for {selectedRefund.returnId}.
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Info warning callout */}
-            <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 space-y-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-blue-950">
-                <Info className="w-4 h-4 text-blue-600 shrink-0" />
-                Authorization is not payment
+            {/* Info callout */}
+            <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '12px 14px', fontSize: '11.5px', color: '#1E40AF', marginTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#1E3A8A', marginBottom: '4px' }}>
+                <Info size={14} color="#2563EB" />
+                <span>Authorization is not payment</span>
               </div>
-              <p className="text-[11px] text-blue-800 leading-relaxed">
+              <div style={{ lineHeight: 1.45 }}>
                 Saving this decision records the allowed amount. A separate, uniquely referenced payout job must then be submitted from Refund Processing.
-              </p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Subtle Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-200/60">
+      {/* 5. Subtle Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: '#94A3B8', paddingTop: '16px', borderTop: '1px solid #E2E8F0' }}>
         <span>Example data · 01 Nov 2026, 10:30 NPT · All amounts in NPR</span>
         <span>Everest Pasal / Operations</span>
       </div>

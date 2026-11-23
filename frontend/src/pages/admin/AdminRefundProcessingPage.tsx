@@ -45,7 +45,8 @@ export const AdminRefundProcessingPage: React.FC = () => {
       providerRef: 'ES-RF-7035',
       currentState: 'Payment issue',
       issueSubstate: 'Destination rejected',
-      issueDetail: 'eSewa returned a destination rejected response at 31 Oct · 13:42. The target mobile wallet was reported inactive or closed. The customer\'s card/wallet was not debited.',
+      issueDetail:
+        'eSewa returned a destination rejected response at 31 Oct · 13:42. The target mobile wallet was reported inactive or closed. The customer\'s card/wallet was not debited.',
       lastChecked: '01 Nov 2026 · 10:10 NPT',
       isIssue: true,
     },
@@ -61,7 +62,8 @@ export const AdminRefundProcessingPage: React.FC = () => {
       providerRef: 'BT-RF-7024',
       currentState: 'Payment issue',
       issueSubstate: 'Account validation failed',
-      issueDetail: 'Account validation failed at clearing bank. Account number does not match registered account name.',
+      issueDetail:
+        'Account validation failed at clearing bank. Account number does not match registered account name.',
       lastChecked: '31 Oct 2026 · 12:00 NPT',
       isIssue: true,
     },
@@ -203,7 +205,6 @@ export const AdminRefundProcessingPage: React.FC = () => {
       fetchProcessingJobs();
     } catch (err) {
       console.error('Reconciliation error:', err);
-      // update locally
       setJobs((prev) =>
         prev.map((j) =>
           j.payoutId === selectedJob.payoutId
@@ -218,35 +219,89 @@ export const AdminRefundProcessingPage: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (state: string) => {
+  const renderStatusBadge = (state: string) => {
     switch (state.toLowerCase()) {
       case 'payment issue':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '2.5px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FECACA',
+              color: '#B91C1C',
+            }}
+          >
             Payment issue
           </span>
         );
       case 'processing':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '2.5px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              backgroundColor: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              color: '#1D4ED8',
+            }}
+          >
             Processing
           </span>
         );
       case 'submitted':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '2.5px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              backgroundColor: '#F1F5F9',
+              border: '1px solid #CBD5E1',
+              color: '#475569',
+            }}
+          >
             Submitted
           </span>
         );
       case 'delayed':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '2.5px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              backgroundColor: '#FFFBEB',
+              border: '1px solid #FDE68A',
+              color: '#B45309',
+            }}
+          >
             Delayed
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '2.5px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              backgroundColor: '#F1F5F9',
+              color: '#475569',
+            }}
+          >
             {state}
           </span>
         );
@@ -254,88 +309,129 @@ export const AdminRefundProcessingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Refund Processing</h1>
-        <p className="text-sm text-slate-500 mt-1">
+    <div style={{ padding: '24px 28px', backgroundColor: '#F8FAFC', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
+      {/* 1. Header Area matching media_1795254092885_d0756584.jpg */}
+      <div style={{ marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+          Refund Processing
+        </h1>
+        <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
           Track automated payout submissions, monitor gateway status, and resolve exceptions before confirmation.
         </p>
       </div>
 
       {successNote && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            {successNote}
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            backgroundColor: '#ECFDF5',
+            border: '1px solid #A7F3D0',
+            color: '#065F46',
+            fontSize: '13px',
+            fontWeight: 500,
+            marginBottom: '16px',
+          }}
+        >
+          <CheckCircle2 size={16} color="#059669" />
+          <span>{successNote}</span>
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      {/* 2. Top 3 KPI Cards matching media_1795254092885_d0756584.jpg */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Refund Processing
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">14 jobs</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Submitted or pending provider confirmation</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            14 jobs
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            Submitted or pending provider confirmation
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-[#E63946] uppercase tracking-wider">
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#E63946', fontWeight: 600, marginBottom: '6px' }}>
             Refund Payment Issues
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-[#E63946]">2 jobs</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Require reconciliation before a safe retry</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#E63946', lineHeight: 1.1 }}>
+            2 jobs
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            Require reconciliation before a safe retry
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px 20px' }}>
+          <div style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500, marginBottom: '6px' }}>
             Queue scope
-          </span>
-          <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-bold text-slate-900">16 active jobs</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Not completed · Excluded from Refund History</p>
+          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1 }}>
+            16 active jobs
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+            Not completed · Excluded from Refund History
+          </div>
         </div>
       </div>
 
-      {/* Payout Monitor Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* 3. Payout Monitor Table matching media_1795254092885_d0756584.jpg */}
+      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F1F5F9' }}>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Payout monitor</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              Payout monitor
+            </h2>
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
               Automated submission pipeline and exception resolution
-            </p>
+            </div>
           </div>
-          <span className="text-xs font-medium text-slate-400">
+          <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
             {jobs.length} active jobs
           </span>
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '340px' }}>
+            <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search job ID, return, order or customer..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+              style={{
+                width: '100%',
+                padding: '7.5px 12px 7.5px 32px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                borderRadius: '6px',
+                fontSize: '12.5px',
+                color: '#0F172A',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
           <select
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+            style={{
+              padding: '7.5px 12px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '6px',
+              fontSize: '12.5px',
+              color: '#475569',
+              outline: 'none',
+              cursor: 'pointer',
+            }}
           >
             <option value="ALL">All payout states</option>
             <option value="Payment issue">Payment issue</option>
@@ -347,7 +443,16 @@ export const AdminRefundProcessingPage: React.FC = () => {
           <select
             value={providerFilter}
             onChange={(e) => setProviderFilter(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]"
+            style={{
+              padding: '7.5px 12px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '6px',
+              fontSize: '12.5px',
+              color: '#475569',
+              outline: 'none',
+              cursor: 'pointer',
+            }}
           >
             <option value="ALL">All providers</option>
             <option value="eSewa">eSewa</option>
@@ -356,72 +461,83 @@ export const AdminRefundProcessingPage: React.FC = () => {
             <option value="Visa">Visa Card</option>
             <option value="Mastercard">Mastercard</option>
           </select>
+
+          <div style={{ padding: '7.5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', color: '#475569' }}>
+            All methods ▾
+          </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50/70 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200/60">
-              <tr>
-                <th className="py-3.5 px-6">Payout Job</th>
-                <th className="py-3.5 px-6">Return / Customer</th>
-                <th className="py-3.5 px-6">Method</th>
-                <th className="py-3.5 px-6">Amount</th>
-                <th className="py-3.5 px-6">Submitted</th>
-                <th className="py-3.5 px-6">Provider Ref</th>
-                <th className="py-3.5 px-6">Current State</th>
-                <th className="py-3.5 px-6 text-right">Action</th>
+        {/* Table Rows */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12.5px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '11px', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '11px 20px' }}>PAYOUT JOB</th>
+                <th style={{ padding: '11px 16px' }}>RETURN / CUSTOMER</th>
+                <th style={{ padding: '11px 16px' }}>METHOD</th>
+                <th style={{ padding: '11px 16px' }}>AMOUNT</th>
+                <th style={{ padding: '11px 16px' }}>SUBMITTED</th>
+                <th style={{ padding: '11px 16px' }}>PROVIDER REF</th>
+                <th style={{ padding: '11px 16px' }}>CURRENT STATE</th>
+                <th style={{ padding: '11px 20px', textAlign: 'right' }}>ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {filteredJobs.map((job) => {
                 const isSelected = job.payoutId === selectedPayoutId;
                 return (
                   <tr
                     key={job.payoutId}
                     onClick={() => setSelectedPayoutId(job.payoutId)}
-                    className={`cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50/60'
-                    }`}
+                    style={{
+                      borderBottom: '1px solid #F1F5F9',
+                      backgroundColor: isSelected ? '#F0F7FF' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                    }}
                   >
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-900">{job.payoutId}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{job.uniqueRef}</div>
+                    <td style={{ padding: '13px 20px' }}>
+                      <div style={{ fontWeight: 600, color: '#0F172A' }}>{job.payoutId}</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', fontFamily: 'monospace' }}>{job.uniqueRef}</div>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-slate-900">{job.returnId}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{job.customer}</div>
+                    <td style={{ padding: '13px 16px' }}>
+                      <div style={{ fontWeight: 500, color: '#0F172A' }}>{job.returnId}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>{job.customer}</div>
                     </td>
-                    <td className="py-4 px-6 font-medium text-slate-900">
+                    <td style={{ padding: '13px 16px', fontWeight: 500, color: '#0F172A' }}>
                       {job.method}
                     </td>
-                    <td className="py-4 px-6 font-semibold text-slate-900">
+                    <td style={{ padding: '13px 16px', fontWeight: 600, color: '#0F172A' }}>
                       NPR {job.amount.toLocaleString()}
                     </td>
-                    <td className="py-4 px-6 text-xs text-slate-500">
+                    <td style={{ padding: '13px 16px', fontSize: '12px', color: '#64748B' }}>
                       {job.submittedDate}
                     </td>
-                    <td className="py-4 px-6 text-xs font-mono text-slate-700">
+                    <td style={{ padding: '13px 16px', fontSize: '11.5px', fontFamily: 'monospace', color: '#475569' }}>
                       {job.providerRef}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col items-start gap-1">
-                        {getStatusBadge(job.currentState)}
-                        <span className="text-[11px] text-slate-400">
-                          {job.issueSubstate}
-                        </span>
+                    <td style={{ padding: '13px 16px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
+                        {renderStatusBadge(job.currentState)}
+                        <span style={{ fontSize: '11px', color: '#94A3B8' }}>{job.issueSubstate}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td style={{ padding: '13px 20px', textAlign: 'right' }}>
                       {job.isIssue ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedPayoutId(job.payoutId);
                           }}
-                          className={`text-xs font-semibold ${
-                            isSelected ? 'text-[#0B4EA2]' : 'text-rose-600 hover:text-rose-800'
-                          }`}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            color: isSelected ? '#0B4EA2' : '#DC2626',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
                         >
                           Review issue
                         </button>
@@ -431,7 +547,15 @@ export const AdminRefundProcessingPage: React.FC = () => {
                             e.stopPropagation();
                             setSelectedPayoutId(job.payoutId);
                           }}
-                          className="text-xs font-semibold text-amber-600 hover:text-amber-800"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            color: '#D97706',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
                         >
                           Reconcile →
                         </button>
@@ -441,7 +565,15 @@ export const AdminRefundProcessingPage: React.FC = () => {
                             e.stopPropagation();
                             setSelectedPayoutId(job.payoutId);
                           }}
-                          className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
                         >
                           Check status →
                         </button>
@@ -451,7 +583,15 @@ export const AdminRefundProcessingPage: React.FC = () => {
                             e.stopPropagation();
                             setSelectedPayoutId(job.payoutId);
                           }}
-                          className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            color: '#0B4EA2',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
                         >
                           View job
                         </button>
@@ -465,141 +605,172 @@ export const AdminRefundProcessingPage: React.FC = () => {
         </div>
 
         {/* Pagination Footer */}
-        <div className="p-4 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0', fontSize: '12px', color: '#64748B' }}>
           <span>Showing 1–8 of 16 active jobs</span>
-          <div className="flex items-center gap-1 self-end sm:self-auto">
-            <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button style={{ padding: '5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
               Previous
             </button>
-            <button className="px-3 py-1.5 rounded-lg bg-[#0B4EA2] text-white font-semibold">
+            <button style={{ padding: '5px 12px', backgroundColor: '#0B4EA2', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>
               1
             </button>
-            <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+            <button style={{ padding: '5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
               2
             </button>
-            <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+            <button style={{ padding: '5px 12px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
               Next
             </button>
           </div>
         </div>
       </div>
 
-      {/* Bottom Split Card: Payment Issue Review & Reconcile Guidance */}
+      {/* 4. Bottom Split Card: Payment Issue Review & Reconcile Guidance matching media_1795254092885_d0756584.jpg */}
       {selectedJob && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left / Main Section (2 cols): Issue Review */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          {/* Left: Issue Review Panel */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1px solid #F1F5F9', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
                 {selectedJob.payoutId} · Payment issue review
               </h3>
-              <span className="text-sm font-semibold text-slate-800">
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>
                 {selectedJob.customer}
               </span>
             </div>
 
             {/* Error Banner Callout */}
-            <div className="p-4 rounded-xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1">
-              <div className="font-semibold text-rose-950 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                {selectedJob.issueDetail || 'Gateway reported destination rejected error.'}
+            <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '12px 14px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12.5px', fontWeight: 600, color: '#991B1B' }}>
+                <AlertCircle size={15} color="#DC2626" />
+                <span>{selectedJob.issueDetail || 'Gateway reported destination rejected error.'}</span>
               </div>
-              <p className="text-[11px] text-rose-700">
+              <div style={{ fontSize: '11.5px', color: '#B91C1C', marginTop: '4px', paddingLeft: '22px' }}>
                 The target mobile wallet was reported inactive or closed. The customer&apos;s card/wallet was not debited.
-              </p>
+              </div>
             </div>
 
             {/* 4 Detail Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Return / original order</div>
-                <div className="text-slate-900 font-semibold mt-1">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '18px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Return / original order</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px' }}>
                   {selectedJob.returnId} / {selectedJob.orderId}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Unique payout ref</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Unique payout ref</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px', fontFamily: 'monospace' }}>
                   {selectedJob.uniqueRef}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Amount to refund</div>
-                <div className="text-slate-900 font-bold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Amount to refund</div>
+                <div style={{ fontSize: '13px', color: '#0F172A', fontWeight: 700, marginTop: '3px' }}>
                   NPR {selectedJob.amount.toLocaleString()}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="text-slate-400 font-medium">Provider reference</div>
-                <div className="text-slate-900 font-semibold mt-1">
+              <div style={{ backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Provider reference</div>
+                <div style={{ fontSize: '12.5px', color: '#0F172A', fontWeight: 600, marginTop: '3px', fontFamily: 'monospace' }}>
                   {selectedJob.providerRef}
                 </div>
               </div>
             </div>
 
             {/* Action buttons */}
-            <div className="pt-2 flex flex-wrap items-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 disabled={isReconciling}
                 onClick={handleReconcile}
-                className="px-5 py-2.5 rounded-xl bg-[#0B4EA2] text-white hover:bg-blue-800 font-semibold text-sm transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  backgroundColor: '#0B4EA2',
+                  border: 'none',
+                  borderRadius: '7px',
+                  padding: '9px 20px',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  opacity: isReconciling ? 0.7 : 1,
+                }}
               >
-                <RefreshCw className={`w-4 h-4 ${isReconciling ? 'animate-spin' : ''}`} />
-                Reconcile original job
+                <RefreshCw size={14} color="#FFFFFF" className={isReconciling ? 'animate-spin' : ''} />
+                <span>Reconcile original job</span>
               </button>
               <button
                 type="button"
                 onClick={() => alert(`Reviewing destination credentials for ${selectedJob.customer}...`)}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '7px',
+                  padding: '9px 16px',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                }}
               >
                 Review destination
               </button>
               <button
                 type="button"
                 onClick={() => alert(`Showing prior gateway attempts for ${selectedJob.uniqueRef}`)}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium text-sm transition-colors"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '7px',
+                  padding: '9px 16px',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                }}
               >
                 View attempts
               </button>
             </div>
           </div>
 
-          {/* Right Card (1 col): Safe Retry Policy */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 text-[#E63946] font-bold text-sm">
-                <ShieldAlert className="w-5 h-5 shrink-0" />
-                Reconcile before retrying
+          {/* Right: Safe Retry Policy */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9', marginBottom: '14px', color: '#E63946', fontWeight: 700, fontSize: '13.5px' }}>
+                <ShieldAlert size={17} color="#E63946" />
+                <span>Reconcile before retrying</span>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5, margin: '0 0 14px 0' }}>
                 Never retry a failed payout with the same provider without first reconciling the original reference. Reconciling prevents duplicate debits if the provider previously accepted the transaction.
               </p>
-              <div className="space-y-3 pt-2 text-xs text-slate-700 font-medium">
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-slate-900">1.</span>
-                  <span>Query provider status with <code className="text-slate-800 bg-slate-100 px-1 py-0.5 rounded font-mono">{selectedJob.providerRef}</code>.</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: '#0F172A' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontWeight: 700 }}>1.</span>
+                  <span>Query provider status with <code style={{ backgroundColor: '#F1F5F9', padding: '2px 5px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '11.5px' }}>{selectedJob.providerRef}</code>.</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-slate-900">2.</span>
-                  <span>If provider confirms zero debit, close <code className="text-slate-800 bg-slate-100 px-1 py-0.5 rounded font-mono">{selectedJob.payoutId}</code> as canceled.</span>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontWeight: 700 }}>2.</span>
+                  <span>If provider confirms zero debit, close <code style={{ backgroundColor: '#F1F5F9', padding: '2px 5px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '11.5px' }}>{selectedJob.payoutId}</code> as canceled.</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-slate-900">3.</span>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontWeight: 700 }}>3.</span>
                   <span>Obtain verified alternate destination from the customer before re-submitting.</span>
                 </div>
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-100">
+            <div style={{ fontSize: '11px', color: '#94A3B8', paddingTop: '14px', borderTop: '1px solid #E2E8F0', marginTop: '16px' }}>
               Provider compliance protocol · Nepal Rastra Bank payment directive
             </div>
           </div>
         </div>
       )}
 
-      {/* Subtle Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-200/60">
+      {/* 5. Subtle Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: '#94A3B8', paddingTop: '16px', borderTop: '1px solid #E2E8F0' }}>
         <span>Example data · 01 Nov 2026, 10:30 NPT · All amounts in NPR</span>
         <span>Everest Pasal / Operations</span>
       </div>
