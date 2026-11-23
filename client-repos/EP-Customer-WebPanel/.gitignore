@@ -1,0 +1,52 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.keystore
+credentials.json
+token.json
+client_secret*.json
+service-account*.json
+
+# Dependencies & Build outputs
+node_modules/
+dist/
+dist-ssr/
+build/
+out/
+coverage/
+*.tsbuildinfo
+.turbo/
+.cache/
+
+# AI Generated Files & Tool Metadata
+.gemini/
+.claude/
+.cursor/
+.cursorrules
+.windsurf/
+.copilot/
+.ai/
+brain/
+scratch/
+.system_generated/
+transcripts/
+*.jsonl
+
+# Logs & OS / IDE Clutter
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*~

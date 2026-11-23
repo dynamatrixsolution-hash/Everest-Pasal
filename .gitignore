@@ -1,19 +1,124 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
+# ==============================================================================
+# EVEREST PASAL - PROFESSIONAL ENTERPRISE .GITIGNORE
+# Protects Secrets, Credentials, AI-Generated Metadata & Client Distribution
+# ==============================================================================
 
-# Node dependencies & build outputs
+# ------------------------------------------------------------------------------
+# 1. SECRET KEYS, TOKENS & ENVIRONMENT VARIABLES (STRICT)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.pkcs12
+*.keystore
+*.jks
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.pub
+credentials.json
+token.json
+client_secret*.json
+service-account*.json
+secrets/
+credentials/
+.npmrc
+
+# ------------------------------------------------------------------------------
+# 2. AI TOOLS, METADATA, SCRATCHPADS & TRANSCRIPTS
+# ------------------------------------------------------------------------------
+.gemini/
+.claude/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.codeium/
+.copilot/
+.ai/
+brain/
+scratch/
+.system_generated/
+transcripts/
+*.transcript.*
+*.jsonl
+*.prompt.md
+*.agent.md
+.user_uploaded/
+SYSTEM_ADMIN_PROGRESS_CHECKLIST.md
+
+# ------------------------------------------------------------------------------
+# 3. NODE DEPENDENCIES & BUILD ARTIFACTS
+# ------------------------------------------------------------------------------
 node_modules/
 dist/
+dist-ssr/
+build/
+out/
+.next/
 coverage/
+.nyc_output/
+*.tsbuildinfo
+.turbo/
+.cache/
+.parcel-cache/
+.eslintcache
 
-# Database backups - NEVER commit database backups or credentials
+# ------------------------------------------------------------------------------
+# 4. LOGS & RUNTIME DATA
+# ------------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------------------------------------------
+# 5. OS & IDE ARTIFACTS
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+*.bak
+
+# ------------------------------------------------------------------------------
+# 6. DATABASE BACKUPS & FILE UPLOADS (Preserve .gitkeep)
+# ------------------------------------------------------------------------------
 backups/database/*
 !backups/database/.gitkeep
-
-# System files
-.DS_Store
-Thumbs.db
-*.log
-.vscode/
+backups/*
+!backups/.gitkeep
+uploads/*
+!uploads/.gitkeep
+temp/
+tmp/
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z

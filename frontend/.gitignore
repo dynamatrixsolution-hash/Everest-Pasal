@@ -1,0 +1,33 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+credentials.json
+token.json
+
+# Dependencies & Build
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.turbo/
+.cache/
+
+# AI Metadata
+.gemini/
+.claude/
+.cursor/
+.ai/
+brain/
+scratch/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
